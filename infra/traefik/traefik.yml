@@ -1,0 +1,29 @@
+# infra/traefik/traefik.yml
+# Configuration Traefik pour développement
+
+# API et Dashboard
+api:
+  dashboard: true
+  insecure: true  # Dashboard accessible sans auth en dev
+
+# Points d'entrée
+entryPoints:
+  web:
+    address: ":80"
+
+# Providers
+providers:
+  docker:
+    exposedByDefault: false
+    network: task-manager-network
+    watch: true
+
+# Logs
+log:
+  level: INFO
+  format: common
+
+# Access logs (optionnel, pour voir les requêtes)
+accessLog:
+  format: common
+  bufferingSize: 100

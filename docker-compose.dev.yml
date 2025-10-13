@@ -1,0 +1,175 @@
+#docker-copmpose.dev.yml
+services:
+  # Reverse Proxy : Traefik
+  traefik:
+    image: traefik:v3
+    container_name: traefik
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--log.level=INFO"
+    ports:
+      - "80:80" #HTTP
+      - "8080:8080" #Dashboard traefik
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./infra/traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+    networks:
+      - task-manager-network
+    restart: unless-stopped
+
+  # Frontend : Nuxt v4
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: task-manager-frontend
+    environment:
+      - NODE_ENV=development
+      - NUXT_HOST=0.0.0.0
+      - NUXT_PORT=3000
+    # Pour production, utiliser un fichier .env :
+    # env_file:
+    #   - ./frontend/.env
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.nuxt
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=Host(`localhost`)"
+      - "traefik.http.routers.frontend.entrypoints=web"
+      - "traefik.http.services.frontend.loadbalancer.server.port=3000"
+    networks:
+      - task-manager-network
+    restart: unless-stopped
+
+  # Service d'authentification
+  auth-service:
+    build:
+      context: ./services/auth-service
+      dockerfile: Dockerfile
+    container_name: auth-service
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+      - SERVICE_NAME=auth-service
+      - CORS_ORIGIN=http://localhost
+    # Pour production, décommenter et utiliser un fichier .env :
+    # env_file:
+    #   - ./services/auth-service/.env
+    volumes:
+      - ./services/auth-service:/app
+      - /app/node_modules
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.auth.rule=Host(`localhost`) && PathPrefix(`/api/auth`)"
+      - "traefik.http.routers.auth.entrypoints=web"
+      - "traefik.http.routers.auth.middlewares=auth-stripprefix"
+      - "traefik.http.middlewares.auth-stripprefix.stripprefix.prefixes=/api/auth"
+      - "traefik.http.services.auth.loadbalancer.server.port=3001"
+    networks:
+      - task-manager-network
+    restart: unless-stopped
+
+  # Service de gestion des tâches
+  # task-service:
+  #   build:
+  #     context: ./services/task-service
+  #     dockerfile: Dockerfile
+  #   container_name: task-service
+  #   environment:
+  #     - NODE_ENV=development
+  #     - PORT=3002
+  #     - SERVICE_NAME=task-service
+  #   volumes:
+  #     - ./services/task-service:/app
+  #     - /app/node_modules
+  #   labels:
+  #     - "traefik.enable=true"
+  #     - "traefik.http.routers.tasks.rule=Host(`localhost`) && PathPrefix(`/api/tasks`)"
+  #     - "traefik.http.routers.tasks.entrypoints=web"
+  #     - "traefik.http.routers.tasks.middlewares=tasks-stripprefix"
+  #     - "traefik.http.middlewares.tasks-stripprefix.stripprefix.prefixes=/api/tasks"
+  #     - "traefik.http.services.tasks.loadbalancer.server.port=3002"
+  #   networks:
+  #     - task-manager-network
+  #   restart: unless-stopped
+
+  # # Service de gamification
+  # gamification-service:
+  #   build:
+  #     context: ./services/gamification-service
+  #     dockerfile: Dockerfile
+  #   container_name: gamification-service
+  #   environment:
+  #     - NODE_ENV=development
+  #     - PORT=3003
+  #     - SERVICE_NAME=gamification-service
+  #   volumes:
+  #     - ./services/gamification-service:/app
+  #     - /app/node_modules
+  #   labels:
+  #     - "traefik.enable=true"
+  #     - "traefik.http.routers.gamification.rule=Host(`localhost`) && PathPrefix(`/api/gamification`)"
+  #     - "traefik.http.routers.gamification.entrypoints=web"
+  #     - "traefik.http.routers.gamification.middlewares=gamification-stripprefix"
+  #     - "traefik.http.middlewares.gamification-stripprefix.stripprefix.prefixes=/api/gamification"
+  #     - "traefik.http.services.gamification.loadbalancer.server.port=3003"
+  #   networks:
+  #     - task-manager-network
+  #   restart: unless-stopped
+
+  # # Service de collaboration
+  # collaboration-service:
+  #   build:
+  #     context: ./services/collaboration-service
+  #     dockerfile: Dockerfile
+  #   container_name: collaboration-service
+  #   environment:
+  #     - NODE_ENV=development
+  #     - PORT=3004
+  #     - SERVICE_NAME=collaboration-service
+  #   volumes:
+  #     - ./services/collaboration-service:/app
+  #     - /app/node_modules
+  #   labels:
+  #     - "traefik.enable=true"
+  #     - "traefik.http.routers.workspaces.rule=Host(`localhost`) && PathPrefix(`/api/workspaces`)"
+  #     - "traefik.http.routers.workspaces.entrypoints=web"
+  #     - "traefik.http.routers.workspaces.middlewares=workspaces-stripprefix"
+  #     - "traefik.http.middlewares.workspaces-stripprefix.stripprefix.prefixes=/api/workspaces"
+  #     - "traefik.http.services.workspaces.loadbalancer.server.port=3004"
+  #   networks:
+  #     - task-manager-network
+  #   restart: unless-stopped
+
+  #     # Service de notifications
+  # notification-service:
+  #   build:
+  #     context: ./services/notification-service
+  #     dockerfile: Dockerfile
+  #   container_name: notification-service
+  #   environment:
+  #     - NODE_ENV=development
+  #     - PORT=3005
+  #     - SERVICE_NAME=notification-service
+  #   volumes:
+  #     - ./services/notification-service:/app
+  #     - /app/node_modules
+  #   labels:
+  #     - "traefik.enable=true"
+  #     - "traefik.http.routers.notifications.rule=Host(`localhost`) && PathPrefix(`/api/notifications`)"
+  #     - "traefik.http.routers.notifications.entrypoints=web"
+  #     - "traefik.http.routers.notifications.middlewares=notifications-stripprefix"
+  #     - "traefik.http.middlewares.notifications-stripprefix.stripprefix.prefixes=/api/notifications"
+  #     - "traefik.http.services.notifications.loadbalancer.server.port=3005"
+  #   networks:
+  #     - task-manager-network
+  #   restart: unless-stopped
+
+networks:
+  task-manager-network:
+    driver: bridge

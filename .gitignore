@@ -1,0 +1,11 @@
+.env
+
+node_modules
+
+services/*/node_modules
+
+.DS_Store
+.idea
+
+.claude
+CLAUDE.md
