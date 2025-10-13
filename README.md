@@ -27,5 +27,32 @@ Application de gestion de tâches basée sur une architecture microservices.
 - Collaboration en temps réel
 - Notifications
 
+## Installation
+
+### Prérequis
+- Node.js (version 22+)
+- pnpm
+- Docker et Docker Compose
+
+### Configuration initiale
+1. Cloner le projet
+2. Installer pnpm globalement :
+   ```bash
+   npm install -g pnpm
+   ```
+3. Installer les dépendances :
+   ```bash
+   pnpm install
+   ```
+4. Lancer l'environnement de développement :
+   ```bash
+   pnpm dev
+   ```
+
 ## Développement
 Le projet utilise Docker pour l'environnement de développement avec hot-reload sur tous les services.
+
+### Commandes utiles
+- `pnpm dev` : Lance tous les services via Docker
+- `pnpm -r build` : Build tous les packages
+- `pnpm -r clean` : Nettoie tous les packages
