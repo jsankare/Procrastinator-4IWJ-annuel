@@ -1,11 +1,11 @@
 import 'dotenv/config';
-import express, { type Request, type Response, type NextFunction } from 'express';
+import express, { type Application, type Request, type Response, type NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 
 // Configuration - Utilise les variables d'environnement
-const app = express();
+const app: Application = express();
 const PORT = parseInt(process.env.PORT || '3001', 10);
 const SERVICE_NAME = process.env.SERVICE_NAME || 'auth-service';
 const NODE_ENV = process.env.NODE_ENV || 'development';

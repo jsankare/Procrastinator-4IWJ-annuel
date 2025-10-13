@@ -54,5 +54,6 @@ Le projet utilise Docker pour l'environnement de développement avec hot-reload 
 
 ### Commandes utiles
 - `pnpm dev` : Lance tous les services via Docker
+- `pnpm dev-down` : Arrête et supprime les containers Docker
 - `pnpm -r build` : Build tous les packages
 - `pnpm -r clean` : Nettoie tous les packages

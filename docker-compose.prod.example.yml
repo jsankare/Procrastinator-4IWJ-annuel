@@ -1,0 +1,145 @@
+#docker-copmpose.prod.example.yml
+services:
+  traefik:
+    image: traefik:v3.0
+    command:
+      - "--api.dashboard=true"
+      - "--api.insecure=true"  # À désactiver en prod
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.email=your-email@domain.com"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"  # Dashboard Traefik
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - letsencrypt_data:/letsencrypt
+    networks:
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.rule=Host(`traefik.yourdomain.com`)"
+      - "traefik.http.routers.traefik.tls.certresolver=letsencrypt"
+
+  frontend:
+    build: ./frontend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - auth-service
+      - task-service
+      - gamification-service
+      - collaboration-service
+      - notification-service
+    networks:
+      - traefik
+      - internal
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=Host(`yourdomain.com`)"
+      - "traefik.http.routers.frontend.tls.certresolver=letsencrypt"
+      - "traefik.http.services.frontend.loadbalancer.server.port=3000"
+
+  auth-service:
+    build: ./services/auth
+    environment:
+      - DATABASE_URL=postgresql://produser:prodpassword@postgres:5432/proddb
+      - JWT_SECRET=${JWT_SECRET}
+    depends_on:
+      - postgres
+    networks:
+      - traefik
+      - internal
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.auth.rule=Host(`api.yourdomain.com`) && PathPrefix(`/auth`)"
+      - "traefik.http.routers.auth.tls.certresolver=letsencrypt"
+      - "traefik.http.services.auth.loadbalancer.server.port=3001"
+
+  task-service:
+    build: ./services/task
+    environment:
+      - DATABASE_URL=postgresql://produser:prodpassword@postgres:5432/proddb
+    depends_on:
+      - postgres
+    networks:
+      - traefik
+      - internal
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.tasks.rule=Host(`api.yourdomain.com`) && PathPrefix(`/tasks`)"
+      - "traefik.http.routers.tasks.tls.certresolver=letsencrypt"
+      - "traefik.http.services.tasks.loadbalancer.server.port=3002"
+
+  gamification-service:
+    build: ./services/gamification
+    environment:
+      - DATABASE_URL=postgresql://produser:prodpassword@postgres:5432/proddb
+    depends_on:
+      - postgres
+    networks:
+      - traefik
+      - internal
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.gamification.rule=Host(`api.yourdomain.com`) && PathPrefix(`/gamification`)"
+      - "traefik.http.routers.gamification.tls.certresolver=letsencrypt"
+      - "traefik.http.services.gamification.loadbalancer.server.port=3003"
+
+  collaboration-service:
+    build: ./services/collaboration
+    environment:
+      - DATABASE_URL=postgresql://produser:prodpassword@postgres:5432/proddb
+    depends_on:
+      - postgres
+    networks:
+      - traefik
+      - internal
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.collaboration.rule=Host(`api.yourdomain.com`) && PathPrefix(`/collaboration`)"
+      - "traefik.http.routers.collaboration.tls.certresolver=letsencrypt"
+      - "traefik.http.services.collaboration.loadbalancer.server.port=3004"
+
+  notification-service:
+    build: ./services/notification
+    environment:
+      - DATABASE_URL=postgresql://produser:prodpassword@postgres:5432/proddb
+    depends_on:
+      - postgres
+    networks:
+      - traefik
+      - internal
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.notifications.rule=Host(`api.yourdomain.com`) && PathPrefix(`/notifications`)"
+      - "traefik.http.routers.notifications.tls.certresolver=letsencrypt"
+      - "traefik.http.services.notifications.loadbalancer.server.port=3005"
+
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: produser
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: proddb
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - internal
+    # Pas d'exposition directe en prod
+
+volumes:
+  postgres_data:
+  letsencrypt_data:
+
+networks:
+  traefik:
+    external: true
+  internal:
+    driver: bridge
