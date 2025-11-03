@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "docker-compose -f docker-compose.dev.yml up -d",
-    "dev-down": "docker-compose -f docker-compose.dev.yml down",
+    "dev": "docker compose -f docker-compose.dev.yml up -d --build",
+    "dev-down": "docker compose -f docker-compose.dev.yml down",
     "build": "pnpm -r build",
     "clean": "pnpm -r clean",
     "format": "pnpm -r format"
