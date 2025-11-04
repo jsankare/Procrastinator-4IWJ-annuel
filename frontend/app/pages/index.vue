@@ -1,4 +1,9 @@
 <script setup lang="ts">
+import Card from "~/components/global/card.vue";
+import fireIcon from "~/assets/icons/fire.svg";
+import checkIcon from "~/assets/icons/check.svg";
+import starIcon from "~/assets/icons/star.svg";
+
 useHead({ title: 'Accueil' })
 </script>
 
@@ -9,16 +14,10 @@ useHead({ title: 'Accueil' })
       Cette page a le layout de base avec la top navbar
     </p>
 
-    <div class="grid gap-4 sm:grid-cols-2">
-      <div class="rounded-lg border border-white/10 bg-secondary p-6">
-        <h2 class="mb-2 text-xl font-semibold">Card</h2>
-        <p class="text-white/70">blabla bla</p>
-      </div>
-      <div class="rounded-lg border border-white/10 bg-secondary p-6">
-        <h2 class="mb-2 text-xl font-semibold">Card avec le layout pour l'auth</h2>
-        <p class="text-white/70">blabla bnla laalka</p>
-        <NuxtLink to="/login" class="mt-3 inline-block rounded-md bg-accent px-4 py-2 font-medium text-secondary hover:opacity-90">Login</NuxtLink>
-      </div>
+    <div class="grid gap-4 sm:grid-cols-3">
+      <Card :icon="checkIcon" title="1247" description="Tâches terminées" />
+      <Card :icon="fireIcon" title="74" description="Jours de streak" />
+      <Card :icon="starIcon" title="titi" description="Niveau" />
     </div>
   </section>
 </template>

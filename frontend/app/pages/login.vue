@@ -1,7 +1,7 @@
 <script setup lang="ts">
 useHead({ title: 'Login' })
 
-// comme ça pour fixer le layout
+// comme ça pour fixer le layout spécifique
 definePageMeta({
   layout: 'auth'
 })
