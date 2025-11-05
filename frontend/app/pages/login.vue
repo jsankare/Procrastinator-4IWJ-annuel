@@ -24,7 +24,13 @@ definePageMeta({
       </form>
 
       <p class="mt-4 text-center text-sm text-white/70">
-        Pas encore de compte ? <NuxtLink to="/" class="text-accent hover:underline">Accueil</NuxtLink>
+        Pas encore de compte ? <NuxtLink to="/register" class="text-accent hover:underline">Créer mon compte</NuxtLink>
+      </p>
+      <p class="mt-4 text-center text-sm text-white/70">
+        Mot de passe oublié ? <NuxtLink to="/forgot-password" class="text-accent hover:underline">Réinitialiser mon mot de passe</NuxtLink>
+      </p>
+      <p class="mt-4 text-center text-sm text-white/70">
+        tempo <NuxtLink to="/" class="text-accent hover:underline">home</NuxtLink>
       </p>
     </div>
   </div>

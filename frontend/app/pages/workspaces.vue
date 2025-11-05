@@ -2,6 +2,9 @@
 import { computed } from 'vue';
 import WorkspaceCard from "~/components/global/workspaceCard.vue";
 import data from "../data.json";
+import Button from "~/components/global/button.vue";
+import plusIcon from "~/assets/icons/plus.svg";
+import usersIcon from "~/assets/icons/users.svg";
 
 // Assume current user is the first one in data.json
 const currentUserId = data.users[0]?.id ?? 1;
@@ -36,28 +39,34 @@ const workspacesWithDetails = computed(() =>
 </script>
 
 <template>
-  <div class="grid gap-4 sm:grid-cols-2" >
-    <NuxtLink
-      v-for="ws in workspacesWithDetails"
-      :key="ws.id"
-      :to="`/workspace/${ws.id}`"
-      class="block"
-    >
-      <WorkspaceCard
-          :title="ws.title"
-          :description="ws.description"
-          :total-tasks="ws.totalTasks"
-          :completed-tasks="ws.completedTasks"
-          :users="ws.users"
-      >
-        <ul>
-          <li v-for="task in ws.tasks" :key="task.id">
-            {{ task.title }} - {{ task.status }} (Assigné à : {{
-              data.users.find(u => u.id === task.assignedTo)?.firstName
-            }})
-          </li>
-        </ul>
-      </WorkspaceCard>
-    </NuxtLink>
+  <div class="flex flex-col gap-6 bg-primary text-text" >
+    <div>
+      <h1 class="text-3xl font-bold">Vos Workspaces</h1>
+      <p class="text-text/70">Sélectionnez un espace pour accéder au board et au leaderboard associé.</p>
+    </div>
+    <div class="flex gap-3">
+      <Button content="Rejoindre un workspace" :icon="usersIcon" />
+      <Button content="Créer un workspace" :icon="plusIcon" />
+    </div>
+    <div class="grid gap-4 sm:grid-cols-2">
+      <NuxtLink v-for="ws in workspacesWithDetails" :key="ws.id" :to="`/workspace/${ws.id}`" class="block">
+        <WorkspaceCard
+            :title="ws.title"
+            :description="ws.description"
+            :total-tasks="ws.totalTasks"
+            :completed-tasks="ws.completedTasks"
+            :users="ws.users"
+        >
+          <ul>
+            <li v-for="task in ws.tasks" :key="task.id">
+              {{ task.title }} - {{ task.status }} (Assigné à : {{
+                data.users.find(u => u.id === task.assignedTo)?.firstName
+              }})
+            </li>
+          </ul>
+        </WorkspaceCard>
+      </NuxtLink>
+    </div>
+
   </div>
 </template>
