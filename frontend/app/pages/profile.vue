@@ -1,17 +1,3 @@
-<script setup lang="ts">
-import Card from "~/components/global/card.vue";
-import fireIcon from "~/assets/icons/fire.svg";
-import checkIcon from "~/assets/icons/check.svg";
-import starIcon from "~/assets/icons/star.svg";
-
-import { getLevelFromPoints, getNextLevelPoints } from "~/utils/levelSystem";
-
-import data from "../data.json"
-const user = data.users[0];
-
-useHead({ title: 'Profil' })
-</script>
-
 <template >
   <section class="space-y-6 bg-primary min-h-screen text-text">
     <div class="space-y-4" >
@@ -24,9 +10,9 @@ useHead({ title: 'Profil' })
     <div class="space-y-4">
       <h3>Statistiques</h3>
       <div class="grid gap-4 sm:grid-cols-3">
-        <Card :icon="checkIcon" :title="user?.completedTasks" description="Tâches terminées" />
-        <Card :icon="fireIcon" :title="user?.streak" description="Jours de streak" />
-        <Card :icon="starIcon" title="titi" description="Niveau" />
+        <Card :icon="checkIcon" title="1247" description="Tâches terminées" layout="side" icon-color="text-green-500" />
+        <Card :icon="fireIcon" title="74" description="Jours de streak" layout="side" icon-color="text-orange-600" />
+        <Card :icon="starIcon" title="77" description="Niveau" layout="side" icon-color="text-yellow-400" />
       </div>
     </div>
     <div class="space-y-4">
@@ -59,3 +45,16 @@ useHead({ title: 'Profil' })
     </div>
   </section>
 </template>
+<script setup lang="ts">
+  import Card from "~/components/global/card.vue";
+  import fireIcon from "~/assets/icons/fire.svg";
+  import checkIcon from "~/assets/icons/check.svg";
+  import starIcon from "~/assets/icons/star.svg";
+
+  import { getLevelFromPoints, getNextLevelPoints } from "~/utils/levelSystem";
+
+  import data from "../data.json"
+  const user = data.users[0];
+
+  useHead({ title: 'Profil' })
+</script>

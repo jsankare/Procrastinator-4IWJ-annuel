@@ -4,13 +4,23 @@
     <p class="text-white/70">{{ description }}</p>
     <div class="flex flex-col justify-between gap-4" >
       <div>
-        <p class="mt-4 text-sm text-white/50">
-          Tâches complétées: {{ completedTasks }} / {{ totalTasks }}
+        <!-- Progress bar -->
+        <div class="mt-4">
+          <div class="h-2 w-full rounded-full bg-white/10 overflow-hidden" aria-label="Avancement des tâches">
+            <div
+              class="h-full bg-accent transition-all duration-300 rounded-full"
+              :style="{ width: `${totalTasks ? Math.min(100, Math.round((completedTasks / totalTasks) * 100)) : 0}%` }"
+            />
+          </div>
+          <p class="mt-2 text-sm text-white/50">
+            Tâches complétées: {{ completedTasks }} / {{ totalTasks }}
+          </p>
+        </div>
+
+        <!-- Users count -->
+        <p class="mt-2 text-sm text-white/70">
+          Utilisateurs: {{ (users && users.length) || 0 }}
         </p>
-        <p>users :</p>
-        <ul>
-          <li v-for="(user, index) in users" :key="index">{{ user }}</li>
-        </ul>
       </div>
       <div>
         <slot />

@@ -20,7 +20,6 @@
     </div>
   </div>
 </template>
-
 <script setup lang="ts">
 import KanbanTask from './kanbanTask.vue'
 

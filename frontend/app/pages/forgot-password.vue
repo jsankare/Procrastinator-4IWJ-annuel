@@ -1,12 +1,3 @@
-<script setup lang="ts">
-useHead({ title: 'Login' })
-
-// comme ça pour fixer le layout spécifique
-definePageMeta({
-  layout: 'auth'
-})
-</script>
-
 <template>
   <div class="min-h-screen flex items-center justify-center p-6 bg-primary text-text">
     <div class="w-full max-w-md rounded-xl bg-secondary p-8 border border-white/10 shadow-lg">
@@ -25,3 +16,11 @@ definePageMeta({
     </div>
   </div>
 </template>
+<script setup lang="ts">
+useHead({ title: 'Login' })
+
+// comme ça pour fixer le layout spécifique
+definePageMeta({
+  layout: 'auth'
+})
+</script>

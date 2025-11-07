@@ -1,4 +1,15 @@
-
+<template>
+  <div
+      class="flex flex-col lg:grid lg:grid-cols-3 gap-6 overflow-x-auto pb-6 lg:overflow-visible"
+  >
+    <KanbanColumn
+        v-for="col in columns"
+        :key="col.status"
+        :title="col.title"
+        :tasks="col.tasks"
+    />
+  </div>
+</template>
 <script setup lang="ts">
 import { computed } from 'vue'
 import KanbanColumn from './kanbanColumn.vue'
@@ -50,15 +61,3 @@ const columns = computed(() => [
   }
 ])
 </script>
-<template>
-  <div
-      class="flex flex-col lg:grid lg:grid-cols-3 gap-6 overflow-x-auto pb-6 lg:overflow-visible"
-  >
-    <KanbanColumn
-        v-for="col in columns"
-        :key="col.status"
-        :title="col.title"
-        :tasks="col.tasks"
-    />
-  </div>
-</template>

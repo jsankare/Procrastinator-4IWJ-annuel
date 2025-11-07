@@ -1,32 +1,3 @@
-<script setup lang="ts">
-import { computed } from 'vue'
-import data from "../../data.json"
-import Kanban from "~/components/kanban/kanban.vue"
-
-const route = useRoute()
-const idParam = route.params.workspace as string
-const workspaceId = Number(idParam)
-
-const workspace = computed(() => data.workspaces.find(w => w.id === workspaceId))
-const members = computed(() => {
-  if (!workspace.value) return [] as string[]
-  return workspace.value.members
-      .map(id => data.users.find(u => u.id === id))
-      .filter(Boolean)
-      .map(u => `${u!.firstName} ${u!.lastName}`)
-})
-
-const tasks = computed(() => data.tasks.filter(t => t.workspaceId === workspaceId))
-const totalTasks = computed(() => tasks.value.length)
-const completedTasks = computed(() =>
-    tasks.value.filter(t => (t.status || '').toLowerCase() === 'terminé').length
-)
-
-useHead({
-  title: workspace.value ? `Workspace · ${workspace.value.name}` : 'Workspace introuvable'
-})
-</script>
-
 <template>
   <section class="space-y-6">
     <div v-if="!workspace" class="rounded-lg border border-white/10 bg-secondary p-6">
@@ -64,3 +35,31 @@ useHead({
     </div>
   </section>
 </template>
+<script setup lang="ts">
+import { computed } from 'vue'
+import data from "../../data.json"
+import Kanban from "~/components/kanban/kanban.vue"
+
+const route = useRoute()
+const idParam = route.params.workspace as string
+const workspaceId = Number(idParam)
+
+const workspace = computed(() => data.workspaces.find(w => w.id === workspaceId))
+const members = computed(() => {
+  if (!workspace.value) return [] as string[]
+  return workspace.value.members
+      .map(id => data.users.find(u => u.id === id))
+      .filter(Boolean)
+      .map(u => `${u!.firstName} ${u!.lastName}`)
+})
+
+const tasks = computed(() => data.tasks.filter(t => t.workspaceId === workspaceId))
+const totalTasks = computed(() => tasks.value.length)
+const completedTasks = computed(() =>
+    tasks.value.filter(t => (t.status || '').toLowerCase() === 'terminé').length
+)
+
+useHead({
+  title: workspace.value ? `${workspace.value.name}` : 'Workspace introuvable'
+})
+</script>
