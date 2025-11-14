@@ -1,5 +1,5 @@
 <template>
-  <div class="relative group bg-secondary rounded-lg p-3 border border-white/10 hover:border-accent transition flex flex-col justify-between cursor-grabbing">
+  <div class="relative group select-none bg-secondary rounded-lg p-3 border border-white/10 hover:border-accent transition flex flex-col justify-between cursor-grabbing">
     <!-- Use Icon component to adjust the color else not working, maybe find a better way to do it later -->
     <Icon :src="dragIcon" alt="drag icon" aria-hidden class="absolute top-2 right-2 w-5 h-5 group-hover:opacity-100 pointer-events-none select-none text-accent" />
 
