@@ -2,7 +2,7 @@
 services:
   # Reverse Proxy : Traefik
   traefik:
-    image: traefik:v3
+    image: traefik:latest
     container_name: traefik
     command:
       - "--api.insecure=true"
@@ -39,8 +39,9 @@ services:
       - /app/.nuxt
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.frontend.rule=Host(`localhost`)"
+      - "traefik.http.routers.frontend.rule=Host(`localhost`) && !PathPrefix(`/api`)"
       - "traefik.http.routers.frontend.entrypoints=web"
+      - "traefik.http.routers.frontend.priority=1"
       - "traefik.http.services.frontend.loadbalancer.server.port=3000"
     networks:
       - task-manager-network

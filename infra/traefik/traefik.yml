@@ -15,7 +15,6 @@ entryPoints:
 providers:
   docker:
     exposedByDefault: false
-    network: task-manager-network
     watch: true
 
 # Logs
