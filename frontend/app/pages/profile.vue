@@ -1,5 +1,6 @@
 <template >
   <section class="space-y-6 bg-primary min-h-screen text-text">
+    <p>ici : {{hello}}</p>
     <div class="space-y-4" >
       <h1 class="text-3xl font-bold">Votre profil, {{ user?.firstName }}</h1>
       <p>Niveau {{ getLevelFromPoints(user?.points) }}</p>
@@ -54,6 +55,8 @@
   import { getLevelFromPoints, getNextLevelPoints } from "~/utils/levelSystem";
 
   import data from "../data.json"
+  // Fetch a simple hello from the API. Using $fetch returns plain data instead of a Ref
+  const { hello } = await $fetch('/api/hello')
   const user = data.users[0];
 
   useHead({ title: 'Profil' })
