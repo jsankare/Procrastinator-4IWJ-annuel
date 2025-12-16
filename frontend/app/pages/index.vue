@@ -22,5 +22,5 @@
   import Kanban from "~/components/kanban/kanban.vue"
   import data from "~/data.json"
 
-  const currentUserId = data.users[0].id
+  const currentUserId: number | undefined = Array.isArray(data.users) && data.users.length > 0 ? data.users[0]?.id : undefined
 </script>
