@@ -7,22 +7,22 @@
     </div>
 
     <div v-else class="space-y-6">
-      <header class="relative flex flex-col items-center justify-center py-10 mb-6 bg-gradient-to-r from-accent/30 to-secondary/30 rounded-b-3xl shadow-lg">
+      <header class="relative flex flex-col items-center justify-center py-10 mb-6 bg-linear-to-r from-accent/30 to-secondary/30 rounded-b-3xl shadow-lg">
         <div class="w-24 h-24 rounded-full overflow-hidden border-4 border-accent shadow-lg mb-4 bg-primary flex items-center justify-center">
           <img :src="workspace?.avatar || '/assets/icons/workspace.svg'" alt="Avatar workspace" class="object-cover w-full h-full" />
         </div>
         <h1 class="text-3xl font-bold tracking-tight">{{ workspace?.name }}</h1>
         <p class="text-white/80 mt-2 text-center max-w-xl">{{ workspace?.description || 'Aucune description.' }}</p>
         <div class="flex gap-6 mt-4">
-          <div class="flex flex-col items-center">
+          <div class="flex flex-col items-center min-w-20">
             <span class="text-lg font-bold text-accent">{{ totalTasks }}</span>
             <span class="text-xs text-white/70">Tâches</span>
           </div>
-          <div class="flex flex-col items-center">
+          <div class="flex flex-col items-center min-w-20">
             <span class="text-lg font-bold text-green-400">{{ completedTasks }}</span>
             <span class="text-xs text-white/70">Complétées</span>
           </div>
-          <div class="flex flex-col items-center">
+          <div class="flex flex-col items-center min-w-20">
             <span class="text-lg font-bold text-orange-400">{{ tasks.filter(t => (t.status || '').toLowerCase() === 'en cours').length }}</span>
             <span class="text-xs text-white/70">En cours</span>
           </div>
@@ -91,14 +91,16 @@
 </template>
 <script setup lang="ts">
 import { computed } from 'vue'
-import data from "../../data.json"
-import Kanban from "~/components/kanban/kanban.vue"
+// @ts-ignore
+import data from '~/data.json'
+import Kanban from '~/components/kanban/kanban.vue'
+import { useRoute, useHead } from '#imports'
 
 const route = useRoute()
 const idParam = route.params.workspace as string
 const workspaceId = Number(idParam)
 
-const workspace = computed(() => data.workspaces.find(w => w.id === workspaceId))
+const workspace = computed(() => data.workspaces.find((w: any) => w.id === workspaceId))
 
 const memberUsers = computed(() => {
   if (!workspace.value) return [] as any[]
@@ -107,10 +109,10 @@ const memberUsers = computed(() => {
     .filter(Boolean)
 })
 
-const tasks = computed(() => data.tasks.filter(t => t.workspaceId === workspaceId))
+const tasks = computed(() => data.tasks.filter((t: any) => t.workspaceId === workspaceId))
 const totalTasks = computed(() => tasks.value.length)
 const completedTasks = computed(() =>
-    tasks.value.filter(t => (t.status || '').toLowerCase() === 'terminé').length
+    tasks.value.filter((t: any) => (t.status || '').toLowerCase() === 'terminé').length
 )
 
 useHead({

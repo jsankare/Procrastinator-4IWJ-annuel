@@ -1,7 +1,7 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center p-6 bg-primary text-text">
-    <div class="w-full max-w-md rounded-xl bg-secondary p-8 border border-white/10 shadow-lg">
-      <h1 class="text-2xl font-bold mb-6">Créer mon compte</h1>
+  <div class="min-h-screen flex items-center justify-center p-2 sm:p-6 bg-primary text-text">
+    <div class="w-full max-w-md rounded-xl bg-secondary p-4 sm:p-8 border border-white/10 shadow-lg">
+      <h1 class="text-xl sm:text-2xl font-bold mb-6 text-center">Créer mon compte</h1>
       <form class="space-y-4">
         <div>
           <label class="block mb-2 text-sm text-white/80" for="firstName">Prénom</label>
@@ -26,7 +26,7 @@
         <button type="submit" class="w-full rounded-md bg-accent text-secondary font-medium py-2 hover:opacity-90 cursor-pointer ">Créer mon compte</button>
       </form>
 
-      <p class="mt-4 text-center text-sm text-white/70">
+      <p class="mt-4 text-center text-xs sm:text-sm text-white/70">
         déjà un compte ? <NuxtLink to="/login" class="text-accent hover:underline">se connecter</NuxtLink>
       </p>
     </div>

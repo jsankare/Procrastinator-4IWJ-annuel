@@ -1,11 +1,12 @@
 <template>
-  <div class="flex flex-col gap-4">
-    <form @submit.prevent="addColumn" class="flex gap-2 items-center mb-2">
-      <input v-model="newColumnTitle" placeholder="Nouvelle colonne..." class="rounded-md p-2 bg-primary text-text border border-white/10" />
-      <button type="submit" class="bg-accent text-secondary px-4 py-2 rounded-md font-semibold">Ajouter</button>
+  <div class="flex flex-col gap-4 w-full">
+    <form @submit.prevent="addColumn" class="flex gap-2 items-center mb-2 px-2 sm:px-0">
+      <input v-model="newColumnTitle" placeholder="Nouvelle colonne..." class="rounded-md p-2 bg-primary text-text border border-white/10 w-full max-w-xs" />
+      <button type="submit" class="bg-accent text-secondary px-4 py-2 rounded-md font-semibold whitespace-nowrap">Ajouter</button>
     </form>
     <div
-      class="flex flex-col lg:grid lg:grid-cols-3 gap-6 overflow-x-auto pb-6 lg:overflow-visible"
+      class="flex gap-4 overflow-x-auto pb-6 scrollbar-thin scrollbar-thumb-accent/40 scrollbar-track-transparent"
+      style="min-height: 350px;"
     >
       <KanbanColumn
         v-for="col in columns"
@@ -14,6 +15,7 @@
         :title="col.title"
         :tasks="col.tasks"
         @drop="handleDrop"
+        class="min-w-[260px] w-full max-w-xs flex-shrink-0"
       />
     </div>
   </div>

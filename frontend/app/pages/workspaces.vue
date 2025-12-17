@@ -1,16 +1,16 @@
 <template>
-  <div class="flex flex-col gap-6 bg-primary text-text">
+  <div class="flex flex-col gap-6 bg-primary text-text px-2 sm:px-0">
     <div>
-      <h1 class="text-3xl font-bold">Vos Workspaces</h1>
-      <p class="text-text/70">Sélectionnez un espace pour accéder au board et au leaderboard associé.</p>
+      <h1 class="text-2xl sm:text-3xl font-bold text-center sm:text-left">Vos Workspaces</h1>
+      <p class="text-text/70 text-center sm:text-left">Sélectionnez un espace pour accéder au board et au leaderboard associé.</p>
     </div>
 
-    <div class="flex gap-3">
+    <div class="flex flex-wrap gap-2 sm:gap-3">
       <Button content="Rejoindre un workspace" :icon="usersIcon" @click="showJoin = true" />
       <Button content="Créer un workspace" :icon="plusIcon" @click="showCreate = true" />
     </div>
 
-    <div class="grid gap-4 sm:grid-cols-2">
+    <div class="grid gap-4 grid-cols-1 sm:grid-cols-2">
       <NuxtLink v-for="ws in workspacesWithDetails" :key="ws.id" :to="`/workspace/${ws.id}`" class="block">
         <WorkspaceCard
           :title="ws.title"
