@@ -1,15 +1,21 @@
 <template>
-  <div
-    class="flex flex-col lg:grid lg:grid-cols-3 gap-6 overflow-x-auto pb-6 lg:overflow-visible"
-  >
-    <KanbanColumn
-      v-for="col in columns"
-      :key="col.id"
-      :column-id="col.id"
-      :title="col.title"
-      :tasks="col.tasks"
-      @drop="handleDrop"
-    />
+  <div class="flex flex-col gap-4">
+    <form @submit.prevent="addColumn" class="flex gap-2 items-center mb-2">
+      <input v-model="newColumnTitle" placeholder="Nouvelle colonne..." class="rounded-md p-2 bg-primary text-text border border-white/10" />
+      <button type="submit" class="bg-accent text-secondary px-4 py-2 rounded-md font-semibold">Ajouter</button>
+    </form>
+    <div
+      class="flex flex-col lg:grid lg:grid-cols-3 gap-6 overflow-x-auto pb-6 lg:overflow-visible"
+    >
+      <KanbanColumn
+        v-for="col in columns"
+        :key="col.id"
+        :column-id="col.id"
+        :title="col.title"
+        :tasks="col.tasks"
+        @drop="handleDrop"
+      />
+    </div>
   </div>
 </template>
 
@@ -62,6 +68,20 @@ const columns = reactive<Column[]>([
   { id: 'en cours',  title: 'En cours',  tasks: [] },
   { id: 'terminé',   title: 'Terminé',   tasks: [] },
 ])
+
+const newColumnTitle = ref('')
+function addColumn() {
+  const title = newColumnTitle.value.trim()
+  if (!title) return
+  // Génère un id unique basé sur le titre (évite les doublons)
+  let id = title.toLowerCase().replace(/\s+/g, '-')
+  let suffix = 1
+  while (columns.some(c => c.id === id)) {
+    id = `${id}-${suffix++}`
+  }
+  columns.push({ id, title, tasks: [] })
+  newColumnTitle.value = ''
+}
 
 function seedColumns() {
   for (const c of columns) c.tasks = []
