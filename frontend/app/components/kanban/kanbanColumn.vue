@@ -1,6 +1,6 @@
 <template>
   <div
-    class="flex-shrink-0 w-full lg:w-auto bg-secondary/60 rounded-xl p-4 border border-white/10 flex flex-col"
+    class="shrink-0 w-full lg:w-auto bg-secondary/60 rounded-xl p-4 border border-white/10 flex flex-col"
   >
     <h2 class="text-lg font-semibold mb-3 flex items-center justify-between">
       {{ title }}

@@ -1,9 +1,12 @@
 <template >
   <section class="space-y-6 bg-primary min-h-screen text-text">
-    <div class="space-y-4" >
-      <h1 class="text-3xl font-bold">Votre profil, {{ user?.firstName }}</h1>
-      <p>Niveau {{ getLevelFromPoints(user?.points) }}</p>
-      <p v-if="user?.points">
+    <div class="relative flex flex-col items-center justify-center py-10 mb-6 bg-gradient-to-r from-accent/30 to-secondary/30 rounded-b-3xl shadow-lg">
+      <div class="w-28 h-28 rounded-full overflow-hidden border-4 border-accent shadow-lg mb-4">
+        <img :src="user?.avatar || '/assets/icons/user.svg'" alt="Avatar" class="object-cover w-full h-full" />
+      </div>
+      <h1 class="text-3xl font-bold tracking-tight">{{ user?.firstName }} {{ user?.lastName }}</h1>
+      <p class="text-lg text-accent font-semibold">Niveau {{ getLevelFromPoints(user?.points) }}</p>
+      <p v-if="user?.points" class="text-sm text-white/70">
         {{ user.points }} pts • Prochain palier: {{ getNextLevelPoints(getLevelFromPoints(user.points) + 1) }} pts
       </p>
     </div>
