@@ -2,7 +2,7 @@
 services:
   # Reverse Proxy : Traefik
   traefik:
-    image: traefik:v3
+    image: traefik:latest
     container_name: traefik
     command:
       - "--api.insecure=true"
@@ -16,6 +16,23 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./infra/traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+    networks:
+      - task-manager-network
+    restart: unless-stopped
+
+  # Database : MongoDB
+  mongodb:
+    image: mongo:7.0
+    container_name: task-manager-mongodb
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=password123
+      - MONGO_INITDB_DATABASE=procrastinator
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+      - ./infra/mongo/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
     networks:
       - task-manager-network
     restart: unless-stopped
@@ -34,14 +51,21 @@ services:
     # env_file:
     #   - ./frontend/.env
     volumes:
-      - ./frontend:/app
+      - ./frontend/app:/app/app
+      - ./frontend/server:/app/server
       - /app/node_modules
       - /app/.nuxt
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.frontend.rule=Host(`localhost`)"
+      - "traefik.http.routers.frontend.rule=Host(`localhost`) && !PathPrefix(`/api`)"
       - "traefik.http.routers.frontend.entrypoints=web"
+      - "traefik.http.routers.frontend.priority=1"
       - "traefik.http.services.frontend.loadbalancer.server.port=3000"
+      # Route API requests to Nuxt too (for Nitro server /api/*), while letting dedicated services (e.g. /api/auth) handle their own paths
+      - "traefik.http.routers.frontend-api.rule=Host(`localhost`) && PathPrefix(`/api`) && !PathPrefix(`/api/auth`)"
+      - "traefik.http.routers.frontend-api.entrypoints=web"
+    depends_on:
+      - mongodb
     networks:
       - task-manager-network
     restart: unless-stopped
@@ -57,12 +81,19 @@ services:
       - PORT=3001
       - SERVICE_NAME=auth-service
       - CORS_ORIGIN=http://localhost
+      - MONGODB_URI=mongodb://procrastinator_user:procrastinator_pass@mongodb:27017/procrastinator?authSource=procrastinator
+      - DB_NAME=procrastinator
+      - JWT_SECRET=your-super-secret-jwt-key-change-in-production-please
+      - JWT_EXPIRES_IN=7d
+      - JWT_REFRESH_EXPIRES_IN=30d
     # Pour production, décommenter et utiliser un fichier .env :
     # env_file:
     #   - ./services/auth-service/.env
     volumes:
       - ./services/auth-service:/app
       - /app/node_modules
+    depends_on:
+      - mongodb
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.auth.rule=Host(`localhost`) && PathPrefix(`/api/auth`)"
@@ -173,3 +204,7 @@ services:
 networks:
   task-manager-network:
     driver: bridge
+
+volumes:
+  mongodb_data:
+    driver: local

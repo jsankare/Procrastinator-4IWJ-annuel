@@ -1,0 +1,402 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "firstName": "John",
+      "lastName": "Doe",
+      "email": "toto@email.fr",
+      "age": 30,
+      "points": 1500,
+      "streak": 5,
+      "completedTasks": 45
+    },
+    {
+      "id": 2,
+      "firstName": "Alice",
+      "lastName": "Smith",
+      "email": "alice.smith@email.fr",
+      "age": 27,
+      "points": 1820,
+      "streak": 8,
+      "completedTasks": 52
+    },
+    {
+      "id": 3,
+      "firstName": "Michael",
+      "lastName": "Brown",
+      "email": "michael.brown@email.fr",
+      "age": 35,
+      "points": 2100,
+      "streak": 10,
+      "completedTasks": 67
+    },
+    {
+      "id": 4,
+      "firstName": "Sophie",
+      "lastName": "Dubois",
+      "email": "sophie.dubois@email.fr",
+      "age": 24,
+      "points": 1340,
+      "streak": 4,
+      "completedTasks": 33
+    },
+    {
+      "id": 5,
+      "firstName": "Liam",
+      "lastName": "Johnson",
+      "email": "liam.johnson@email.fr",
+      "age": 29,
+      "points": 1750,
+      "streak": 6,
+      "completedTasks": 49
+    },
+    {
+      "id": 6,
+      "firstName": "Emma",
+      "lastName": "Garcia",
+      "email": "emma.garcia@email.fr",
+      "age": 31,
+      "points": 1985,
+      "streak": 9,
+      "completedTasks": 61
+    },
+    {
+      "id": 7,
+      "firstName": "Noah",
+      "lastName": "Martinez",
+      "email": "noah.martinez@email.fr",
+      "age": 26,
+      "points": 1620,
+      "streak": 7,
+      "completedTasks": 48
+    },
+    {
+      "id": 8,
+      "firstName": "Olivia",
+      "lastName": "Lefevre",
+      "email": "olivia.lefevre@email.fr",
+      "age": 33,
+      "points": 2200,
+      "streak": 12,
+      "completedTasks": 74
+    },
+    {
+      "id": 9,
+      "firstName": "Ethan",
+      "lastName": "Moreau",
+      "email": "ethan.moreau@email.fr",
+      "age": 28,
+      "points": 1475,
+      "streak": 5,
+      "completedTasks": 42
+    },
+    {
+      "id": 10,
+      "firstName": "Chloe",
+      "lastName": "Bernard",
+      "email": "chloe.bernard@email.fr",
+      "age": 32,
+      "points": 1900,
+      "streak": 11,
+      "completedTasks": 68
+    }
+  ],
+  "workspaces": [
+    {
+      "id": 1,
+      "name": "Development Team",
+      "description": "Workspace for the development team to manage projects and tasks.",
+      "members": [1, 2, 3]
+    },
+    {
+      "id": 2,
+      "name": "Marketing Team",
+      "description": "Workspace for the marketing team to coordinate campaigns and strategies.",
+      "members": [4, 5, 6]
+    },
+    {
+      "id": 3,
+      "name": "Design Team",
+      "description": "Workspace for the design team to collaborate on visual assets and UI/UX.",
+      "members": [7, 8, 9, 10]
+    },
+    {
+      "id": 4,
+      "name": "Product Team",
+      "description": "Workspace for the product team to plan and execute product roadmaps.",
+      "members": [1, 4, 7]
+    }
+  ],
+  "tasks": [
+    {
+      "id": 1,
+      "title": "Implement authentication",
+      "description": "Set up user authentication using JWT.",
+      "assignedTo": 1,
+      "workspaceId": 1,
+      "status": "en cours",
+      "dueDate": "2024-07-10"
+    },
+    {
+      "id": 2,
+      "title": "Design landing page",
+      "description": "Create responsive layout and hero section for the landing page.",
+      "assignedTo": 2,
+      "workspaceId": 1,
+      "status": "terminé",
+      "dueDate": "2024-06-25"
+    },
+    {
+      "id": 3,
+      "title": "Integrate payment gateway",
+      "description": "Connect Stripe API for secure transactions.",
+      "assignedTo": 3,
+      "workspaceId": 2,
+      "status": "plannifié",
+      "dueDate": "2024-08-01"
+    },
+    {
+      "id": 4,
+      "title": "Database schema update",
+      "description": "Add indexes and optimize queries for performance.",
+      "assignedTo": 4,
+      "workspaceId": 1,
+      "status": "en cours",
+      "dueDate": "2024-07-15"
+    },
+    {
+      "id": 5,
+      "title": "Set up CI/CD pipeline",
+      "description": "Configure automated build and deploy pipeline using GitHub Actions.",
+      "assignedTo": 5,
+      "workspaceId": 2,
+      "status": "terminé",
+      "dueDate": "2024-06-30"
+    },
+    {
+      "id": 6,
+      "title": "Create user dashboard",
+      "description": "Develop dashboard UI for managing user settings and data.",
+      "assignedTo": 6,
+      "workspaceId": 1,
+      "status": "en cours",
+      "dueDate": "2024-07-22"
+    },
+    {
+      "id": 7,
+      "title": "Optimize image loading",
+      "description": "Implement lazy loading and compression for faster load times.",
+      "assignedTo": 7,
+      "workspaceId": 2,
+      "status": "plannifié",
+      "dueDate": "2024-08-05"
+    },
+    {
+      "id": 8,
+      "title": "Write unit tests",
+      "description": "Add Jest unit tests for authentication and routing modules.",
+      "assignedTo": 8,
+      "workspaceId": 3,
+      "status": "en cours",
+      "dueDate": "2024-07-18"
+    },
+    {
+      "id": 9,
+      "title": "Fix mobile navigation bug",
+      "description": "Resolve issues with menu not opening on iOS devices.",
+      "assignedTo": 9,
+      "workspaceId": 1,
+      "status": "terminé",
+      "dueDate": "2024-06-20"
+    },
+    {
+      "id": 10,
+      "title": "Implement notifications",
+      "description": "Add push and email notifications for task updates.",
+      "assignedTo": 10,
+      "workspaceId": 3,
+      "status": "plannifié",
+      "dueDate": "2024-08-10"
+    },
+    {
+      "id": 11,
+      "title": "Migrate to TypeScript",
+      "description": "Convert main frontend codebase to TypeScript for better safety.",
+      "assignedTo": 2,
+      "workspaceId": 2,
+      "status": "en cours",
+      "dueDate": "2024-07-25"
+    },
+    {
+      "id": 12,
+      "title": "Set up error tracking",
+      "description": "Integrate Sentry to monitor and log production errors.",
+      "assignedTo": 3,
+      "workspaceId": 3,
+      "status": "terminé",
+      "dueDate": "2024-06-28"
+    },
+    {
+      "id": 13,
+      "title": "Implement dark mode",
+      "description": "Add theme switcher and dark mode styling across app.",
+      "assignedTo": 1,
+      "workspaceId": 1,
+      "status": "en cours",
+      "dueDate": "2024-07-12"
+    },
+    {
+      "id": 14,
+      "title": "Refactor API routes",
+      "description": "Simplify API structure and improve naming conventions.",
+      "assignedTo": 1,
+      "workspaceId": 1,
+      "status": "plannifié",
+      "dueDate": "2024-08-02"
+    },
+    {
+      "id": 15,
+      "title": "Add search functionality",
+      "description": "Enable global search across users, tasks, and workspaces.",
+      "assignedTo": 6,
+      "workspaceId": 3,
+      "status": "terminé",
+      "dueDate": "2024-06-29"
+    },
+    {
+      "id": 16,
+      "title": "Configure role-based access",
+      "description": "Restrict actions based on user roles and permissions.",
+      "assignedTo": 7,
+      "workspaceId": 1,
+      "status": "en cours",
+      "dueDate": "2024-07-20"
+    },
+    {
+      "id": 17,
+      "title": "Improve SEO",
+      "description": "Add meta tags, structured data, and sitemap for better indexing.",
+      "assignedTo": 8,
+      "workspaceId": 2,
+      "status": "terminé",
+      "dueDate": "2024-06-22"
+    },
+    {
+      "id": 18,
+      "title": "Set up analytics",
+      "description": "Integrate Google Analytics and custom tracking events.",
+      "assignedTo": 9,
+      "workspaceId": 3,
+      "status": "plannifié",
+      "dueDate": "2024-08-08"
+    },
+    {
+      "id": 19,
+      "title": "Enhance form validation",
+      "description": "Add custom validation rules and error messages to forms.",
+      "assignedTo": 10,
+      "workspaceId": 1,
+      "status": "en cours",
+      "dueDate": "2024-07-14"
+    },
+    {
+      "id": 20,
+      "title": "Deploy staging environment",
+      "description": "Create and configure staging environment for pre-production testing.",
+      "assignedTo": 1,
+      "workspaceId": 2,
+      "status": "terminé",
+      "dueDate": "2024-06-27"
+    },
+    {
+      "id": 21,
+      "title": "Add file upload feature",
+      "description": "Implement file uploads with size validation and storage integration.",
+      "assignedTo": 2,
+      "workspaceId": 1,
+      "status": "plannifié",
+      "dueDate": "2024-08-12"
+    },
+    {
+      "id": 22,
+      "title": "Implement email verification",
+      "description": "Send verification link during sign-up process.",
+      "assignedTo": 3,
+      "workspaceId": 3,
+      "status": "en cours",
+      "dueDate": "2024-07-17"
+    },
+    {
+      "id": 23,
+      "title": "Update UI components",
+      "description": "Redesign outdated UI components to match new design system.",
+      "assignedTo": 4,
+      "workspaceId": 2,
+      "status": "terminé",
+      "dueDate": "2024-06-24"
+    },
+    {
+      "id": 24,
+      "title": "Improve accessibility",
+      "description": "Ensure WCAG 2.1 compliance across all pages.",
+      "assignedTo": 5,
+      "workspaceId": 1,
+      "status": "en cours",
+      "dueDate": "2024-07-19"
+    },
+    {
+      "id": 25,
+      "title": "Implement task comments",
+      "description": "Allow users to add and view comments on tasks.",
+      "assignedTo": 6,
+      "workspaceId": 3,
+      "status": "plannifié",
+      "dueDate": "2024-08-09"
+    },
+    {
+      "id": 26,
+      "title": "Define product roadmap Q3",
+      "description": "Collaborate to outline the Q3 product roadmap and milestones.",
+      "assignedTo": 1,
+      "workspaceId": 4,
+      "status": "en cours",
+      "dueDate": "2024-07-21"
+    },
+    {
+      "id": 27,
+      "title": "User research interviews",
+      "description": "Schedule and conduct 5 user interviews for new feature validation.",
+      "assignedTo": 4,
+      "workspaceId": 4,
+      "status": "terminé",
+      "dueDate": "2024-06-26"
+    },
+    {
+      "id": 28,
+      "title": "Create product specs",
+      "description": "Draft detailed specifications for the upcoming release.",
+      "assignedTo": 7,
+      "workspaceId": 4,
+      "status": "plannifié",
+      "dueDate": "2024-08-03"
+    },
+    {
+      "id": 29,
+      "title": "OKRs alignment",
+      "description": "Align team OKRs with company objectives for Q3.",
+      "assignedTo": 1,
+      "workspaceId": 4,
+      "status": "terminé",
+      "dueDate": "2024-06-23"
+    },
+    {
+      "id": 30,
+      "title": "Backlog grooming",
+      "description": "Review and prioritize product backlog items.",
+      "assignedTo": 4,
+      "workspaceId": 4,
+      "status": "en cours",
+      "dueDate": "2024-07-16"
+    }
+  ]
+}
