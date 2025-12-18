@@ -140,7 +140,7 @@ services:
   #   volumes:
   #     - ./services/collaboration-service:/app
   #     - /app/node_modules
-  #   labels:
+  #   labels: --
   #     - "traefik.enable=true"
   #     - "traefik.http.routers.workspaces.rule=Host(`localhost`) && PathPrefix(`/api/workspaces`)"
   #     - "traefik.http.routers.workspaces.entrypoints=web"
