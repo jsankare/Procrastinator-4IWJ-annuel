@@ -96,25 +96,19 @@ export const useAuthStore = () => {
   const logout = async () => {
     isLoading.value = true
     
-    try {
-      await authApi.logout()
-    } catch (err) {
-      console.error('Logout error:', err)
-    } finally {
-      // Clear state
-      user.value = null
-      token.value = null
-      error.value = null
-      
-      // Clear localStorage
-      if (process.client) {
-        localStorage.removeItem('auth_token')
-        localStorage.removeItem('auth_user')
-        localStorage.removeItem('refresh_token')
-      }
-      
-      isLoading.value = false
+    // Clear state
+    user.value = null
+    token.value = null
+    error.value = null
+    
+    // Clear localStorage
+    if (process.client) {
+      localStorage.removeItem('auth_token')
+      localStorage.removeItem('auth_user')
+      localStorage.removeItem('refresh_token')
     }
+    
+    isLoading.value = false
   }
 
   // Fetch current user
