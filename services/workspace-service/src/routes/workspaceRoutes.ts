@@ -22,23 +22,6 @@ router.get('/workspaces', async (req: any, res: any) => {
   }
 })
 
-router.get('/workspaces/:id', async (req: any, res: any) => {
-  try {
-    const token = extractTokenFromHeader(req.headers.authorization)
-    if (!token) return res.status(401).json({ success: false, message: 'Authorization token required' })
-    const payload = verifyToken(token)
-    if (!payload) return res.status(401).json({ success: false, message: 'Invalid token' })
-
-    const item = await WorkspaceModel.findById(req.params.id)
-    if (!item || !item.members.includes(payload.userId)) {
-      return res.status(404).json({ success: false, message: 'Workspace not found' })
-    }
-    res.json({ success: true, data: item })
-  } catch (e) {
-    res.status(500).json({ success: false, message: 'Internal error' })
-  }
-})
-
 router.post('/workspaces', async (req: any, res: any) => {
   try {
     const token = extractTokenFromHeader(req.headers.authorization)
@@ -72,6 +55,42 @@ router.post('/workspaces/join', async (req: any, res: any) => {
 
     const updated = await WorkspaceModel.addMember(ws._id!, payload.userId)
     res.json({ success: true, data: updated })
+  } catch (e) {
+    res.status(500).json({ success: false, message: 'Internal error' })
+  }
+})
+
+router.get('/workspaces/:id', async (req: any, res: any) => {
+  try {
+    const token = extractTokenFromHeader(req.headers.authorization)
+    if (!token) return res.status(401).json({ success: false, message: 'Authorization token required' })
+    const payload = verifyToken(token)
+    if (!payload) return res.status(401).json({ success: false, message: 'Invalid token' })
+
+    const item = await WorkspaceModel.findById(req.params.id)
+    if (!item || !item.members.includes(payload.userId)) {
+      return res.status(404).json({ success: false, message: 'Workspace not found' })
+    }
+    res.json({ success: true, data: item })
+  } catch (e) {
+    res.status(500).json({ success: false, message: 'Internal error' })
+  }
+})
+
+router.post('/workspaces/:id/leave', async (req: any, res: any) => {
+  try {
+    const token = extractTokenFromHeader(req.headers.authorization)
+    if (!token) return res.status(401).json({ success: false, message: 'Authorization token required' })
+    const payload = verifyToken(token)
+    if (!payload) return res.status(401).json({ success: false, message: 'Invalid token' })
+
+    const ws = await WorkspaceModel.findById(req.params.id)
+    if (!ws || !ws.members.includes(payload.userId)) {
+      return res.status(404).json({ success: false, message: 'Workspace not found' })
+    }
+
+    const updated = await WorkspaceModel.removeMember(ws._id!, payload.userId)
+    res.json({ success: true, data: null })
   } catch (e) {
     res.status(500).json({ success: false, message: 'Internal error' })
   }

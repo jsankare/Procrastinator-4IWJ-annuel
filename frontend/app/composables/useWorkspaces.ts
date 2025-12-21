@@ -89,6 +89,20 @@ export const useWorkspaces = () => {
     return res
   }
 
+  const leaveWorkspace = async (id: string | number): Promise<ApiResponse<null>> => {
+    isLoading.value = true
+    error.value = null
+    const res = await apiClient.post<null>(`/api/workspaces/${id}/leave`, {})
+    if (!res.success) {
+      error.value = res.error || 'Impossible de quitter le workspace'
+    } else {
+      currentWorkspace.value = null
+      await fetchMyWorkspaces()
+    }
+    isLoading.value = false
+    return res
+  }
+
   return {
     // state
     workspaces,
@@ -100,5 +114,6 @@ export const useWorkspaces = () => {
     fetchWorkspaceById,
     createWorkspace,
     joinWorkspace,
+    leaveWorkspace,
   }
 }

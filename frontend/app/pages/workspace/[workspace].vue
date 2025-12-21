@@ -8,6 +8,9 @@
 
     <div v-else class="space-y-6">
       <header class="relative flex flex-col items-center justify-center py-10 mb-6 bg-linear-to-r from-accent/30 to-secondary/30 rounded-b-3xl shadow-lg">
+        <div class="absolute top-4 right-4">
+          <button type="button" class="px-4 py-2 rounded-md bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 transition-colors" @click="handleLeave">Quitter</button>
+        </div>
         <div class="w-24 h-24 rounded-full overflow-hidden border-4 border-accent shadow-lg mb-4 bg-primary flex items-center justify-center">
           <img src="/assets/icons/attention.svg" alt="Avatar workspace" class="object-cover w-full h-full" />
         </div>
@@ -130,7 +133,7 @@ const route = useRoute()
 const idParam = route.params.workspace as string
 const workspaceId = idParam
 
-const { currentWorkspace, fetchWorkspaceById } = useWorkspaces()
+const { currentWorkspace, fetchWorkspaceById, leaveWorkspace } = useWorkspaces()
 const { tasks, fetchTasksForWorkspace, completed } = useTasks()
 
 onMounted(async () => {
@@ -160,6 +163,15 @@ const copy = async (value: string) => {
       await navigator.clipboard.writeText(value)
     } catch (e) {
       console.error('Clipboard error', e)
+    }
+  }
+}
+
+const handleLeave = async () => {
+  if (confirm('Êtes-vous sûr de vouloir quitter ce workspace ?')) {
+    const res = await leaveWorkspace(workspaceId)
+    if (res.success) {
+      navigateTo('/workspaces')
     }
   }
 }

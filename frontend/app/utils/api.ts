@@ -1,6 +1,8 @@
 // API client configuration
-// Point to Traefik proxy for backend APIs
-const API_BASE_URL = 'http://localhost:85'
+// In dev: use absolute URL to Traefik if available, else use relative URLs
+const API_BASE_URL = process.client && typeof window !== 'undefined' 
+  ? (window.location.origin.includes('localhost:3000') ? 'http://localhost:85' : '')
+  : 'http://localhost:85'
 
 interface ApiResponse<T = any> {
   success: boolean

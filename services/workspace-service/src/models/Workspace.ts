@@ -56,4 +56,9 @@ export class WorkspaceModel {
     await this.collection.updateOne({ _id: workspaceId }, { $addToSet: { members: userId }, $set: { updatedAt: new Date() } })
     return this.collection.findOne({ _id: workspaceId })
   }
+
+  static async removeMember(workspaceId: any, userId: string): Promise<Workspace | null> {
+    await this.collection.updateOne({ _id: workspaceId }, { $pull: { members: userId }, $set: { updatedAt: new Date() } })
+    return this.collection.findOne({ _id: workspaceId })
+  }
 }
