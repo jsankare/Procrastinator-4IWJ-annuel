@@ -11,7 +11,11 @@
           <NuxtLink to="/" class="hover:text-accent transition-colors">Home</NuxtLink>
           <NuxtLink to="/workspaces" class="hover:text-accent transition-colors">Workspaces</NuxtLink>
           <NuxtLink to="/profile" class="hover:text-accent transition-colors">Profil</NuxtLink>
-          <NuxtLink to="/login" class="hover:text-accent transition-colors">Déconnexion</NuxtLink>
+          <div v-if="user" class="flex items-center gap-3">
+            <span class="text-sm text-text/80">{{ user.username }}</span>
+            <button @click="handleLogout" class="hover:text-accent transition-colors">Déconnexion</button>
+          </div>
+          <NuxtLink v-else to="/login" class="hover:text-accent transition-colors">Se connecter</NuxtLink>
         </div>
 
         <button class="md:hidden flex items-center justify-center w-10 h-10 rounded-md hover:bg-white/10" @click="menuOpen = !menuOpen">
@@ -50,7 +54,11 @@
           <NuxtLink to="/" class="hover:text-accent transition-colors" @click="menuOpen = false">Home</NuxtLink>
           <NuxtLink to="/workspaces" class="hover:text-accent transition-colors" @click="menuOpen = false">Workspaces</NuxtLink>
           <NuxtLink to="/profile" class="hover:text-accent transition-colors" @click="menuOpen = false">Profil</NuxtLink>
-          <NuxtLink to="/login" class="hover:text-accent transition-colors" @click="menuOpen = false">Déconnexion</NuxtLink>
+          <div v-if="user" class="flex items-center gap-3">
+            <span class="text-sm text-text/80">{{ user.username }}</span>
+            <button @click="handleLogout" class="hover:text-accent transition-colors">Déconnexion</button>
+          </div>
+          <NuxtLink v-else to="/login" class="hover:text-accent transition-colors" @click="menuOpen = false">Se connecter</NuxtLink>
         </div>
       </transition>
     </nav>
@@ -61,7 +69,26 @@
     </main>
   </div>
 </template>
+
 <script setup lang="ts">
-  import { ref } from 'vue'
+  import { ref, onMounted } from 'vue'
+  import { useAuthStore } from '~/composables/useAuthStore'
+  import { useRouter } from 'vue-router'
+
   const menuOpen = ref(false)
+  const router = useRouter()
+  const authStore = useAuthStore()
+  const user = authStore.user
+
+  onMounted(() => {
+    authStore.init()
+  })
+
+  const handleLogout = async () => {
+    menuOpen.value = false
+    await authStore.logout()
+    if (router.currentRoute.value.path !== '/login') {
+      router.push('/login')
+    }
+  }
 </script>
