@@ -539,4 +539,84 @@ export class UserModel {
       throw error;
     }
   }
+
+  // Password recovery methods
+  static async updateResetToken(
+    userId: string,
+    resetToken: string,
+    resetTokenExpires: Date
+  ): Promise<boolean> {
+    try {
+      const hashedToken = await bcrypt.hash(resetToken, 10);
+      const result = await this.collection.updateOne(
+        { _id: new ObjectId(userId) },
+        {
+          $set: {
+            passwordResetToken: hashedToken,
+            passwordResetExpires: resetTokenExpires,
+            updatedAt: new Date(),
+          },
+        }
+      );
+      return result.modifiedCount > 0;
+    } catch (error) {
+      console.error('Error updating reset token:', error);
+      throw error;
+    }
+  }
+
+  static async findByEmail(email: string): Promise<User | null> {
+    try {
+      return await this.collection.findOne({ email });
+    } catch (error) {
+      console.error('Error finding user by email:', error);
+      throw error;
+    }
+  }
+
+  static async verifyResetToken(
+    userId: string,
+    resetToken: string
+  ): Promise<boolean> {
+    try {
+      const user = await this.collection.findOne({ _id: new ObjectId(userId) });
+      if (!user || !user.passwordResetToken) return false;
+
+      const isValid = await bcrypt.compare(resetToken, user.passwordResetToken);
+      if (!isValid) return false;
+
+      // Check if token is still valid (not expired)
+      if (user.passwordResetExpires && user.passwordResetExpires < new Date()) {
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error verifying reset token:', error);
+      throw error;
+    }
+  }
+
+  static async updatePassword(userId: string, newPassword: string): Promise<boolean> {
+    try {
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      const result = await this.collection.updateOne(
+        { _id: new ObjectId(userId) },
+        {
+          $set: {
+            password: hashedPassword,
+            updatedAt: new Date(),
+          },
+          $unset: {
+            passwordResetToken: "",
+            passwordResetExpires: "",
+          }
+        }
+      );
+      return result.modifiedCount > 0;
+    } catch (error) {
+      console.error('Error updating password:', error);
+      throw error;
+    }
+  }
 }

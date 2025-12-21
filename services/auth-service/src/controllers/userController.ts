@@ -1060,4 +1060,147 @@ export class UserController {
       });
     }
   }
+
+  /**
+   * Request password reset
+   * POST /forgot-password
+   */
+  static async forgotPassword(req: Request, res: Response): Promise<void> {
+    try {
+      const { email } = req.body;
+
+      if (!email) {
+        res.status(400).json({
+          success: false,
+          message: 'Email is required',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      const user = await UserModel.findByEmail(email);
+
+      if (!user) {
+        // Don't reveal if email exists
+        res.json({
+          success: true,
+          message: 'If an account with this email exists, you will receive password reset instructions',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Generate reset token
+      const resetToken = EmailService.generateVerificationToken();
+      const tokenExpiry = new Date();
+      tokenExpiry.setHours(tokenExpiry.getHours() + 1); // 1 hour validity
+
+      // Update user with reset token
+      if (user._id) {
+        await UserModel.updateResetToken(user._id.toString(), resetToken, tokenExpiry);
+
+        // Send reset email
+        await EmailService.sendPasswordResetEmail(email, user.username, resetToken, user._id.toString());
+      }
+
+      res.json({
+        success: true,
+        message: 'If an account with this email exists, you will receive password reset instructions',
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('Forgot password error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error while processing password reset request',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+
+  /**
+   * Reset password
+   * POST /reset-password
+   */
+  static async resetPassword(req: Request, res: Response): Promise<void> {
+    try {
+      const { userId, token, newPassword } = req.body;
+
+      if (!userId || !token || !newPassword) {
+        res.status(400).json({
+          success: false,
+          message: 'User ID, token, and new password are required',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Verify reset token
+      const isValidToken = await UserModel.verifyResetToken(userId, token);
+
+      if (!isValidToken) {
+        res.status(401).json({
+          success: false,
+          message: 'Invalid or expired reset token',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Validate new password
+      const passwordErrors = UserController.validatePassword(newPassword);
+      if (passwordErrors.length > 0) {
+        res.status(400).json({
+          success: false,
+          message: 'Password validation failed',
+          errors: passwordErrors,
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Update password
+      const success = await UserModel.updatePassword(userId, newPassword);
+
+      if (!success) {
+        res.status(500).json({
+          success: false,
+          message: 'Failed to update password',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      res.json({
+        success: true,
+        message: 'Password reset successfully',
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('Reset password error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error while resetting password',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+
+  private static validatePassword(password: string): ValidationError[] {
+    const errors: ValidationError[] = [];
+
+    if (!password) {
+      errors.push({ field: 'password', message: 'Password is required' });
+    } else if (password.length < 8) {
+      errors.push({ field: 'password', message: 'Password must be at least 8 characters long' });
+    } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) {
+      errors.push({
+        field: 'password',
+        message:
+          'Password must contain at least one lowercase letter, one uppercase letter, and one number',
+      });
+    }
+
+    return errors;
+  }
 }

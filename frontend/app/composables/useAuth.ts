@@ -95,8 +95,8 @@ export const authApi = {
   },
 
   // Reset password
-  async resetPassword(token: string, newPassword: string): Promise<ApiResponse<void>> {
-    return apiClient.post<void>('/api/auth/reset-password', { token, newPassword })
+  async resetPassword(userId: string, token: string, newPassword: string): Promise<ApiResponse<void>> {
+    return apiClient.post<void>('/api/auth/reset-password', { userId, token, newPassword })
   },
 
   // Update profile

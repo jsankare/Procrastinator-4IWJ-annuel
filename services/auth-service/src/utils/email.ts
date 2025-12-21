@@ -189,9 +189,10 @@ Si vous n'avez pas créé de compte, vous pouvez ignorer cet email.
   static async sendPasswordResetEmail(
     email: string,
     username: string,
-    token: string
+    token: string,
+    userId?: string
   ): Promise<boolean> {
-    const resetUrl = `${this.baseUrl}/reset-password?token=${token}`;
+    const resetUrl = `${this.baseUrl}/reset-password?token=${token}${userId ? `&userId=${userId}` : ''}`;
 
     const html = `
       <!DOCTYPE html>

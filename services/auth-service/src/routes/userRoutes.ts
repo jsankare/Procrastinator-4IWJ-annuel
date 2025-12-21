@@ -11,6 +11,10 @@ router.post('/login', UserController.login);
 router.post('/verify-email', UserController.verifyEmail);
 router.post('/resend-verification', UserController.resendVerification);
 
+// Password recovery routes
+router.post('/forgot-password', UserController.forgotPassword);
+router.post('/reset-password', UserController.resetPassword);
+
 // Two-factor authentication routes
 router.post('/setup-2fa', UserController.setupTwoFactor);
 router.post('/enable-2fa', UserController.enableTwoFactor);
