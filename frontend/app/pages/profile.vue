@@ -1,6 +1,6 @@
 <template >
   <section class="space-y-6 bg-primary min-h-screen text-text">
-    <div class="relative flex flex-col items-center justify-center py-10 mb-6 bg-gradient-to-r from-accent/30 to-secondary/30 rounded-b-3xl shadow-lg">
+    <div class="relative flex flex-col items-center justify-center py-10 mb-6 bg-linear-to-r from-accent/30 to-secondary/30 rounded-b-3xl shadow-lg">
       <button @click="showEdit = true" class="absolute top-4 right-4 bg-accent text-secondary px-4 py-2 rounded-lg font-semibold shadow hover:bg-accent/80 transition-all flex items-center gap-2">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M9 13h3l8-8a2.828 2.828 0 00-4-4l-8 8v3zm0 0v3h3" /></svg>
         Modifier
@@ -15,11 +15,6 @@
       <h1 class="text-3xl font-bold tracking-tight">{{ user?.firstName }} {{ user?.lastName }}</h1>
       <p class="text-lg text-accent font-semibold">Niveau {{ getLevelFromPoints(user?.points) }}</p>
       <p v-if="user?.points" class="text-sm text-white/70">
-    <p>ici : {{hello}}</p>
-    <div class="space-y-4" >
-      <h1 class="text-3xl font-bold">Votre profil, {{ user?.firstName }}</h1>
-      <p>Niveau {{ getLevelFromPoints(user?.points) }}</p>
-      <p v-if="user?.points">
         {{ user.points }} pts • Prochain palier: {{ getNextLevelPoints(getLevelFromPoints(user.points) + 1) }} pts
       </p>
     </div>
@@ -71,7 +66,7 @@ import checkIcon from "~/assets/icons/check.svg";
 import starIcon from "~/assets/icons/star.svg";
 import { getLevelFromPoints, getNextLevelPoints } from "~/utils/levelSystem";
 import data from "../data.json";
-const user = ref({ ...data.users[0] });
+const user = ref<any>({ ...data.users[0] });
 const showEdit = ref(false);
 function onSave(newData: any) {
   user.value = { ...user.value, ...newData };

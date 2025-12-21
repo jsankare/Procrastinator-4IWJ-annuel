@@ -9,7 +9,7 @@
     <div v-else class="space-y-6">
       <header class="relative flex flex-col items-center justify-center py-10 mb-6 bg-linear-to-r from-accent/30 to-secondary/30 rounded-b-3xl shadow-lg">
         <div class="w-24 h-24 rounded-full overflow-hidden border-4 border-accent shadow-lg mb-4 bg-primary flex items-center justify-center">
-          <img :src="workspace?.avatar || '/assets/icons/workspace.svg'" alt="Avatar workspace" class="object-cover w-full h-full" />
+          <img src="/assets/icons/workspace.svg" alt="Avatar workspace" class="object-cover w-full h-full" />
         </div>
         <h1 class="text-3xl font-bold tracking-tight">{{ workspace?.name }}</h1>
         <p class="text-white/80 mt-2 text-center max-w-xl">{{ workspace?.description || 'Aucune description.' }}</p>
@@ -23,7 +23,7 @@
             <span class="text-xs text-white/70">Complétées</span>
           </div>
           <div class="flex flex-col items-center min-w-20">
-            <span class="text-lg font-bold text-orange-400">{{ tasks.filter(t => (t.status || '').toLowerCase() === 'en cours').length }}</span>
+            <span class="text-lg font-bold text-orange-400">{{ tasks.filter((t: { status?: string }) => (t.status || '').toLowerCase() === 'en cours').length }}</span>
             <span class="text-xs text-white/70">En cours</span>
           </div>
         </div>
@@ -59,7 +59,7 @@
                 <svg class="w-6 h-6 text-orange-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2" /></svg>
               </span>
               <div>
-                <div class="text-lg font-bold">{{ tasks.filter(t => (t.status || '').toLowerCase() === 'en cours').length }}</div>
+                <div class="text-lg font-bold">{{ tasks.filter((t: { status?: string }) => (t.status || '').toLowerCase() === 'en cours').length }}</div>
                 <div class="text-xs text-white/70">En cours</div>
               </div>
             </div>
@@ -68,7 +68,7 @@
                 <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2" /><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h8" /></svg>
               </span>
               <div>
-                <div class="text-lg font-bold">{{ tasks.filter(t => (t.status || '').toLowerCase().startsWith('plann')).length }}</div>
+                <div class="text-lg font-bold">{{ tasks.filter((t: { status?: string }) => (t.status || '').toLowerCase().startsWith('plann')).length }}</div>
                 <div class="text-xs text-white/70">Planifiées</div>
               </div>
             </div>
@@ -93,8 +93,9 @@
 import { computed } from 'vue'
 // @ts-ignore
 import data from '~/data.json'
+// @ts-ignore
 import Kanban from '~/components/kanban/kanban.vue'
-import { useRoute, useHead } from '#imports'
+import { useRoute, useHead } from 'nuxt/app'
 
 const route = useRoute()
 const idParam = route.params.workspace as string
