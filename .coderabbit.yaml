@@ -1,0 +1,105 @@
+# CodeRabbit Configuration
+# Automatically generate PR titles and descriptions
+
+reviews:
+  # Auto-generate PR titles based on changes
+  auto_title: true
+
+  # Custom instructions for generating PR titles
+  auto_title_instructions: |
+    Generate concise, descriptive PR titles that:
+    - Start with a conventional commit type (feat, fix, docs, style, refactor, test, chore)
+    - Clearly describe what was changed
+    - Use imperative mood (e.g., "Add user authentication" not "Added user authentication")
+    - Keep under 50 characters when possible
+    - Be specific about the main feature/fix
+
+    Examples:
+    - "feat: add JWT authentication system"
+    - "fix: resolve MongoDB connection timeout"
+    - "docs: update API documentation"
+    - "refactor: improve user validation logic"
+
+  # Auto-generate PR descriptions
+  auto_description: true
+
+  # Custom instructions for generating PR descriptions
+  auto_description_instructions: |
+    Generate comprehensive PR descriptions that include:
+
+    ## 📝 Summary
+    Brief overview of what this PR accomplishes
+
+    ## 🔄 Changes Made
+    - List key changes in bullet points
+    - Focus on functionality, not implementation details
+    - Group related changes together
+
+    ## 🎯 Type of Change
+    - [ ] 🐛 Bug fix (non-breaking change which fixes an issue)
+    - [ ] ✨ New feature (non-breaking change which adds functionality)
+    - [ ] 💥 Breaking change (fix or feature that would cause existing functionality to not work as expected)
+    - [ ] 📚 Documentation update
+    - [ ] 🔧 Configuration change
+    - [ ] 🎨 Style/UI changes
+    - [ ] ♻️ Code refactoring
+    - [ ] ⚡ Performance improvements
+    - [ ] 🧪 Tests
+
+    ## 🧪 Testing
+    Describe how this was tested:
+    - [ ] Unit tests
+    - [ ] Integration tests
+    - [ ] Manual testing
+    - [ ] API endpoint testing
+
+    ## 📋 Checklist
+    - [ ] Code follows project style guidelines
+    - [ ] Self-review completed
+    - [ ] Documentation updated if needed
+    - [ ] Tests added/updated for changes
+    - [ ] All tests passing
+
+    ## 🔗 Related Issues
+    Closes #[issue_number] (if applicable)
+
+  # Enable auto-review
+  auto_review: true
+
+  # Review settings
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: true
+  review_status: true
+
+# Chat settings
+chat:
+  auto_reply: false
+
+# Language settings
+language: "en-US"
+
+# File patterns to focus reviews on
+path_filters:
+  - "!node_modules/**"
+  - "!dist/**"
+  - "!build/**"
+  - "!coverage/**"
+  - "!*.log"
+  - "!package-lock.json"
+  - "!pnpm-lock.yaml"
+  - "!yarn.lock"
+
+# Custom prompts for different file types
+knowledge_base:
+  learnings: |
+    This is a Vue.js/Nuxt 4 project with:
+    - TypeScript throughout
+    - Microservices architecture
+    - MongoDB database
+    - JWT authentication
+    - Docker containerization
+    - Academic project requirements compliance
+
+  opt_out_instructions: |
+    You can disable CodeRabbit on specific PRs by adding "@coderabbitai ignore" in the PR description.

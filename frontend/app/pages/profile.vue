@@ -15,6 +15,11 @@
       <h1 class="text-3xl font-bold tracking-tight">{{ user?.firstName }} {{ user?.lastName }}</h1>
       <p class="text-lg text-accent font-semibold">Niveau {{ getLevelFromPoints(user?.points) }}</p>
       <p v-if="user?.points" class="text-sm text-white/70">
+    <p>ici : {{hello}}</p>
+    <div class="space-y-4" >
+      <h1 class="text-3xl font-bold">Votre profil, {{ user?.firstName }}</h1>
+      <p>Niveau {{ getLevelFromPoints(user?.points) }}</p>
+      <p v-if="user?.points">
         {{ user.points }} pts • Prochain palier: {{ getNextLevelPoints(getLevelFromPoints(user.points) + 1) }} pts
       </p>
     </div>
