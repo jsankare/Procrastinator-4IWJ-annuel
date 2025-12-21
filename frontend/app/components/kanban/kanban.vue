@@ -15,7 +15,7 @@
         :title="col.title"
         :tasks="col.tasks"
         @drop="handleDrop"
-        class="min-w-[260px] w-full max-w-xs flex-shrink-0"
+        class="min-w-[260px] w-full max-w-xs shrink-0"
       />
     </div>
   </div>
@@ -81,7 +81,7 @@ function addColumn() {
   while (columns.some(c => c.id === id)) {
     id = `${id}-${suffix++}`
   }
-  columns.push({ id, title, tasks: [] })
+  columns.push({ id: id as ColumnId, title, tasks: [] })
   newColumnTitle.value = ''
 }
 

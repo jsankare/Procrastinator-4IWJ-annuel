@@ -13,15 +13,35 @@ const app: Application = express();
 const PORT = parseInt(process.env.PORT || '3001', 10);
 const SERVICE_NAME = process.env.SERVICE_NAME || 'auth-service';
 const NODE_ENV = process.env.NODE_ENV || 'development';
-const CORS_ORIGIN = process.env.CORS_ORIGIN || '*';
+
+// Allow multiple origins for CORS
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:85',
+  'http://127.0.0.1:3000',
+  'http://127.0.0.1:85',
+];
 
 const database = Database.getInstance();
+
+// Trust proxy - Required for Traefik
+app.set('trust proxy', 1);
 
 // Middlewares de sécurité
 app.use(helmet());
 app.use(
   cors({
-    origin: CORS_ORIGIN,
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps, curl, etc.)
+      if (!origin) return callback(null, true);
+      
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        console.warn(`CORS blocked request from origin: ${origin}`);
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
   }),
 );
@@ -30,6 +50,8 @@ app.use(
 const limiter = rateLimit({
   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000', 10),
   max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '100', 10),
+  standardHeaders: true,
+  legacyHeaders: false,
   message: {
     success: false,
     message: 'Trop de requêtes, réessayez plus tard.',

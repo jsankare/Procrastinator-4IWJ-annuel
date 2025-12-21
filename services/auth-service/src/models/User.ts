@@ -148,6 +148,7 @@ export class UserModel {
         role: 'user',
         isActive: true,
         isEmailVerified: false,
+        isTwoFactorEnabled: false,
         createdAt: new Date(),
         updatedAt: new Date(),
         lastLoginAt: null,
@@ -214,6 +215,16 @@ export class UserModel {
       return await this.collection.findOne({ username: username.toLowerCase() });
     } catch (error) {
       console.error('Error finding user by username:', error);
+      throw error;
+    }
+  }
+
+  // Find user by verification token
+  static async findByVerificationToken(token: string): Promise<User | null> {
+    try {
+      return await this.collection.findOne({ emailVerificationToken: token });
+    } catch (error) {
+      console.error('Error finding user by verification token:', error);
       throw error;
     }
   }
@@ -290,6 +301,30 @@ export class UserModel {
 
       if (updateData.profile) {
         updateDoc.profile = updateData.profile;
+      }
+
+      if (updateData.emailVerificationToken !== undefined) {
+        updateDoc.emailVerificationToken = updateData.emailVerificationToken;
+      }
+
+      if (updateData.emailVerificationExpires !== undefined) {
+        updateDoc.emailVerificationExpires = updateData.emailVerificationExpires;
+      }
+
+      if (updateData.isEmailVerified !== undefined) {
+        updateDoc.isEmailVerified = updateData.isEmailVerified;
+      }
+
+      if (updateData.isTwoFactorEnabled !== undefined) {
+        updateDoc.isTwoFactorEnabled = updateData.isTwoFactorEnabled;
+      }
+
+      if (updateData.totpSecret !== undefined) {
+        updateDoc.totpSecret = updateData.totpSecret;
+      }
+
+      if (updateData.backupCodes !== undefined) {
+        updateDoc.backupCodes = updateData.backupCodes;
       }
 
       const updateFields: UpdateFilter<User> = {
@@ -501,6 +536,86 @@ export class UserModel {
       };
     } catch (error) {
       console.error('Error getting user stats:', error);
+      throw error;
+    }
+  }
+
+  // Password recovery methods
+  static async updateResetToken(
+    userId: string,
+    resetToken: string,
+    resetTokenExpires: Date
+  ): Promise<boolean> {
+    try {
+      const hashedToken = await bcrypt.hash(resetToken, 10);
+      const result = await this.collection.updateOne(
+        { _id: new ObjectId(userId) },
+        {
+          $set: {
+            passwordResetToken: hashedToken,
+            passwordResetExpires: resetTokenExpires,
+            updatedAt: new Date(),
+          },
+        }
+      );
+      return result.modifiedCount > 0;
+    } catch (error) {
+      console.error('Error updating reset token:', error);
+      throw error;
+    }
+  }
+
+  static async findByEmail(email: string): Promise<User | null> {
+    try {
+      return await this.collection.findOne({ email });
+    } catch (error) {
+      console.error('Error finding user by email:', error);
+      throw error;
+    }
+  }
+
+  static async verifyResetToken(
+    userId: string,
+    resetToken: string
+  ): Promise<boolean> {
+    try {
+      const user = await this.collection.findOne({ _id: new ObjectId(userId) });
+      if (!user || !user.passwordResetToken) return false;
+
+      const isValid = await bcrypt.compare(resetToken, user.passwordResetToken);
+      if (!isValid) return false;
+
+      // Check if token is still valid (not expired)
+      if (user.passwordResetExpires && user.passwordResetExpires < new Date()) {
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error verifying reset token:', error);
+      throw error;
+    }
+  }
+
+  static async updatePassword(userId: string, newPassword: string): Promise<boolean> {
+    try {
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      const result = await this.collection.updateOne(
+        { _id: new ObjectId(userId) },
+        {
+          $set: {
+            password: hashedPassword,
+            updatedAt: new Date(),
+          },
+          $unset: {
+            passwordResetToken: "",
+            passwordResetExpires: "",
+          }
+        }
+      );
+      return result.modifiedCount > 0;
+    } catch (error) {
+      console.error('Error updating password:', error);
       throw error;
     }
   }
