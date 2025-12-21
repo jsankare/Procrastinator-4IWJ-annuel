@@ -23,7 +23,9 @@
   import checkIcon from "~/assets/icons/check.svg"
   import starIcon from "~/assets/icons/star.svg"
   import Kanban from "~/components/kanban/kanban.vue"
-  import data from "~/data.json"
+  import { useAuthStore } from "~/composables/useAuthStore"
 
-  const currentUserId: number | undefined = Array.isArray(data.users) && data.users.length > 0 ? data.users[0]?.id : undefined
+  const authStore = useAuthStore()
+  authStore.init()
+  const currentUserId: string | undefined = authStore.user.value?._id || undefined
 </script>

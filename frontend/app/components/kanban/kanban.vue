@@ -1,5 +1,7 @@
 <template>
   <div class="flex flex-col gap-4 w-full">
+    <div v-if="isLoading" class="p-3 rounded-md bg-secondary border border-white/10">Chargement des tâches...</div>
+    <div v-else-if="error" class="p-3 rounded-md bg-red-500/10 border border-red-500/20 text-red-400">{{ error }}</div>
     <form @submit.prevent="addColumn" class="flex gap-2 items-center mb-2 px-2 sm:px-0">
       <input v-model="newColumnTitle" placeholder="Nouvelle colonne..." class="rounded-md p-2 bg-primary text-text border border-white/10 w-full max-w-xs" />
       <button type="submit" class="bg-accent text-secondary px-4 py-2 rounded-md font-semibold whitespace-nowrap">Ajouter</button>
@@ -22,44 +24,24 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, computed, watch } from 'vue'
+import { reactive, computed, watch, ref, onMounted } from 'vue'
 import KanbanColumn from './kanbanColumn.vue'
-import data from '../../data.json'
+import { useTasks, type Task as TaskType } from '~/composables/useTasks'
 
-type Task = {
-  id: number | string
-  title: string
-  description: string
-  dueDate: string
-  status?: string
-  workspaceId?: number
-  assignedTo?: number
-  user?: { firstName: string; lastName: string } | null
-}
+type Task = TaskType
 
 const props = defineProps<{
-  userId?: number
-  workspaceId?: number
+  userId?: string | number
+  workspaceId?: string | number
 }>()
 
-const filteredTasks = computed<Task[]>(() => {
-  if (props.workspaceId) {
-    return (data.tasks as any[])
-      .filter((t) => t.workspaceId === props.workspaceId)
-      .map((t) => {
-        const u = data.users.find((u) => u.id === t.assignedTo)
-        return {
-          ...t,
-          user: u ? { firstName: u.firstName, lastName: u.lastName } : null,
-        } as Task
-      })
-  }
-  if (props.userId) {
-    return (data.tasks as any[])
-      .filter((t) => t.assignedTo === props.userId)
-      .map((t) => ({ ...t, user: null })) as Task[]
-  }
-  return []
+const { tasks, fetchTasksForWorkspace, fetchTasksForUser, updateTaskStatus, isLoading, error } = useTasks()
+
+const filteredTasks = computed<Task[]>(() => tasks.value as Task[])
+
+onMounted(async () => {
+  if (props.workspaceId) await fetchTasksForWorkspace(props.workspaceId)
+  else if (props.userId) await fetchTasksForUser(props.userId)
 })
 
 type ColumnId = 'plannifié' | 'en cours' | 'terminé'
@@ -135,6 +117,8 @@ function handleDrop(details: {
   // Mise à jour du statut si colonne changée
   if (fromCol !== toCol) {
     item.status = toCol.id
+    // Propagate status update to API
+    updateTaskStatus(item.id, toCol.id as any)
   }
 }
 </script>

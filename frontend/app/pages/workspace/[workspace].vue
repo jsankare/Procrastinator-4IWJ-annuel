@@ -1,6 +1,6 @@
 <template>
   <section class="space-y-6">
-    <div v-if="!workspace" class="rounded-lg border border-white/10 bg-secondary p-6">
+    <div v-if="!currentWorkspace" class="rounded-lg border border-white/10 bg-secondary p-6">
       <h1 class="text-2xl font-semibold">Workspace introuvable</h1>
       <p class="text-white/70 mt-2">Aucun espace avec l'identifiant "{{ idParam }}".</p>
       <NuxtLink to="/workspaces" class="text-accent underline mt-4 inline-block">Retour aux workspaces</NuxtLink>
@@ -11,8 +11,8 @@
         <div class="w-24 h-24 rounded-full overflow-hidden border-4 border-accent shadow-lg mb-4 bg-primary flex items-center justify-center">
           <img src="/assets/icons/attention.svg" alt="Avatar workspace" class="object-cover w-full h-full" />
         </div>
-        <h1 class="text-3xl font-bold tracking-tight">{{ workspace?.name }}</h1>
-        <p class="text-white/80 mt-2 text-center max-w-xl">{{ workspace?.description || 'Aucune description.' }}</p>
+        <h1 class="text-3xl font-bold tracking-tight">{{ currentWorkspace?.name }}</h1>
+        <p class="text-white/80 mt-2 text-center max-w-xl">{{ currentWorkspace?.description || 'Aucune description.' }}</p>
         <div class="flex gap-6 mt-4">
           <div class="flex flex-col items-center min-w-20">
             <span class="text-lg font-bold text-accent">{{ totalTasks }}</span>
@@ -29,7 +29,8 @@
         </div>
       </header>
 
-      <div class="grid gap-6 sm:grid-cols-2">
+      <div v-if="!tasks.length && !completedTasks && !totalTasks" class="rounded-lg border border-white/10 bg-secondary p-6">Aucune tâche pour ce workspace.</div>
+      <div v-else class="grid gap-6 sm:grid-cols-2">
         <div class="rounded-lg border border-white/10 bg-secondary p-6">
           <h2 class="text-xl font-semibold mb-3">Membres</h2>
           <ul class="flex flex-wrap gap-6">
@@ -85,38 +86,85 @@
         </div>
       </div>
 
-      <Kanban :workspace-id="workspaceId" />
+      <div class="rounded-lg border border-white/10 bg-secondary p-6 space-y-4">
+        <div v-if="!tasks.length" class="text-white/60">Aucune tâche à afficher.</div>
+        <Kanban v-else :workspace-id="workspaceId" />
+      </div>
+
+      <div class="rounded-lg border border-white/10 bg-secondary p-6 space-y-3">
+        <div class="flex items-center justify-between gap-2 flex-wrap">
+          <div>
+            <h2 class="text-xl font-semibold">Inviter des membres</h2>
+            <p class="text-white/70 text-sm">Partagez le code ou le lien d'invitation pour rejoindre ce workspace.</p>
+          </div>
+        </div>
+        <div class="grid gap-3 sm:grid-cols-2">
+          <div class="p-3 rounded-lg bg-primary/40 border border-white/10">
+            <div class="text-xs text-white/60 mb-1">Code d'invitation</div>
+            <div class="flex items-center gap-2">
+              <span class="font-mono text-sm bg-black/30 px-3 py-2 rounded-md border border-white/10">{{ inviteCode || '—' }}</span>
+              <button type="button" class="text-sm px-3 py-2 rounded-md bg-accent text-primary font-semibold" @click="copy(inviteCode)">Copier</button>
+            </div>
+          </div>
+          <div class="p-3 rounded-lg bg-primary/40 border border-white/10">
+            <div class="text-xs text-white/60 mb-1">Lien d'invitation</div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs sm:text-sm break-all bg-black/30 px-3 py-2 rounded-md border border-white/10">{{ inviteLink }}</span>
+              <button type="button" class="text-sm px-3 py-2 rounded-md bg-accent text-primary font-semibold" @click="copy(inviteLink)">Copier</button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 </template>
 <script setup lang="ts">
-import { computed } from 'vue'
-// @ts-ignore
-import data from '~/data.json'
+import { computed, onMounted } from 'vue'
 // @ts-ignore
 import Kanban from '~/components/kanban/kanban.vue'
 import { useRoute, useHead } from 'nuxt/app'
+import { useWorkspaces } from '~/composables/useWorkspaces'
+import { useTasks } from '~/composables/useTasks'
 
 const route = useRoute()
 const idParam = route.params.workspace as string
-const workspaceId = Number(idParam)
+const workspaceId = idParam
 
-const workspace = computed(() => data.workspaces.find((w: any) => w.id === workspaceId))
+const { currentWorkspace, fetchWorkspaceById } = useWorkspaces()
+const { tasks, fetchTasksForWorkspace, completed } = useTasks()
 
-const memberUsers = computed(() => {
-  if (!workspace.value) return [] as any[]
-  return workspace.value.members
-    .map((id: number) => data.users.find((u: any) => u.id === id))
-    .filter(Boolean)
+onMounted(async () => {
+  await fetchWorkspaceById(workspaceId)
+  await fetchTasksForWorkspace(workspaceId)
 })
 
-const tasks = computed(() => data.tasks.filter((t: any) => t.workspaceId === workspaceId))
+const memberUsers = computed(() => {
+  if (!currentWorkspace.value || !Array.isArray(currentWorkspace.value.members)) return [] as any[]
+  // Member details should come from backend; placeholder names
+  return (currentWorkspace.value.members || []).map(() => ({ firstName: 'Membre', lastName: '', avatar: '' }))
+})
+
 const totalTasks = computed(() => tasks.value.length)
-const completedTasks = computed(() =>
-    tasks.value.filter((t: any) => (t.status || '').toLowerCase() === 'terminé').length
-)
+const completedTasks = computed(() => completed.value)
+
+const inviteCode = computed(() => currentWorkspace.value?.inviteCode || '')
+const inviteLink = computed(() => {
+  const origin = process.client ? window.location.origin : 'http://localhost:3000'
+  return inviteCode.value ? `${origin}/workspaces?invite=${inviteCode.value}` : ''
+})
+
+const copy = async (value: string) => {
+  if (!value) return
+  if (typeof navigator !== 'undefined' && navigator.clipboard) {
+    try {
+      await navigator.clipboard.writeText(value)
+    } catch (e) {
+      console.error('Clipboard error', e)
+    }
+  }
+}
 
 useHead({
-  title: workspace.value ? `${workspace.value.name}` : 'Workspace introuvable'
+  title: currentWorkspace.value ? `${currentWorkspace.value.name}` : 'Workspace introuvable'
 })
 </script>

@@ -44,12 +44,12 @@ import KanbanTask from './kanbanTask.vue'
 export interface Task {
   id: number | string
   title: string
-  description: string
-  dueDate: string
+  description?: string
+  dueDate?: string
   status?: string
-  workspaceId?: number
-  assignedTo?: number
-  user?: { firstName: string; lastName: string } | null
+  workspaceId?: number | string
+  assignedTo?: number | string
+  user?: { firstName: string; lastName: string; avatar?: string } | null
 }
 
 const props = defineProps<{

@@ -10,16 +10,21 @@
       <Button content="Créer un workspace" :icon="plusIcon" @click="showCreate = true" />
     </div>
 
-    <div class="grid gap-4 grid-cols-1 sm:grid-cols-2">
-      <NuxtLink v-for="ws in workspacesWithDetails" :key="ws.id" :to="`/workspace/${ws.id}`" class="block">
-        <WorkspaceCard
-          :title="ws.title"
-          :description="ws.description"
-          :total-tasks="ws.totalTasks"
-          :completed-tasks="ws.completedTasks"
-          :users="ws.users"
-        />
-      </NuxtLink>
+    <div>
+      <div v-if="isLoading" class="p-4 rounded-lg border border-white/10 bg-secondary">Chargement des workspaces...</div>
+      <div v-else-if="error" class="p-4 rounded-lg border border-red-500/20 bg-red-500/10 text-red-400">{{ error }}</div>
+      <div v-else-if="!workspacesWithDetails.length" class="p-4 rounded-lg border border-white/10 bg-secondary">Aucun workspace pour l’instant. Créez ou rejoignez-en un.</div>
+      <div v-else class="grid gap-4 grid-cols-1 sm:grid-cols-2">
+        <NuxtLink v-for="ws in workspacesWithDetails" :key="ws.id" :to="`/workspace/${ws.id}`" class="block">
+          <WorkspaceCard
+            :title="ws.title"
+            :description="ws.description"
+            :total-tasks="ws.totalTasks"
+            :completed-tasks="ws.completedTasks"
+            :users="ws.users"
+          />
+        </NuxtLink>
+      </div>
     </div>
 
     <!-- Modales -->
@@ -37,43 +42,33 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import WorkspaceCard from '~/components/global/workspaceCard.vue'
 import Button from '~/components/global/button.vue'
 import CreateWorkspaceModal from '~/components/workspaces/CreateWorkspaceModal.vue'
 import JoinWorkspaceModal from '~/components/workspaces/JoinWorkspaceModal.vue'
 import plusIcon from '~/assets/icons/plus.svg'
 import usersIcon from '~/assets/icons/users.svg'
-import data from '../data.json'
+import { useAuthStore } from '~/composables/useAuthStore'
+import { useWorkspaces } from '~/composables/useWorkspaces'
 
-// Assume current user is the first one in data.json
-const currentUserId = data.users[0]?.id ?? 1
+const authStore = useAuthStore()
+const { workspaces, fetchMyWorkspaces, createWorkspace, joinWorkspace, isLoading, error } = useWorkspaces()
 
-const userWorkspaces = computed(() => {
-  return data.workspaces.filter(ws => ws.members.includes(currentUserId))
+onMounted(() => {
+  authStore.init()
+  fetchMyWorkspaces()
 })
 
 const workspacesWithDetails = computed(() =>
-  userWorkspaces.value.map(ws => {
-    const wsUsers = ws.members
-      .map(id => data.users.find(u => u.id === id))
-      .filter(Boolean)
-      .map(u => `${u!.firstName} ${u!.lastName}`)
-
-    const wsTasks = data.tasks.filter(task => task.workspaceId === ws.id)
-    const totalTasks = wsTasks.length
-    const completedTasks = wsTasks.filter(t => (t.status || '').toLowerCase() === 'terminé').length
-
-    return {
-      id: ws.id,
-      title: ws.name,
-      description: ws.description,
-      totalTasks,
-      completedTasks,
-      users: wsUsers,
-      tasks: wsTasks,
-    }
-  })
+  (workspaces.value || []).map(ws => ({
+    id: ws.id,
+    title: ws.name,
+    description: ws.description,
+    totalTasks: 0,
+    completedTasks: 0,
+    users: Array.isArray(ws.members) ? ws.members.map(() => 'Membre') : [],
+  }))
 )
 
 // État modales
@@ -83,14 +78,17 @@ const showJoin = ref(false)
 const creating = ref(false)
 const joining = ref(false)
 
-// A raccorder au backend prochainement
 const handleCreate = async (payload: { name: string; description?: string; visibility: 'private' | 'public' }) => {
   try {
     creating.value = true
-    // Exemple: const workspace = await $fetch('/api/workspaces', { method: 'POST', body: payload })
-    // navigateTo(`/workspace/${workspace.id}`)
-    await new Promise(r => setTimeout(r, 600))
-    navigateTo(`/workspace/${encodeURIComponent(payload.name.toLowerCase().replace(/\s+/g, '-'))}`)
+    const res = await createWorkspace(payload)
+    if (res.success && res.data) {
+      const wsId = res.data.id ?? res.data._id ?? ''
+      if (wsId) {
+        await fetchMyWorkspaces()
+        navigateTo(`/workspace/${wsId}`)
+      }
+    }
   } catch (e) {
     console.error(e)
   } finally {
@@ -101,10 +99,14 @@ const handleCreate = async (payload: { name: string; description?: string; visib
 const handleJoin = async (payload: { invite: string }) => {
   try {
     joining.value = true
-    // Exemple: const workspace = await $fetch('/api/workspaces/join', { method: 'POST', body: payload })
-    // navigateTo(`/workspace/${workspace.id}`)
-    await new Promise(r => setTimeout(r, 600))
-    navigateTo(`/workspace/${payload.invite}`)
+    const res = await joinWorkspace(payload)
+    if (res.success && res.data) {
+      const wsId = res.data.id ?? res.data._id ?? ''
+      if (wsId) {
+        await fetchMyWorkspaces()
+        navigateTo(`/workspace/${wsId}`)
+      }
+    }
   } catch (e) {
     console.error(e)
   } finally {

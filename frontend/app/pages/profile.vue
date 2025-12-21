@@ -151,7 +151,7 @@ import fireIcon from "~/assets/icons/fire.svg";
 import checkIcon from "~/assets/icons/check.svg";
 import starIcon from "~/assets/icons/star.svg";
 import { getLevelFromPoints, getNextLevelPoints } from "~/utils/levelSystem";
-import data from "../data.json";
+// Removed mocked data import; profile is driven by auth store
 
 const authStore = useAuthStore();
 const { isLoading: isTwoFactorLoading, disableTwoFactor } = useTwoFactor();
@@ -168,8 +168,8 @@ onMounted(() => {
   authStore.init();
 });
 
-function onSave(newData: any) {
-  authStore.user = { ...authStore.user, ...newData };
+async function onSave(newData: any) {
+  await authStore.updateProfile(newData)
 }
 
 function onAvatarChange(e: Event) {
