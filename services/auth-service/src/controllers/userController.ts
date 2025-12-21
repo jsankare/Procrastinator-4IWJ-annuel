@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { UserModel } from '../models/User.js';
 import { JWTUtils } from '../utils/jwt.js';
 import { EmailService } from '../utils/email.js';
+import { TOTPUtils } from '../utils/totp.js';
 import {
   CreateUserRequest,
   UpdateUserRequest,
@@ -126,6 +127,20 @@ export class UserController {
         res.status(401).json({
           success: false,
           message: 'Invalid email or password',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Check if 2FA is enabled
+      if (user.isTwoFactorEnabled) {
+        res.status(200).json({
+          success: true,
+          message: 'Two-factor authentication required',
+          data: {
+            requiresTwoFactor: true,
+            userId: user._id!.toString(),
+          },
           timestamp: new Date().toISOString(),
         });
         return;
@@ -758,6 +773,289 @@ export class UserController {
       res.status(500).json({
         success: false,
         message: 'Internal server error while resending verification',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+
+  // Setup 2FA
+  static async setupTwoFactor(req: Request, res: Response): Promise<void> {
+    try {
+      const { userId } = req.body;
+
+      if (!userId) {
+        res.status(400).json({
+          success: false,
+          message: 'User ID is required',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      const user = await UserModel.findById(userId);
+
+      if (!user) {
+        res.status(404).json({
+          success: false,
+          message: 'User not found',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Generate TOTP secret
+      const secret = TOTPUtils.generateSecret(user.email);
+      const qrCode = await TOTPUtils.generateQRCode(secret.otpauth_url!);
+      const backupCodes = TOTPUtils.generateBackupCodes();
+
+      res.json({
+        success: true,
+        message: 'Two-factor setup initialized',
+        data: {
+          secret: secret.base32,
+          qrCode: qrCode,
+          backupCodes: backupCodes,
+        },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error while setting up 2FA',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+
+  // Enable 2FA
+  static async enableTwoFactor(req: Request, res: Response): Promise<void> {
+    try {
+      const { userId, secret, token, backupCodes } = req.body;
+
+      if (!userId || !secret || !token || !backupCodes) {
+        res.status(400).json({
+          success: false,
+          message: 'User ID, secret, token, and backup codes are required',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Verify the token
+      const isValid = TOTPUtils.verifyToken(secret, token);
+
+      if (!isValid) {
+        res.status(400).json({
+          success: false,
+          message: 'Invalid TOTP token',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Hash backup codes
+      const hashedBackupCodes = backupCodes.map((code: string) => TOTPUtils.hashBackupCode(code));
+
+      // Update user with 2FA settings
+      const user = await UserModel.findById(userId);
+
+      if (!user) {
+        res.status(404).json({
+          success: false,
+          message: 'User not found',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      const updatedUser = await UserModel.updateById(userId, {
+        isTwoFactorEnabled: true,
+        totpSecret: secret,
+        backupCodes: hashedBackupCodes,
+      });
+
+      if (!updatedUser.success || !updatedUser.data) {
+        res.status(500).json({
+          success: false,
+          message: 'Failed to enable 2FA',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      const userWithoutPassword = updatedUser.data;
+
+      res.json({
+        success: true,
+        message: 'Two-factor authentication enabled successfully',
+        data: { user: userWithoutPassword },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error while enabling 2FA',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+
+  // Verify 2FA token during login
+  static async verifyTwoFactorToken(req: Request, res: Response): Promise<void> {
+    try {
+      const { userId, token } = req.body;
+
+      if (!userId || !token) {
+        res.status(400).json({
+          success: false,
+          message: 'User ID and token are required',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      const user = await UserModel.findById(userId);
+
+      if (!user) {
+        res.status(404).json({
+          success: false,
+          message: 'User not found',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      if (!user.isTwoFactorEnabled || !user.totpSecret) {
+        res.status(400).json({
+          success: false,
+          message: 'Two-factor authentication is not enabled',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Try TOTP token first
+      const isTOTPValid = TOTPUtils.verifyToken(user.totpSecret, token);
+
+      // Try backup codes
+      let isBackupCodeValid = false;
+      if (!isTOTPValid && user.backupCodes) {
+        isBackupCodeValid = TOTPUtils.verifyBackupCode(token, user.backupCodes);
+        if (isBackupCodeValid) {
+          // Remove used backup code
+          const newBackupCodes = user.backupCodes.filter((code) => code !== TOTPUtils.hashBackupCode(token));
+          await UserModel.updateById(userId, { backupCodes: newBackupCodes });
+        }
+      }
+
+      if (!isTOTPValid && !isBackupCodeValid) {
+        res.status(401).json({
+          success: false,
+          message: 'Invalid 2FA token',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Generate JWT token
+      const tokenPayload = {
+        userId: user._id!.toString(),
+        email: user.email,
+        role: user.role,
+      };
+
+      const jwtToken = JWTUtils.generateToken(tokenPayload);
+      const expiresAt = JWTUtils.getTokenExpirationDate(jwtToken);
+
+      // Update last login time
+      await UserModel.updateLastLogin(user._id!.toString());
+
+      const { password: _, ...userWithoutPassword } = user;
+
+      res.json({
+        success: true,
+        message: '2FA verification successful',
+        data: {
+          user: userWithoutPassword,
+          token: jwtToken,
+          expiresAt,
+        },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error while verifying 2FA',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+
+  // Disable 2FA
+  static async disableTwoFactor(req: Request, res: Response): Promise<void> {
+    try {
+      const { userId, password } = req.body;
+
+      if (!userId || !password) {
+        res.status(400).json({
+          success: false,
+          message: 'User ID and password are required',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      const user = await UserModel.findById(userId);
+
+      if (!user) {
+        res.status(404).json({
+          success: false,
+          message: 'User not found',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Verify password
+      const isPasswordValid = await UserModel.verifyPassword(password, user.password);
+
+      if (!isPasswordValid) {
+        res.status(401).json({
+          success: false,
+          message: 'Invalid password',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Disable 2FA
+      const updatedUser = await UserModel.updateById(userId, {
+        isTwoFactorEnabled: false,
+        totpSecret: null,
+        backupCodes: [],
+      });
+
+      if (!updatedUser.success || !updatedUser.data) {
+        res.status(500).json({
+          success: false,
+          message: 'Failed to disable 2FA',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      const userWithoutPassword = updatedUser.data;
+
+      res.json({
+        success: true,
+        message: 'Two-factor authentication disabled successfully',
+        data: { user: userWithoutPassword },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error while disabling 2FA',
         timestamp: new Date().toISOString(),
       });
     }

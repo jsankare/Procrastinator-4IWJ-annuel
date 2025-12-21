@@ -10,6 +10,7 @@ export interface User {
   role: string
   isActive: boolean
   isEmailVerified: boolean
+  isTwoFactorEnabled?: boolean
   createdAt: string
   updatedAt: string
   preferences?: {
@@ -26,6 +27,8 @@ export interface User {
     location?: string
     website?: string
   }
+  avatar?: string
+  points?: number
 }
 
 export interface LoginCredentials {
@@ -45,6 +48,8 @@ export interface AuthResponse {
   user: User
   token: string
   refreshToken: string
+  requiresTwoFactor?: boolean
+  userId?: string
 }
 
 // Auth API Service

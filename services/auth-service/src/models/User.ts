@@ -148,6 +148,7 @@ export class UserModel {
         role: 'user',
         isActive: true,
         isEmailVerified: false,
+        isTwoFactorEnabled: false,
         createdAt: new Date(),
         updatedAt: new Date(),
         lastLoginAt: null,
@@ -312,6 +313,18 @@ export class UserModel {
 
       if (updateData.isEmailVerified !== undefined) {
         updateDoc.isEmailVerified = updateData.isEmailVerified;
+      }
+
+      if (updateData.isTwoFactorEnabled !== undefined) {
+        updateDoc.isTwoFactorEnabled = updateData.isTwoFactorEnabled;
+      }
+
+      if (updateData.totpSecret !== undefined) {
+        updateDoc.totpSecret = updateData.totpSecret;
+      }
+
+      if (updateData.backupCodes !== undefined) {
+        updateDoc.backupCodes = updateData.backupCodes;
       }
 
       const updateFields: UpdateFilter<User> = {

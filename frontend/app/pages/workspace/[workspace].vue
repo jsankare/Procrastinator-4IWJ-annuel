@@ -9,7 +9,7 @@
     <div v-else class="space-y-6">
       <header class="relative flex flex-col items-center justify-center py-10 mb-6 bg-linear-to-r from-accent/30 to-secondary/30 rounded-b-3xl shadow-lg">
         <div class="w-24 h-24 rounded-full overflow-hidden border-4 border-accent shadow-lg mb-4 bg-primary flex items-center justify-center">
-          <img src="/assets/icons/workspace.svg" alt="Avatar workspace" class="object-cover w-full h-full" />
+          <img src="/assets/icons/attention.svg" alt="Avatar workspace" class="object-cover w-full h-full" />
         </div>
         <h1 class="text-3xl font-bold tracking-tight">{{ workspace?.name }}</h1>
         <p class="text-white/80 mt-2 text-center max-w-xl">{{ workspace?.description || 'Aucune description.' }}</p>

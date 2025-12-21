@@ -97,10 +97,21 @@ const handleLogin = async () => {
     })
 
     if (result.success) {
-      successMessage.value = 'Connexion réussie!'
-      setTimeout(() => {
-        router.push('/')
-      }, 1500)
+      // Check if 2FA is required
+      if (result.requiresTwoFactor && result.userId) {
+        successMessage.value = 'Double authentification requise...'
+        setTimeout(() => {
+          router.push({
+            path: '/verify-2fa',
+            query: { userId: result.userId }
+          })
+        }, 1000)
+      } else {
+        successMessage.value = 'Connexion réussie!'
+        setTimeout(() => {
+          router.push('/')
+        }, 1500)
+      }
     } else {
       errorMessage.value = result.error || 'Erreur de connexion'
     }

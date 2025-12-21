@@ -32,16 +32,28 @@ export const useAuthStore = () => {
     try {
       const response = await authApi.login(credentials)
       
-      if (response.success && response.data) {
-        user.value = response.data.user
-        token.value = response.data.token
+      if (response.success) {
+        // Check if 2FA is required
+        if (response.data?.requiresTwoFactor) {
+          return {
+            success: true,
+            requiresTwoFactor: true,
+            userId: response.data.userId
+          }
+        }
         
-        // Save to localStorage
-        if (process.client) {
-          localStorage.setItem('auth_token', response.data.token)
-          localStorage.setItem('auth_user', JSON.stringify(response.data.user))
-          if (response.data.refreshToken) {
-            localStorage.setItem('refresh_token', response.data.refreshToken)
+        // Normal login flow
+        if (response.data) {
+          user.value = response.data.user
+          token.value = response.data.token
+          
+          // Save to localStorage
+          if (process.client) {
+            localStorage.setItem('auth_token', response.data.token)
+            localStorage.setItem('auth_user', JSON.stringify(response.data.user))
+            if (response.data.refreshToken) {
+              localStorage.setItem('refresh_token', response.data.refreshToken)
+            }
           }
         }
         

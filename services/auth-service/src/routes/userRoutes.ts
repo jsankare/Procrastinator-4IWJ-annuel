@@ -11,8 +11,15 @@ router.post('/login', UserController.login);
 router.post('/verify-email', UserController.verifyEmail);
 router.post('/resend-verification', UserController.resendVerification);
 
+// Two-factor authentication routes
+router.post('/setup-2fa', UserController.setupTwoFactor);
+router.post('/enable-2fa', UserController.enableTwoFactor);
+router.post('/verify-2fa', UserController.verifyTwoFactorToken);
+router.post('/disable-2fa', UserController.disableTwoFactor);
+
 // User profile routes (requires authentication)
 router.get('/profile', UserController.getProfile);
+router.get('/me', UserController.getProfile); // Alias for /profile
 router.put('/profile', UserController.updateProfile);
 
 // Admin routes for user management
