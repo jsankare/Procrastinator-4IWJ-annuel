@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { UserModel } from '../models/User.js';
 import { JWTUtils } from '../utils/jwt.js';
+import { EmailService } from '../utils/email.js';
 import {
   CreateUserRequest,
   UpdateUserRequest,
@@ -30,9 +31,29 @@ export class UserController {
         return;
       }
 
+      // Generate verification token and send email
+      const verificationToken = EmailService.generateVerificationToken();
+      const tokenExpiry = new Date();
+      tokenExpiry.setHours(tokenExpiry.getHours() + 24); // 24 hours
+
+      // Update user with verification token
+      if (result.data && result.data._id) {
+        await UserModel.updateById(result.data._id.toString(), {
+          emailVerificationToken: verificationToken,
+          emailVerificationExpires: tokenExpiry,
+        });
+
+        // Send verification email
+        await EmailService.sendVerificationEmail(
+          result.data.email,
+          result.data.username,
+          verificationToken
+        );
+      }
+
       res.status(201).json({
         success: true,
-        message: 'User created successfully',
+        message: 'User created successfully. Please check your email to verify your account.',
         data: {
           user: result.data,
         },
@@ -83,6 +104,16 @@ export class UserController {
         res.status(401).json({
           success: false,
           message: 'Account is deactivated. Please contact support.',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Check if email is verified
+      if (!user.isEmailVerified) {
+        res.status(403).json({
+          success: false,
+          message: 'Veuillez vérifier votre adresse e-mail avant de vous connecter. Consultez votre boîte de réception pour trouver le lien de vérification.',
           timestamp: new Date().toISOString(),
         });
         return;
@@ -580,6 +611,153 @@ export class UserController {
       res.status(500).json({
         success: false,
         message: 'Internal server error while retrieving statistics',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+
+  /**
+   * Verify email with token
+   * POST /verify-email
+   */
+  static async verifyEmail(req: Request, res: Response): Promise<void> {
+    try {
+      const { token } = req.body;
+
+      if (!token) {
+        res.status(400).json({
+          success: false,
+          message: 'Verification token is required',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Find user with this verification token
+      const user = await UserModel.findByVerificationToken(token);
+
+      if (!user) {
+        res.status(400).json({
+          success: false,
+          message: 'Invalid or expired verification token',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Check if token is expired
+      if (user.emailVerificationExpires && new Date() > new Date(user.emailVerificationExpires)) {
+        res.status(400).json({
+          success: false,
+          message: 'Verification token has expired. Please request a new one.',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Check if already verified
+      if (user.isEmailVerified) {
+        res.status(200).json({
+          success: true,
+          message: 'Email already verified',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Update user to verified
+      if (user._id) {
+        await UserModel.updateById(user._id.toString(), {
+          isEmailVerified: true,
+          emailVerificationToken: null,
+          emailVerificationExpires: null,
+        });
+      }
+
+      res.status(200).json({
+        success: true,
+        message: 'Email verified successfully',
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('Email verification error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error during email verification',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+
+  /**
+   * Resend verification email
+   * POST /resend-verification
+   */
+  static async resendVerification(req: Request, res: Response): Promise<void> {
+    try {
+      const { email } = req.body;
+
+      if (!email) {
+        res.status(400).json({
+          success: false,
+          message: 'Email is required',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      const user = await UserModel.findByEmail(email);
+
+      if (!user) {
+        // Don't reveal if user exists or not
+        res.status(200).json({
+          success: true,
+          message: 'If an account with that email exists, a verification email has been sent.',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Check if already verified
+      if (user.isEmailVerified) {
+        res.status(200).json({
+          success: true,
+          message: 'Email is already verified',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Generate new verification token
+      const verificationToken = EmailService.generateVerificationToken();
+      const tokenExpiry = new Date();
+      tokenExpiry.setHours(tokenExpiry.getHours() + 24);
+
+      // Update user with new token
+      if (user._id) {
+        await UserModel.updateById(user._id.toString(), {
+          emailVerificationToken: verificationToken,
+          emailVerificationExpires: tokenExpiry,
+        });
+      }
+
+      // Send verification email
+      await EmailService.sendVerificationEmail(
+        user.email,
+        user.username,
+        verificationToken
+      );
+
+      res.status(200).json({
+        success: true,
+        message: 'Verification email sent successfully',
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('Resend verification error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error while resending verification',
         timestamp: new Date().toISOString(),
       });
     }

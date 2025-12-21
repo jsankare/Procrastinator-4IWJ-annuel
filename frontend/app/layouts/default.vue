@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen bg-primary text-text">
-    <nav class="sticky lg:top-2.5 z-50 bg-secondary/95 backdrop-blur supports-[backdrop-filter]:bg-secondary/80 mx-auto max-w-7xl sm:px-6 lg:px-8 lg:rounded-4xl border border-white/10">
+    <nav class="sticky lg:top-2.5 z-50 bg-secondary/95 backdrop-blur supports-backdrop-filter:bg-secondary/80 mx-auto max-w-7xl sm:px-6 lg:px-8 lg:rounded-4xl border border-white/10">
       <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         <NuxtLink to="/" class="flex items-center gap-3">
           <div class="h-8 w-8 rounded-md bg-accent flex items-center justify-center font-bold text-secondary">P</div>

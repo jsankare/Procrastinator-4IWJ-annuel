@@ -218,6 +218,16 @@ export class UserModel {
     }
   }
 
+  // Find user by verification token
+  static async findByVerificationToken(token: string): Promise<User | null> {
+    try {
+      return await this.collection.findOne({ emailVerificationToken: token });
+    } catch (error) {
+      console.error('Error finding user by verification token:', error);
+      throw error;
+    }
+  }
+
   // Update user
   static async updateById(
     id: string,
@@ -290,6 +300,18 @@ export class UserModel {
 
       if (updateData.profile) {
         updateDoc.profile = updateData.profile;
+      }
+
+      if (updateData.emailVerificationToken !== undefined) {
+        updateDoc.emailVerificationToken = updateData.emailVerificationToken;
+      }
+
+      if (updateData.emailVerificationExpires !== undefined) {
+        updateDoc.emailVerificationExpires = updateData.emailVerificationExpires;
+      }
+
+      if (updateData.isEmailVerified !== undefined) {
+        updateDoc.isEmailVerified = updateData.isEmailVerified;
       }
 
       const updateFields: UpdateFilter<User> = {

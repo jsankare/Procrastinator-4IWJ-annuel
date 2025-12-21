@@ -7,6 +7,10 @@ const router = Router();
 router.post('/register', UserController.register);
 router.post('/login', UserController.login);
 
+// Email verification routes
+router.post('/verify-email', UserController.verifyEmail);
+router.post('/resend-verification', UserController.resendVerification);
+
 // User profile routes (requires authentication)
 router.get('/profile', UserController.getProfile);
 router.put('/profile', UserController.updateProfile);

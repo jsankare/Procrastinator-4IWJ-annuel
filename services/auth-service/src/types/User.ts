@@ -27,6 +27,7 @@ export interface User {
   isActive: boolean;
   isEmailVerified: boolean;
   emailVerificationToken?: string | null;
+  emailVerificationExpires?: Date | null;
   passwordResetToken?: string | null;
   passwordResetExpires?: Date | null;
   createdAt: Date;
@@ -51,6 +52,11 @@ export interface UpdateUserRequest {
   lastName?: string;
   preferences?: Partial<UserPreferences>;
   profile?: Partial<UserProfile>;
+  isEmailVerified?: boolean;
+  emailVerificationToken?: string | null;
+  emailVerificationExpires?: Date | null;
+  passwordResetToken?: string | null;
+  passwordResetExpires?: Date | null;
 }
 
 export interface LoginRequest {
