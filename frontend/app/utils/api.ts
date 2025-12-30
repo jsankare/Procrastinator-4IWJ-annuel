@@ -1,6 +1,7 @@
 // API client configuration
-// Point to Traefik proxy for backend APIs
-const API_BASE_URL = 'http://localhost:85'
+// Base URL configurable via environment variable `NUXT_PUBLIC_API_BASE_URL`
+export const API_BASE_URL =
+  (import.meta.env?.NUXT_PUBLIC_API_BASE_URL as string) || "http://localhost";
 
 interface ApiResponse<T = any> {
   success: boolean
@@ -27,7 +28,7 @@ class ApiClient {
     }
 
     // Get token from localStorage if exists
-    if (process.client) {
+    if (import.meta.client) {
       const token = localStorage.getItem('auth_token')
       if (token) {
         defaultHeaders['Authorization'] = `Bearer ${token}`

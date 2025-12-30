@@ -1,4 +1,5 @@
 import { ref, computed } from 'vue'
+import { API_BASE_URL } from "~/utils/api";
 
 const setupData = ref<{
   secret: string
@@ -9,8 +10,8 @@ const setupData = ref<{
 const isLoading = ref(false)
 const error = ref<string | null>(null)
 
-// Base URL pour l'auth service via Traefik
-const AUTH_SERVICE_URL = 'http://localhost:85/api/auth'
+// Base URL pour l'auth service via Traefik (configurable via NUXT_PUBLIC_API_BASE_URL / utils/api)
+const AUTH_SERVICE_URL = `${API_BASE_URL}/api/auth`;
 
 export const useTwoFactor = () => {
   // Setup 2FA - génère secret et QR code

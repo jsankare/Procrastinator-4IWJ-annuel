@@ -13,10 +13,10 @@ export const useAuthStore = () => {
 
   // Initialize from localStorage
   const init = () => {
-    if (process.client) {
+    if (import.meta.client) {
       const savedToken = localStorage.getItem('auth_token')
       const savedUser = localStorage.getItem('auth_user')
-      
+
       if (savedToken && savedUser) {
         token.value = savedToken
         user.value = JSON.parse(savedUser)
@@ -31,7 +31,7 @@ export const useAuthStore = () => {
 
     try {
       const response = await authApi.login(credentials)
-      
+
       if (response.success) {
         // Check if 2FA is required
         if (response.data?.requiresTwoFactor) {
@@ -41,14 +41,14 @@ export const useAuthStore = () => {
             userId: response.data.userId
           }
         }
-        
+
         // Normal login flow
         if (response.data) {
           user.value = response.data.user
           token.value = response.data.token
-          
+
           // Save to localStorage
-          if (process.client) {
+          if (import.meta.client) {
             localStorage.setItem('auth_token', response.data.token)
             localStorage.setItem('auth_user', JSON.stringify(response.data.user))
             if (response.data.refreshToken) {
@@ -56,8 +56,8 @@ export const useAuthStore = () => {
             }
           }
         }
-        
-        return { success: true }
+
+        return { success: true };
       } else {
         error.value = response.error || 'Erreur de connexion'
         return { success: false, error: error.value }
@@ -86,7 +86,7 @@ export const useAuthStore = () => {
           token.value = response.data.token
           
           // Save to localStorage
-          if (process.client) {
+          if (import.meta.client) {
             localStorage.setItem('auth_token', response.data.token)
             localStorage.setItem('auth_user', JSON.stringify(response.data.user))
             if (response.data.refreshToken) {
@@ -139,7 +139,7 @@ export const useAuthStore = () => {
       if (response.success && response.data) {
         user.value = response.data
         
-        if (process.client) {
+        if (import.meta.client) {
           localStorage.setItem('auth_user', JSON.stringify(response.data))
         }
       } else {
@@ -167,7 +167,7 @@ export const useAuthStore = () => {
       if (response.success && response.data) {
         user.value = response.data
         
-        if (process.client) {
+        if (import.meta.client) {
           localStorage.setItem('auth_user', JSON.stringify(response.data))
         }
         

@@ -36,7 +36,7 @@
                    class="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-sm font-medium transition-colors">
                   Microsoft Authenticator
                 </a>
-                <a href="https://authy.com/download/" 
+                <a href="https://authy.com/download/"
                    target="_blank" rel="noopener noreferrer"
                    class="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-sm font-medium transition-colors">
                   Authy
@@ -247,7 +247,7 @@ onMounted(async () => {
     console.log('[2FA Setup] Initializing authStore...')
     await authStore.init()
     console.log('[2FA Setup] authStore initialized, user:', authStore.user.value?._id)
-    
+
     if (authStore.user.value) {
       userId.value = authStore.user.value._id
       isInitialized.value = true
@@ -315,7 +315,7 @@ const finalizeTwoFactor = async () => {
     console.log('[2FA] Found token, fetching user data...')
     
     // Fetch the latest user data from the backend
-    const response = await fetch('http://localhost:85/api/auth/me', {
+    const response = await fetch('http://localhost/api/auth/me', {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -334,7 +334,7 @@ const finalizeTwoFactor = async () => {
       authStore.user = userData
       
       // Save to localStorage
-      if (process.client) {
+      if (import.meta.client) {
         localStorage.setItem('auth_user', JSON.stringify(userData))
       }
       

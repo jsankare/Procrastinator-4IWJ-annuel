@@ -164,9 +164,13 @@ const disablePassword = ref('');
 const disableError = ref('');
 const isDisablingLoading = ref(false);
 
-onMounted(() => {
-  authStore.init();
+onMounted(async () => {
+  await authStore.init();
+  if (authStore.token?.value) {
+    await authStore.fetchCurrentUser();
+  }
 });
+
 
 function onSave(newData: any) {
   authStore.user = { ...authStore.user, ...newData };
