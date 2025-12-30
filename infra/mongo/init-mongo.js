@@ -44,7 +44,11 @@ db.users.insertOne({
   password: "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewxJxzPlSqSj3lRG", // "admin123" hashed
   firstName: "Admin",
   lastName: "User",
+  birthdate: new Date("1991-02-01"),
   role: "admin",
+  points: 1,
+  streak: 1,
+  completedTasks: 1,
   isActive: true,
   isEmailVerified: true,
   createdAt: new Date(),

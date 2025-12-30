@@ -53,7 +53,7 @@ watch(() => props.user, (u) => {
     form.value = {
       firstName: u.firstName || '',
       lastName: u.lastName || '',
-      avatar: u.avatar || ''
+      avatar: (u.profile && u.profile.avatar) ? u.profile.avatar : (u.avatar || '')
     };
   }
 }, { immediate: true });

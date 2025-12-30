@@ -15,9 +15,15 @@ const SERVICE_NAME = process.env.SERVICE_NAME || 'auth-service';
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
 // Allow multiple origins for CORS
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost';
+process.env.FRONTEND_URL = FRONTEND_URL;
+
+const frontendHost = FRONTEND_URL.replace(/:\d+$/, '');
 const allowedOrigins = [
-  'http://localhost:3000',
-  'http://localhost:85',
+  FRONTEND_URL,
+  `${frontendHost}:3000`,
+  `${frontendHost}:85`,
+  'http://127.0.0.1',
   'http://127.0.0.1:3000',
   'http://127.0.0.1:85',
 ];

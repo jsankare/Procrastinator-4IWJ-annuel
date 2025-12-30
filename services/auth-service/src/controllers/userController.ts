@@ -94,7 +94,7 @@ export class UserController {
       if (!user) {
         res.status(401).json({
           success: false,
-          message: 'Invalid email or password',
+          message: 'Identifiants non valides',
           timestamp: new Date().toISOString(),
         });
         return;
@@ -126,7 +126,7 @@ export class UserController {
       if (!isPasswordValid) {
         res.status(401).json({
           success: false,
-          message: 'Invalid email or password',
+          message: 'Identifiants non valides',
           timestamp: new Date().toISOString(),
         });
         return;

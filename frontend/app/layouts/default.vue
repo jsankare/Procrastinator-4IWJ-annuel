@@ -10,6 +10,7 @@
         <div class="hidden md:flex items-center gap-6">
           <NuxtLink to="/" class="hover:text-accent transition-colors">Home</NuxtLink>
           <NuxtLink v-if="user" to="/workspaces" class="hover:text-accent transition-colors">Workspaces</NuxtLink>
+          <AdminDropdown />
           <NuxtLink v-if="user" to="/profile" class="hover:text-accent transition-colors">Profil</NuxtLink>
           
           <!-- État connecté -->
@@ -20,8 +21,8 @@
               </div>
               <span class="text-sm font-medium">{{ user.username }}</span>
             </div>
-            <button 
-              @click="handleLogout" 
+            <button
+              @click="handleLogout"
               class="px-4 py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 transition-all duration-200 text-sm font-medium flex items-center gap-2"
             >
               <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -34,9 +35,9 @@
           </div>
           
           <!-- État non connecté -->
-          <NuxtLink 
-            v-else 
-            to="/login" 
+          <NuxtLink
+            v-else
+            to="/login"
             class="ml-3 px-5 py-2 rounded-lg bg-accent hover:bg-accent/90 text-secondary font-medium transition-all duration-200 flex items-center gap-2 shadow-lg shadow-accent/20"
           >
             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -83,8 +84,9 @@
         <div v-if="menuOpen" class="md:hidden px-4 pb-4 flex flex-col gap-3 text-base bg-secondary/95 backdrop-blur lg:rounded-b-3xl border-t border-white/10">
           <NuxtLink to="/" class="hover:text-accent transition-colors py-2" @click="menuOpen = false">Home</NuxtLink>
           <NuxtLink v-if="user" to="/workspaces" class="hover:text-accent transition-colors py-2" @click="menuOpen = false">Workspaces</NuxtLink>
+          <AdminDropdown />
           <NuxtLink v-if="user" to="/profile" class="hover:text-accent transition-colors py-2" @click="menuOpen = false">Profil</NuxtLink>
-          
+
           <!-- État connecté mobile -->
           <div v-if="user" class="pt-3 border-t border-white/10 flex flex-col gap-3">
             <div class="flex items-center gap-3 px-3 py-2 rounded-lg bg-white/5">
@@ -93,8 +95,8 @@
               </div>
               <span class="font-medium">{{ user.username }}</span>
             </div>
-            <button 
-              @click="handleLogout" 
+            <button
+              @click="handleLogout"
               class="w-full px-4 py-2.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 transition-all duration-200 font-medium flex items-center justify-center gap-2"
             >
               <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -107,10 +109,10 @@
           </div>
           
           <!-- État non connecté mobile -->
-          <NuxtLink 
-            v-else 
-            to="/login" 
-            class="mt-2 w-full px-5 py-3 rounded-lg bg-accent hover:bg-accent/90 text-secondary font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-accent/20" 
+          <NuxtLink
+            v-else
+            to="/login"
+            class="mt-2 w-full px-5 py-3 rounded-lg bg-accent hover:bg-accent/90 text-secondary font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-accent/20"
             @click="menuOpen = false"
           >
             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -133,6 +135,7 @@
 
 <script setup lang="ts">
   import { ref, onMounted } from 'vue'
+  import AdminDropdown from '~/components/global/AdminDropdown.vue'
   import { useAuthStore } from '~/composables/useAuthStore'
   import { useRouter } from 'vue-router'
 

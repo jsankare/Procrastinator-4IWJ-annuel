@@ -217,7 +217,7 @@ Authenticate user and get JWT token.
 ```json
 {
   "success": false,
-  "message": "Invalid email or password",
+  "message": "Identifiants non valides",
   "timestamp": "2024-01-01T00:00:00.000Z"
 }
 ```

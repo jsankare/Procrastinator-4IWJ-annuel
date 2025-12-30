@@ -13,7 +13,7 @@ export interface EmailOptions {
 }
 
 export class EmailService {
-  private static baseUrl = process.env.FRONTEND_URL || 'http://localhost:85';
+  private static baseUrl = process.env.FRONTEND_URL || 'http://localhost';
   private static transporter: nodemailer.Transporter | null = null;
 
   /**
@@ -32,7 +32,7 @@ export class EmailService {
         console.warn('⚠️  Email credentials not configured. Using mock mode.');
         console.log('📧 Mock mode: Emails will be logged to console instead of being sent.');
         this.transporter = nodemailer.createTransport({
-          jsonTransport: true
+          jsonTransport: true,
         });
       } else if (emailHost && emailPort) {
         // Custom SMTP configuration (e.g., Ethereal, Mailtrap, etc.)
@@ -59,7 +59,7 @@ export class EmailService {
       } else {
         console.warn('⚠️  No email configuration found. Using mock mode.');
         this.transporter = nodemailer.createTransport({
-          jsonTransport: true
+          jsonTransport: true,
         });
       }
     }
@@ -117,7 +117,7 @@ export class EmailService {
   static async sendVerificationEmail(
     email: string,
     username: string,
-    token: string
+    token: string,
   ): Promise<boolean> {
     const verificationUrl = `${this.baseUrl}/verify-email?token=${token}`;
 
@@ -190,7 +190,7 @@ Si vous n'avez pas créé de compte, vous pouvez ignorer cet email.
     email: string,
     username: string,
     token: string,
-    userId?: string
+    userId?: string,
   ): Promise<boolean> {
     const resetUrl = `${this.baseUrl}/reset-password?token=${token}${userId ? `&userId=${userId}` : ''}`;
 

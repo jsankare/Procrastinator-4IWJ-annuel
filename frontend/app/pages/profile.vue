@@ -7,7 +7,7 @@
       </button>
       <label class="w-28 h-28 rounded-full overflow-hidden border-4 border-accent shadow-lg mb-4 cursor-pointer group relative" title="Changer l'avatar">
         <input type="file" accept="image/*" class="hidden" @change="onAvatarChange" />
-        <img :src="user?.avatar || '/assets/icons/user.svg'" alt="Avatar" class="object-cover w-full h-full" />
+        <img :src="(user?.profile?.avatar) || user?.avatar || '/assets/icons/user.svg'" alt="Avatar" class="object-cover w-full h-full" />
         <span class="absolute bottom-2 right-2 bg-accent text-secondary rounded-full p-1 shadow group-hover:scale-110 transition-transform">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M9 13h3l8-8a2.828 2.828 0 00-4-4l-8 8v3zm0 0v3h3" /></svg>
         </span>
@@ -164,21 +164,56 @@ const disablePassword = ref('');
 const disableError = ref('');
 const isDisablingLoading = ref(false);
 
-onMounted(() => {
-  authStore.init();
+onMounted(async () => {
+  await authStore.init();
+  if (authStore.token?.value) {
+    await authStore.fetchCurrentUser();
+  }
 });
 
-function onSave(newData: any) {
-  authStore.user = { ...authStore.user, ...newData };
+
+async function onSave(newData: any) {
+  try {
+    const payload: any = {};
+    if (newData.firstName !== undefined) payload.firstName = newData.firstName;
+    if (newData.lastName !== undefined) payload.lastName = newData.lastName;
+    if (newData.avatar !== undefined) {
+      const existingProfile = authStore.user.value?.profile || {};
+      payload.profile = {
+        ...existingProfile,
+        avatar: newData.avatar,
+      };
+    }
+
+    const result = await authStore.updateProfile(payload);
+
+    if (!result || !result.success) {
+      console.error('Failed to update profile', result?.error || result);
+      return;
+    }
+
+    await authStore.fetchCurrentUser();
+  } catch (err) {
+    console.error('Error saving profile', err);
+  } finally {
+    showEdit.value = false;
+  }
 }
 
-function onAvatarChange(e: Event) {
+async function onAvatarChange(e: Event) {
   const file = (e.target as HTMLInputElement).files?.[0];
   if (!file) return;
   const reader = new FileReader();
-  reader.onload = (ev) => {
+  reader.onload = async (ev) => {
+    const avatarData = ev.target?.result as string;
     if (user.value) {
-      user.value.avatar = ev.target?.result as string;
+      user.value.avatar = avatarData;
+      try {
+        await authStore.updateProfile({ profile: { ...(authStore.user.value?.profile || {}), avatar: avatarData } });
+        await authStore.fetchCurrentUser();
+      } catch (err) {
+        console.error('Failed to persist avatar', err);
+      }
     }
   };
   reader.readAsDataURL(file);
