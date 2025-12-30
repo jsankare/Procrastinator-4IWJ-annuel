@@ -99,8 +99,73 @@ export const authApi = {
     return apiClient.post<void>('/api/auth/reset-password', { userId, token, newPassword })
   },
 
-  // Update profile
-  async updateProfile(userId: string, data: Partial<User>): Promise<ApiResponse<User>> {
-    return apiClient.patch<User>(`/api/auth/users/${userId}`, data)
+  // Update profile (admin)
+  async updateProfile(
+    userId: string,
+    data: Partial<User>,
+  ): Promise<ApiResponse<User>> {
+    return apiClient.patch<User>(`/api/auth/users/${userId}`, data);
   },
-}
+
+  // Update my profile (current user)
+  async updateMyProfile(data: Partial<User>): Promise<ApiResponse<User>> {
+    return apiClient.put<User>("/api/auth/profile", data);
+  },
+
+  // Admin: list users with optional filters/pagination
+  async getAllUsers(params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    role?: string;
+    isActive?: boolean;
+    isEmailVerified?: boolean;
+    sortBy?: string;
+    sortOrder?: "asc" | "desc";
+  }): Promise<
+    ApiResponse<{
+      users: User[];
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    }>
+  > {
+    const query = new URLSearchParams();
+    if (params?.page) query.set("page", String(params.page));
+    if (params?.limit) query.set("limit", String(params.limit));
+    if (params?.search) query.set("search", params.search);
+    if (params?.role) query.set("role", params.role);
+    if (params?.isActive !== undefined)
+      query.set("isActive", String(params.isActive));
+    if (params?.isEmailVerified !== undefined)
+      query.set("isEmailVerified", String(params.isEmailVerified));
+    if (params?.sortBy) query.set("sortBy", params.sortBy);
+    if (params?.sortOrder) query.set("sortOrder", params.sortOrder);
+    const q = query.toString() ? `?${query.toString()}` : "";
+    return apiClient.get(`/api/auth/users${q}`);
+  },
+
+  // Admin: get a single user by id
+  async getUserById(userId: string): Promise<ApiResponse<User>> {
+    return apiClient.get<User>(`/api/auth/users/${userId}`);
+  },
+
+  // Admin: update user by id
+  async updateUserById(
+    userId: string,
+    data: Partial<User>,
+  ): Promise<ApiResponse<User>> {
+    return apiClient.put<User>(`/api/auth/users/${userId}`, data);
+  },
+
+  // Admin: delete user by id
+  async deleteUserById(userId: string): Promise<ApiResponse<void>> {
+    return apiClient.delete<void>(`/api/auth/users/${userId}`);
+  },
+
+  // Admin: get aggregated user stats
+  async getUserStats(): Promise<ApiResponse<any>> {
+    return apiClient.get("/api/auth/users/stats");
+  },
+};

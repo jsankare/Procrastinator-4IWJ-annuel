@@ -118,7 +118,7 @@ export const useAuthStore = () => {
     error.value = null
     
     // Clear localStorage
-    if (process.client) {
+    if (import.meta.client) {
       localStorage.removeItem('auth_token')
       localStorage.removeItem('auth_user')
       localStorage.removeItem('refresh_token')
@@ -162,8 +162,8 @@ export const useAuthStore = () => {
     error.value = null
 
     try {
-      const response = await authApi.updateProfile(user.value._id, updates)
-      
+      const response = await authApi.updateMyProfile(updates)
+
       if (response.success && response.data) {
         user.value = response.data
         
