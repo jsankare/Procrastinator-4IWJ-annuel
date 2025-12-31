@@ -2,8 +2,9 @@
   <section class="p-6 bg-primary min-h-screen text-text">
     <div class="flex items-center justify-between mb-6">
       <h1 class="text-2xl font-bold">Gestion des utilisateurs</h1>
-      <div>
+      <div class="flex items-center gap-2">
         <button @click="refresh" class="px-4 py-2 bg-accent text-secondary rounded-md">Actualiser</button>
+        <button @click="openCreate" class="px-4 py-2 bg-green-600 text-white rounded-md">Créer un utilisateur</button>
       </div>
     </div>
 
@@ -58,6 +59,57 @@
             <button :disabled="page <= 1" @click="setPage(page - 1)" class="px-3 py-1 bg-white/5 rounded">Préc</button>
             <div class="px-3">{{ page }} / {{ totalPages }}</div>
             <button :disabled="page >= totalPages" @click="setPage(page + 1)" class="px-3 py-1 bg-white/5 rounded">Suiv</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Create Modal -->
+      <div v-if="showCreateModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div class="bg-secondary rounded-lg p-6 w-full max-w-lg">
+          <h3 class="text-xl font-bold mb-4">Créer un utilisateur</h3>
+          <div class="space-y-3">
+            <div>
+              <label class="block text-sm font-medium mb-1">Prénom</label>
+              <input v-model="createForm.firstName" class="w-full rounded-md p-2 bg-primary text-text border border-white/10" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Nom</label>
+              <input v-model="createForm.lastName" class="w-full rounded-md p-2 bg-primary text-text border border-white/10" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Nom d'utilisateur</label>
+              <input v-model="createForm.username" class="w-full rounded-md p-2 bg-primary text-text border border-white/10" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Email</label>
+              <input v-model="createForm.email" type="email" class="w-full rounded-md p-2 bg-primary text-text border border-white/10" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Mot de passe (laisser vide pour générer)</label>
+              <input v-model="createForm.password" type="password" class="w-full rounded-md p-2 bg-primary text-text border border-white/10" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Rôle</label>
+              <select v-model="createForm.role" class="w-full rounded-md p-2 bg-primary text-text border border-white/10">
+                <option value="user">user</option>
+                <option value="admin">admin</option>
+                <option value="moderator">moderator</option>
+              </select>
+            </div>
+            <div class="flex gap-4">
+              <label class="flex items-center gap-2"><input type="checkbox" v-model="createForm.isActive" /> Actif</label>
+              <label class="flex items-center gap-2"><input type="checkbox" v-model="createForm.isEmailVerified" /> Email vérifié</label>
+            </div>
+
+            <div v-if="createError" class="text-red-400 text-sm">{{ createError }}</div>
+          </div>
+
+          <div class="flex gap-2 justify-end mt-4">
+            <button @click="closeCreate" class="px-4 py-2 bg-white/10 rounded">Annuler</button>
+            <button @click="createUser" :disabled="creating" class="px-4 py-2 bg-accent text-secondary rounded">
+              <span v-if="!creating">Créer</span>
+              <span v-else>Création...</span>
+            </button>
           </div>
         </div>
       </div>
@@ -136,6 +188,21 @@ const totalPages = computed(() => Math.max(1, Math.ceil(total.value / limit.valu
 const loadingState = ref(false);
 const error = ref<string | null>(null);
 
+const showCreateModal = ref(false);
+const creating = ref(false);
+const createForm = ref({
+  username: '',
+  email: '',
+  password: '',
+  firstName: '',
+  lastName: '',
+  role: 'user',
+  isActive: true,
+  isEmailVerified: false,
+});
+const createError = ref<string | null>(null);
+
+// Edit modal state & form
 const showEditModal = ref(false);
 const editForm = ref<any>({});
 const editingUserId = ref<string | null>(null);
@@ -173,6 +240,87 @@ function refresh() {
   fetchUsers();
 }
 
+function openCreate() {
+  createError.value = null;
+  createForm.value = {
+    username: '',
+    email: '',
+    password: '',
+    firstName: '',
+    lastName: '',
+    role: 'user',
+    isActive: true,
+    isEmailVerified: false,
+  };
+  showCreateModal.value = true;
+}
+function closeCreate() {
+  showCreateModal.value = false;
+  creating.value = false;
+  createError.value = null;
+}
+
+function generateRandomPassword(len = 12) {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%&*()_+-=';
+  let s = '';
+  for (let i = 0; i < len; i++) s += chars.charAt(Math.floor(Math.random() * chars.length));
+  return s;
+}
+
+async function createUser() {
+  createError.value = null;
+  if (!createForm.value.username || !createForm.value.email || !createForm.value.firstName || !createForm.value.lastName) {
+    createError.value = 'Veuillez remplir les champs obligatoires';
+    return;
+  }
+
+  creating.value = true;
+  try {
+    const passwordToUse = createForm.value.password && createForm.value.password.length >= 6
+      ? createForm.value.password
+      : generateRandomPassword(12);
+
+    const payload = {
+      username: createForm.value.username,
+      email: createForm.value.email,
+      password: passwordToUse,
+      firstName: createForm.value.firstName,
+      lastName: createForm.value.lastName,
+    };
+
+    const res = await authApi.register(payload as any);
+
+    if (!res.success) {
+      createError.value = res.error || 'Erreur lors de la création de l\'utilisateur';
+      creating.value = false;
+      return;
+    }
+
+    const createdUser = res.data?.user || (res.data as any);
+
+    if (createdUser && (createForm.value.role !== 'user' || createForm.value.isActive === false || createForm.value.isEmailVerified === true)) {
+      try {
+        await authApi.updateUserById(createdUser._id, {
+          role: createForm.value.role,
+          isActive: createForm.value.isActive,
+          isEmailVerified: createForm.value.isEmailVerified,
+        } as any);
+      } catch (e) {
+        console.warn('Failed to apply admin overrides after create', e);
+      }
+    }
+
+    await fetchUsers();
+    closeCreate();
+  } catch (err) {
+    console.error('Create user error', err);
+    createError.value = err instanceof Error ? err.message : 'Erreur inattendue lors de la création';
+  } finally {
+    creating.value = false;
+  }
+}
+
+/* Edit user functions */
 function openEdit(u: User) {
   editingUserId.value = u._id;
   editForm.value = {
@@ -215,6 +363,7 @@ async function saveEdit() {
   }
 }
 
+/* Delete user functions */
 function confirmDelete(u: User) {
   deletingUser.value = u;
   showDeleteModal.value = true;

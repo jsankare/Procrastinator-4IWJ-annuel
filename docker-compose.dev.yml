@@ -22,7 +22,7 @@ services:
 
   # Database : MongoDB
   mongodb:
-    image: mongo:7.0
+    image: mongo:latest
     container_name: task-manager-mongodb
     environment:
       - MONGO_INITDB_ROOT_USERNAME=admin
@@ -36,6 +36,11 @@ services:
     networks:
       - task-manager-network
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # Frontend : Nuxt v4
   frontend:
@@ -43,10 +48,13 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: task-manager-frontend
+    ports:
+      - "3000:3000"
     environment:
       - NODE_ENV=development
       - NUXT_HOST=0.0.0.0
       - NUXT_PORT=3000
+      - NUXT_PUBLIC_API_BASE_URL=http://localhost
     # Pour production, utiliser un fichier .env :
     # env_file:
     #   - ./frontend/.env
@@ -61,11 +69,17 @@ services:
       - "traefik.http.routers.frontend.entrypoints=web"
       - "traefik.http.routers.frontend.priority=1"
       - "traefik.http.services.frontend.loadbalancer.server.port=3000"
+      # Explicit router for Nuxt static/_nuxt assets to avoid proxy path normalization issues
+      - "traefik.http.routers.frontend-nuxt.rule=Host(`localhost`) && PathPrefix(`/_nuxt`)"
+      - "traefik.http.routers.frontend-nuxt.entrypoints=web"
+      - "traefik.http.routers.frontend-nuxt.priority=2"
+      - "traefik.http.services.frontend-nuxt.loadbalancer.server.port=3000"
       # Route API requests to Nuxt too (for Nitro server /api/*), while letting dedicated services (e.g. /api/auth) handle their own paths
       - "traefik.http.routers.frontend-api.rule=Host(`localhost`) && PathPrefix(`/api`) && !PathPrefix(`/api/auth`)"
       - "traefik.http.routers.frontend-api.entrypoints=web"
     depends_on:
-      - mongodb
+      mongodb:
+        condition: service_healthy
     networks:
       - task-manager-network
     restart: unless-stopped
@@ -93,7 +107,8 @@ services:
       - ./services/auth-service:/app
       - /app/node_modules
     depends_on:
-      - mongodb
+      mongodb:
+        condition: service_healthy
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.auth.rule=Host(`localhost`) && PathPrefix(`/api/auth`)"
