@@ -41,7 +41,7 @@ db.users.insertOne({
   _id: ObjectId(),
   username: "admin",
   email: "admin@procrastinator.com",
-  password: "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewxJxzPlSqSj3lRG", // "admin123" hashed
+  password: "$2a$12$V42x92ird58VKP2p4KJKXePThbezcMnIWLVVdE9qNjgFSgrEisLke", // "admin123" hashed
   firstName: "Admin",
   lastName: "User",
   birthdate: new Date("1991-02-01"),
