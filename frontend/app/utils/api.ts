@@ -4,34 +4,36 @@ export const API_BASE_URL =
   (import.meta.env?.NUXT_PUBLIC_API_BASE_URL as string) || "http://localhost";
 
 interface ApiResponse<T = any> {
-  success: boolean
-  data?: T
-  message?: string
-  error?: string
+  success: boolean;
+  data?: T;
+  message?: string;
+  error?: string;
+  errors?: any;
+  status?: number;
 }
 
 class ApiClient {
-  private baseURL: string
+  private baseURL: string;
 
   constructor(baseURL: string = API_BASE_URL) {
-    this.baseURL = baseURL
+    this.baseURL = baseURL;
   }
 
   private async request<T>(
     endpoint: string,
-    options: RequestInit = {}
+    options: RequestInit = {},
   ): Promise<ApiResponse<T>> {
-    const url = `${this.baseURL}${endpoint}`
-    
+    const url = `${this.baseURL}${endpoint}`;
+
     const defaultHeaders: HeadersInit = {
-      'Content-Type': 'application/json',
-    }
+      "Content-Type": "application/json",
+    };
 
     // Get token from localStorage if exists
     if (import.meta.client) {
-      const token = localStorage.getItem('auth_token')
+      const token = localStorage.getItem("auth_token");
       if (token) {
-        defaultHeaders['Authorization'] = `Bearer ${token}`
+        defaultHeaders["Authorization"] = `Bearer ${token}`;
       }
     }
 
@@ -41,66 +43,91 @@ class ApiClient {
         ...defaultHeaders,
         ...options.headers,
       },
-    }
+    };
 
     try {
-      const response = await fetch(url, config)
-      const data = await response.json()
+      const response = await fetch(url, config);
+      const data = await response.json();
 
       if (!response.ok) {
         return {
           success: false,
-          error: data.message || data.error || 'Une erreur est survenue',
-          message: data.message
-        }
+          error: data?.message || data?.error || "Une erreur est survenue",
+          message: data?.message,
+          errors: data?.errors || undefined,
+          status: response.status,
+        };
       }
 
       return {
         success: true,
         data: data.data || data,
-        message: data.message
-      }
+        message: data?.message,
+        errors: data?.errors || undefined,
+      };
     } catch (error) {
-      console.error('API Error:', error)
+      console.error("API Error:", error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Erreur de connexion au serveur'
-      }
+        error:
+          error instanceof Error
+            ? error.message
+            : "Erreur de connexion au serveur",
+        errors: undefined,
+      };
     }
   }
 
-  async get<T>(endpoint: string, options?: RequestInit): Promise<ApiResponse<T>> {
-    return this.request<T>(endpoint, { ...options, method: 'GET' })
+  async get<T>(
+    endpoint: string,
+    options?: RequestInit,
+  ): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, { ...options, method: "GET" });
   }
 
-  async post<T>(endpoint: string, body?: any, options?: RequestInit): Promise<ApiResponse<T>> {
+  async post<T>(
+    endpoint: string,
+    body?: any,
+    options?: RequestInit,
+  ): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, {
       ...options,
-      method: 'POST',
+      method: "POST",
       body: body ? JSON.stringify(body) : undefined,
-    })
+    });
   }
 
-  async put<T>(endpoint: string, body?: any, options?: RequestInit): Promise<ApiResponse<T>> {
+  async put<T>(
+    endpoint: string,
+    body?: any,
+    options?: RequestInit,
+  ): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, {
       ...options,
-      method: 'PUT',
+      method: "PUT",
       body: body ? JSON.stringify(body) : undefined,
-    })
+    });
   }
 
-  async patch<T>(endpoint: string, body?: any, options?: RequestInit): Promise<ApiResponse<T>> {
+  async patch<T>(
+    endpoint: string,
+    body?: any,
+    options?: RequestInit,
+  ): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, {
       ...options,
-      method: 'PATCH',
+      method: "PATCH",
       body: body ? JSON.stringify(body) : undefined,
-    })
+    });
   }
 
-  async delete<T>(endpoint: string, options?: RequestInit): Promise<ApiResponse<T>> {
-    return this.request<T>(endpoint, { ...options, method: 'DELETE' })
+  async delete<T>(
+    endpoint: string,
+    options?: RequestInit,
+  ): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, { ...options, method: "DELETE" });
   }
 }
 
-export const apiClient = new ApiClient()
-export type { ApiResponse }
+export const apiClient = new ApiClient();
+export type { ApiResponse };
