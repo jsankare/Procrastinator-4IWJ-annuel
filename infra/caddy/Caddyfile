@@ -1,0 +1,75 @@
+# Caddyfile for Procrastinator development environment
+# Handles routing to frontend, auth-service, and workspace-service
+
+# Main domain - localhost (HTTP only for development)
+http://localhost {
+    # Enable logging for debugging
+    log {
+        level DEBUG
+        output file /var/log/caddy/access.log
+        format console
+    }
+
+    # Health check endpoint for Caddy itself
+    handle /health {
+        respond "Caddy OK" 200
+    }
+
+    # Auth service - strip /api/auth prefix and proxy to auth-service:3001
+    handle /api/auth/* {
+        uri strip_prefix /api/auth
+        reverse_proxy auth-service:3001 {
+            header_up Host {upstream_hostport}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    # Workspace service - strip /api/workspaces prefix and proxy to workspace-service:3002
+    handle /api/workspaces/* {
+        uri strip_prefix /api/workspaces
+        reverse_proxy workspace-service:3002 {
+            header_up Host {upstream_hostport}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    # All other requests go to the frontend (Nuxt app)
+    handle /* {
+        reverse_proxy task-manager-frontend:3000 {
+            header_up Host {upstream_hostport}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+
+            # Handle WebSocket connections for HMR
+            header_up Connection {>Connection}
+            header_up Upgrade {>Upgrade}
+        }
+    }
+
+    # Enable compression for better performance
+    encode gzip
+
+    # CORS headers for development
+    header {
+        Access-Control-Allow-Origin "*"
+        Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+        Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With"
+        Access-Control-Allow-Credentials "true"
+    }
+
+    # Handle OPTIONS requests for CORS preflight
+    @options method OPTIONS
+    handle @options {
+        respond "" 204
+    }
+}
+
+# Admin API configuration
+:2019 {
+    # Caddy admin interface - accessible at localhost:2019
+}

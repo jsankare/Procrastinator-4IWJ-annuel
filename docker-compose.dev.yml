@@ -1,225 +1,260 @@
 #docker-copmpose.dev.yml
 services:
-  # Reverse Proxy : Traefik
-  traefik:
-    image: traefik:latest
-    container_name: traefik
-    command:
-      - "--api.insecure=true"
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--entrypoints.web.address=:80"
-      - "--log.level=INFO"
-    ports:
-      - "80:80" #HTTP
-      - "8080:8080" #Dashboard traefik
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./infra/traefik/traefik.yml:/etc/traefik/traefik.yml:ro
-    networks:
-      - task-manager-network
-    restart: unless-stopped
+    # Reverse Proxy : Caddy
+    caddy:
+        image: caddy:2.11
+        container_name: caddy
+        ports:
+            - "80:80"
+            - "443:443"
+            - "2019:2019" # Admin API
+        volumes:
+            - ./infra/caddy/Caddyfile:/etc/caddy/Caddyfile
+            - caddy_data:/data
+            - caddy_config:/config
+        networks:
+            - task-manager-network
+        restart: unless-stopped
 
-  # Database : MongoDB
-  mongodb:
-    image: mongo:latest
-    container_name: task-manager-mongodb
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=admin
-      - MONGO_INITDB_ROOT_PASSWORD=password123
-      - MONGO_INITDB_DATABASE=procrastinator
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongodb_data:/data/db
-      - ./infra/mongo/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
-    networks:
-      - task-manager-network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+    # # Reverse Proxy : Traefik (commented out)
+    # traefik:
+    #     image: traefik:latest
+    #     container_name: traefik
+    #     command:
+    #         - "--api.insecure=true"
+    #         - "--providers.docker=true"
+    #         - "--providers.docker.exposedbydefault=false"
+    #         - "--entrypoints.web.address=:80"
+    #         - "--log.level=INFO"
+    #         - "--entrypoints.web.forwardedHeaders.insecure=true"
+    #         - "--serversTransport.insecureSkipVerify=true"
+    #         - "--global.sendAnonymousUsage=false"
+    #     ports:
+    #         - "80:80" #HTTP
+    #         - "8080:8080" #Dashboard traefik
+    #     volumes:
+    #         - /var/run/docker.sock:/var/run/docker.sock:ro
+    #         - ./infra/traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+    #     networks:
+    #         - task-manager-network
+    #     restart: unless-stopped
 
-  # Frontend : Nuxt v4
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    container_name: task-manager-frontend
-    ports:
-      - "3000:3000"
-    environment:
-      - NODE_ENV=development
-      - NUXT_HOST=0.0.0.0
-      - NUXT_PORT=3000
-      - NUXT_PUBLIC_API_BASE_URL=http://localhost
-    # Pour production, utiliser un fichier .env :
-    # env_file:
-    #   - ./frontend/.env
-    volumes:
-      - ./frontend/app:/app/app
-      - ./frontend/server:/app/server
-      - /app/node_modules
-      - /app/.nuxt
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.frontend.rule=Host(`localhost`) && !PathPrefix(`/api`)"
-      - "traefik.http.routers.frontend.entrypoints=web"
-      - "traefik.http.routers.frontend.priority=1"
-      - "traefik.http.services.frontend.loadbalancer.server.port=3000"
-      # Explicit router for Nuxt static/_nuxt assets to avoid proxy path normalization issues
-      - "traefik.http.routers.frontend-nuxt.rule=Host(`localhost`) && PathPrefix(`/_nuxt`)"
-      - "traefik.http.routers.frontend-nuxt.entrypoints=web"
-      - "traefik.http.routers.frontend-nuxt.priority=2"
-      - "traefik.http.services.frontend-nuxt.loadbalancer.server.port=3000"
-      # Route API requests to Nuxt too (for Nitro server /api/*), while letting dedicated services (e.g. /api/auth) handle their own paths
-      - "traefik.http.routers.frontend-api.rule=Host(`localhost`) && PathPrefix(`/api`) && !PathPrefix(`/api/auth`)"
-      - "traefik.http.routers.frontend-api.entrypoints=web"
-    depends_on:
-      mongodb:
-        condition: service_healthy
-    networks:
-      - task-manager-network
-    restart: unless-stopped
+    # Database : MongoDB
+    mongodb:
+        image: mongo:latest
+        container_name: task-manager-mongodb
+        environment:
+            - MONGO_INITDB_ROOT_USERNAME=admin
+            - MONGO_INITDB_ROOT_PASSWORD=password123
+            - MONGO_INITDB_DATABASE=procrastinator
+        ports:
+            - "27017:27017"
+        volumes:
+            - mongodb_data:/data/db
+            - ./infra/mongo/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+        networks:
+            - task-manager-network
+        restart: unless-stopped
+        healthcheck:
+            test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
 
-  # Service d'authentification
-  auth-service:
-    build:
-      context: ./services/auth-service
-      dockerfile: Dockerfile
-    container_name: auth-service
-    environment:
-      - NODE_ENV=development
-      - PORT=3001
-      - SERVICE_NAME=auth-service
-      - CORS_ORIGIN=http://localhost
-      - MONGODB_URI=mongodb://procrastinator_user:procrastinator_pass@mongodb:27017/procrastinator?authSource=procrastinator
-      - DB_NAME=procrastinator
-      - JWT_SECRET=your-super-secret-jwt-key-change-in-production-please
-      - JWT_EXPIRES_IN=7d
-      - JWT_REFRESH_EXPIRES_IN=30d
-    # Pour production, décommenter et utiliser un fichier .env :
-    # env_file:
-    #   - ./services/auth-service/.env
-    volumes:
-      - ./services/auth-service:/app
-      - /app/node_modules
-    depends_on:
-      mongodb:
-        condition: service_healthy
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.auth.rule=Host(`localhost`) && PathPrefix(`/api/auth`)"
-      - "traefik.http.routers.auth.entrypoints=web"
-      - "traefik.http.routers.auth.middlewares=auth-stripprefix"
-      - "traefik.http.middlewares.auth-stripprefix.stripprefix.prefixes=/api/auth"
-      - "traefik.http.services.auth.loadbalancer.server.port=3001"
-    networks:
-      - task-manager-network
-    restart: unless-stopped
+    # Frontend : Nuxt v4
+    frontend:
+        build:
+            context: ./frontend
+            dockerfile: Dockerfile
+        container_name: task-manager-frontend
+        ports:
+            - "3000:3000"
+            - "3333:3000"
+            - "5173:5173"
+        environment:
+            - NODE_ENV=development
+            - NUXT_HOST=0.0.0.0
+            - NUXT_PORT=3000
+            - NUXT_PUBLIC_API_BASE_URL=http://localhost
+        # Pour production, utiliser un fichier .env :
+        # env_file:
+        #   - ./frontend/.env
+        volumes:
+            - ./frontend/app:/app/app
+            - ./frontend/server:/app/server
+            - /app/node_modules
+            - /app/.nuxt
+        # No labels needed for Caddy - configured in Caddyfile
+        depends_on:
+            mongodb:
+                condition: service_healthy
+        networks:
+            - task-manager-network
+        restart: unless-stopped
 
-  # Service de gestion des tâches
-  # task-service:
-  #   build:
-  #     context: ./services/task-service
-  #     dockerfile: Dockerfile
-  #   container_name: task-service
-  #   environment:
-  #     - NODE_ENV=development
-  #     - PORT=3002
-  #     - SERVICE_NAME=task-service
-  #   volumes:
-  #     - ./services/task-service:/app
-  #     - /app/node_modules
-  #   labels:
-  #     - "traefik.enable=true"
-  #     - "traefik.http.routers.tasks.rule=Host(`localhost`) && PathPrefix(`/api/tasks`)"
-  #     - "traefik.http.routers.tasks.entrypoints=web"
-  #     - "traefik.http.routers.tasks.middlewares=tasks-stripprefix"
-  #     - "traefik.http.middlewares.tasks-stripprefix.stripprefix.prefixes=/api/tasks"
-  #     - "traefik.http.services.tasks.loadbalancer.server.port=3002"
-  #   networks:
-  #     - task-manager-network
-  #   restart: unless-stopped
+    # Service d'authentification
+    auth-service:
+        build:
+            context: ./services/auth-service
+            dockerfile: Dockerfile
+        container_name: auth-service
+        environment:
+            - NODE_ENV=development
+            - PORT=3001
+            - SERVICE_NAME=auth-service
+            - CORS_ORIGIN=http://localhost
+            - MONGODB_URI=mongodb://procrastinator_user:procrastinator_pass@mongodb:27017/procrastinator?authSource=procrastinator
+            - DB_NAME=procrastinator
+            - JWT_SECRET=your-super-secret-jwt-key-change-in-production-please
+            - JWT_EXPIRES_IN=7d
+            - JWT_REFRESH_EXPIRES_IN=30d
+        # Pour production, décommenter et utiliser un fichier .env :
+        # env_file:
+        #   - ./services/auth-service/.env
+        volumes:
+            - ./services/auth-service:/app
+            - /app/node_modules
+        depends_on:
+            mongodb:
+                condition: service_healthy
+        # No labels needed for Caddy - configured in Caddyfile
+        networks:
+            - task-manager-network
+        restart: unless-stopped
 
-  # # Service de gamification
-  # gamification-service:
-  #   build:
-  #     context: ./services/gamification-service
-  #     dockerfile: Dockerfile
-  #   container_name: gamification-service
-  #   environment:
-  #     - NODE_ENV=development
-  #     - PORT=3003
-  #     - SERVICE_NAME=gamification-service
-  #   volumes:
-  #     - ./services/gamification-service:/app
-  #     - /app/node_modules
-  #   labels:
-  #     - "traefik.enable=true"
-  #     - "traefik.http.routers.gamification.rule=Host(`localhost`) && PathPrefix(`/api/gamification`)"
-  #     - "traefik.http.routers.gamification.entrypoints=web"
-  #     - "traefik.http.routers.gamification.middlewares=gamification-stripprefix"
-  #     - "traefik.http.middlewares.gamification-stripprefix.stripprefix.prefixes=/api/gamification"
-  #     - "traefik.http.services.gamification.loadbalancer.server.port=3003"
-  #   networks:
-  #     - task-manager-network
-  #   restart: unless-stopped
+    # Service de gestion des workspaces
+    workspace-service:
+        build:
+            context: ./services/workspace-service
+            dockerfile: Dockerfile
+        container_name: workspace-service
+        environment:
+            - NODE_ENV=development
+            - PORT=3002
+            - SERVICE_NAME=workspace-service
+            - CORS_ORIGIN=http://localhost
+            - MONGODB_URI=mongodb://procrastinator_user:procrastinator_pass@mongodb:27017/procrastinator?authSource=procrastinator
+            - DB_NAME=procrastinator
+            - JWT_SECRET=your-super-secret-jwt-key-change-in-production-please
+            - FRONTEND_URL=http://localhost
+        # Pour production, décommenter et utiliser un fichier .env :
+        # env_file:
+        #   - ./services/workspace-service/.env
+        volumes:
+            - ./services/workspace-service:/app
+            - /app/node_modules
+        depends_on:
+            mongodb:
+                condition: service_healthy
+        # No labels needed for Caddy - configured in Caddyfile
+        networks:
+            - task-manager-network
+        restart: unless-stopped
 
-  # # Service de collaboration
-  # collaboration-service:
-  #   build:
-  #     context: ./services/collaboration-service
-  #     dockerfile: Dockerfile
-  #   container_name: collaboration-service
-  #   environment:
-  #     - NODE_ENV=development
-  #     - PORT=3004
-  #     - SERVICE_NAME=collaboration-service
-  #   volumes:
-  #     - ./services/collaboration-service:/app
-  #     - /app/node_modules
-  #   labels:
-  #     - "traefik.enable=true"
-  #     - "traefik.http.routers.workspaces.rule=Host(`localhost`) && PathPrefix(`/api/workspaces`)"
-  #     - "traefik.http.routers.workspaces.entrypoints=web"
-  #     - "traefik.http.routers.workspaces.middlewares=workspaces-stripprefix"
-  #     - "traefik.http.middlewares.workspaces-stripprefix.stripprefix.prefixes=/api/workspaces"
-  #     - "traefik.http.services.workspaces.loadbalancer.server.port=3004"
-  #   networks:
-  #     - task-manager-network
-  #   restart: unless-stopped
+    # Service de gestion des tâches
+    # task-service:
+    #   build:
+    #     context: ./services/task-service
+    #     dockerfile: Dockerfile
+    #   container_name: task-service
+    #   environment:
+    #     - NODE_ENV=development
+    #     - PORT=3002
+    #     - SERVICE_NAME=task-service
+    #   volumes:
+    #     - ./services/task-service:/app
+    #     - /app/node_modules
+    #   labels:
+    #     - "traefik.enable=true"
+    #     - "traefik.http.routers.tasks.rule=Host(`localhost`) && PathPrefix(`/api/tasks`)"
+    #     - "traefik.http.routers.tasks.entrypoints=web"
+    #     - "traefik.http.routers.tasks.middlewares=tasks-stripprefix"
+    #     - "traefik.http.middlewares.tasks-stripprefix.stripprefix.prefixes=/api/tasks"
+    #     - "traefik.http.services.tasks.loadbalancer.server.port=3002"
+    #   networks:
+    #     - task-manager-network
+    #   restart: unless-stopped
 
-  #     # Service de notifications
-  # notification-service:
-  #   build:
-  #     context: ./services/notification-service
-  #     dockerfile: Dockerfile
-  #   container_name: notification-service
-  #   environment:
-  #     - NODE_ENV=development
-  #     - PORT=3005
-  #     - SERVICE_NAME=notification-service
-  #   volumes:
-  #     - ./services/notification-service:/app
-  #     - /app/node_modules
-  #   labels:
-  #     - "traefik.enable=true"
-  #     - "traefik.http.routers.notifications.rule=Host(`localhost`) && PathPrefix(`/api/notifications`)"
-  #     - "traefik.http.routers.notifications.entrypoints=web"
-  #     - "traefik.http.routers.notifications.middlewares=notifications-stripprefix"
-  #     - "traefik.http.middlewares.notifications-stripprefix.stripprefix.prefixes=/api/notifications"
-  #     - "traefik.http.services.notifications.loadbalancer.server.port=3005"
-  #   networks:
-  #     - task-manager-network
-  #   restart: unless-stopped
+    # # Service de gamification
+    # gamification-service:
+    #   build:
+    #     context: ./services/gamification-service
+    #     dockerfile: Dockerfile
+    #   container_name: gamification-service
+    #   environment:
+    #     - NODE_ENV=development
+    #     - PORT=3003
+    #     - SERVICE_NAME=gamification-service
+    #   volumes:
+    #     - ./services/gamification-service:/app
+    #     - /app/node_modules
+    #   labels:
+    #     - "traefik.enable=true"
+    #     - "traefik.http.routers.gamification.rule=Host(`localhost`) && PathPrefix(`/api/gamification`)"
+    #     - "traefik.http.routers.gamification.entrypoints=web"
+    #     - "traefik.http.routers.gamification.middlewares=gamification-stripprefix"
+    #     - "traefik.http.middlewares.gamification-stripprefix.stripprefix.prefixes=/api/gamification"
+    #     - "traefik.http.services.gamification.loadbalancer.server.port=3003"
+    #   networks:
+    #     - task-manager-network
+    #   restart: unless-stopped
+
+    # # Service de collaboration
+    # collaboration-service:
+    #   build:
+    #     context: ./services/collaboration-service
+    #     dockerfile: Dockerfile
+    #   container_name: collaboration-service
+    #   environment:
+    #     - NODE_ENV=development
+    #     - PORT=3004
+    #     - SERVICE_NAME=collaboration-service
+    #   volumes:
+    #     - ./services/collaboration-service:/app
+    #     - /app/node_modules
+    #   labels:
+    #     - "traefik.enable=true"
+    #     - "traefik.http.routers.workspaces.rule=Host(`localhost`) && PathPrefix(`/api/workspaces`)"
+    #     - "traefik.http.routers.workspaces.entrypoints=web"
+    #     - "traefik.http.routers.workspaces.middlewares=workspaces-stripprefix"
+    #     - "traefik.http.middlewares.workspaces-stripprefix.stripprefix.prefixes=/api/workspaces"
+    #     - "traefik.http.services.workspaces.loadbalancer.server.port=3004"
+    #   networks:
+    #     - task-manager-network
+    #   restart: unless-stopped
+
+    #     # Service de notifications
+    # notification-service:
+    #   build:
+    #     context: ./services/notification-service
+    #     dockerfile: Dockerfile
+    #   container_name: notification-service
+    #   environment:
+    #     - NODE_ENV=development
+    #     - PORT=3005
+    #     - SERVICE_NAME=notification-service
+    #   volumes:
+    #     - ./services/notification-service:/app
+    #     - /app/node_modules
+    #   labels:
+    #     - "traefik.enable=true"
+    #     - "traefik.http.routers.notifications.rule=Host(`localhost`) && PathPrefix(`/api/notifications`)"
+    #     - "traefik.http.routers.notifications.entrypoints=web"
+    #     - "traefik.http.routers.notifications.middlewares=notifications-stripprefix"
+    #     - "traefik.http.middlewares.notifications-stripprefix.stripprefix.prefixes=/api/notifications"
+    #     - "traefik.http.services.notifications.loadbalancer.server.port=3005"
+    #   networks:
+    #     - task-manager-network
+    #   restart: unless-stopped
 
 networks:
-  task-manager-network:
-    driver: bridge
+    task-manager-network:
+        driver: bridge
 
 volumes:
-  mongodb_data:
-    driver: local
+    mongodb_data:
+        driver: local
+    caddy_data:
+        driver: local
+    caddy_config:
+        driver: local

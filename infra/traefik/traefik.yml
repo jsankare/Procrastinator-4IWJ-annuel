@@ -3,26 +3,38 @@
 
 # API et Dashboard
 api:
-  dashboard: true
-  insecure: true  # Dashboard accessible sans auth en dev
+    dashboard: true
+    insecure: true # Dashboard accessible sans auth en dev
 
 # Points d'entrée
 entryPoints:
-  web:
-    address: ":80"
+    web:
+        address: ":80"
 
 # Providers
 providers:
-  docker:
-    exposedByDefault: false
-    watch: true
+    docker:
+        exposedByDefault: false
+        watch: true
+
+# ServersTransport configuration to handle URL encoding
+serversTransport:
+    insecureSkipVerify: true
+    forwardingTimeouts:
+        dialTimeout: 30s
+        responseHeaderTimeout: 0s
+        idleConnTimeout: 90s
+
+# Global configuration
+global:
+    sendAnonymousUsage: false
 
 # Logs
 log:
-  level: INFO
-  format: common
+    level: DEBUG
+    format: common
 
 # Access logs (optionnel, pour voir les requêtes)
 accessLog:
-  format: common
-  bufferingSize: 100
+    format: common
+    bufferingSize: 100

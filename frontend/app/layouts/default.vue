@@ -10,9 +10,9 @@
         <div class="hidden md:flex items-center gap-6">
           <NuxtLink to="/" class="hover:text-accent transition-colors">Home</NuxtLink>
           <NuxtLink v-if="user" to="/workspaces" class="hover:text-accent transition-colors">Workspaces</NuxtLink>
-          <AdminDropdown />
           <NuxtLink v-if="user" to="/profile" class="hover:text-accent transition-colors">Profil</NuxtLink>
-          
+          <AdminDropdown />
+
           <!-- État connecté -->
           <div v-if="user" class="flex items-center gap-3 pl-3 border-l border-white/10">
             <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5">
@@ -84,8 +84,8 @@
         <div v-if="menuOpen" class="md:hidden px-4 pb-4 flex flex-col gap-3 text-base bg-secondary/95 backdrop-blur lg:rounded-b-3xl border-t border-white/10">
           <NuxtLink to="/" class="hover:text-accent transition-colors py-2" @click="menuOpen = false">Home</NuxtLink>
           <NuxtLink v-if="user" to="/workspaces" class="hover:text-accent transition-colors py-2" @click="menuOpen = false">Workspaces</NuxtLink>
-          <AdminDropdown />
           <NuxtLink v-if="user" to="/profile" class="hover:text-accent transition-colors py-2" @click="menuOpen = false">Profil</NuxtLink>
+          <AdminDropdown />
 
           <!-- État connecté mobile -->
           <div v-if="user" class="pt-3 border-t border-white/10 flex flex-col gap-3">
