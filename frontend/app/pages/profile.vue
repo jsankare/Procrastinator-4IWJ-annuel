@@ -2,14 +2,13 @@
   <section class="space-y-6 bg-primary min-h-screen text-text">
     <div class="relative flex flex-col items-center justify-center py-10 mb-6 bg-linear-to-r from-accent/30 to-secondary/30 rounded-b-3xl shadow-lg">
       <button @click="showEdit = true" class="absolute top-4 right-4 bg-accent text-secondary px-4 py-2 rounded-lg font-semibold shadow hover:bg-accent/80 transition-all flex items-center gap-2">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M9 13h3l8-8a2.828 2.828 0 00-4-4l-8 8v3zm0 0v3h3" /></svg>
         Modifier
       </button>
       <label class="w-28 h-28 rounded-full overflow-hidden border-4 border-accent shadow-lg mb-4 cursor-pointer group relative" title="Changer l'avatar">
         <input type="file" accept="image/*" class="hidden" @change="onAvatarChange" />
-        <img :src="(user?.profile?.avatar) || user?.avatar || '/assets/icons/user.svg'" alt="Avatar" class="object-cover w-full h-full" />
+        <img :src="(user?.profile?.avatar) || user?.avatar || '/assets/icons/user.svg'" alt="Fallback Avatar" class="object-cover w-full h-full p-4" />
         <span class="absolute bottom-2 right-2 bg-accent text-secondary rounded-full p-1 shadow group-hover:scale-110 transition-transform">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M9 13h3l8-8a2.828 2.828 0 00-4-4l-8 8v3zm0 0v3h3" /></svg>
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path fill-rule="evenodd" clip-rule="evenodd" d="m3.99 16.854-1.314 3.504a.75.75 0 0 0 .966.965l3.503-1.314a3 3 0 0 0 1.068-.687L18.36 9.175s-.354-1.061-1.414-2.122c-1.06-1.06-2.122-1.414-2.122-1.414L4.677 15.786a3 3 0 0 0-.687 1.068zm12.249-12.63 1.383-1.383c.248-.248.579-.406.925-.348.487.08 1.232.322 1.934 1.025.703.703.945 1.447 1.025 1.934.058.346-.1.677-.348.925L19.774 7.76s-.353-1.06-1.414-2.12c-1.06-1.062-2.121-1.415-2.121-1.415z" fill="#000000"></path></g></svg>
         </span>
       </label>
       <h1 class="text-3xl font-bold tracking-tight">{{ user?.firstName }} {{ user?.lastName }}</h1>

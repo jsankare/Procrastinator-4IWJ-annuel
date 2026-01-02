@@ -13,10 +13,10 @@
             <div>
               <label class="block text-sm mb-1">Nom <span class="text-red-500">*</span></label>
               <input
-                v-model="form.name"
-                type="text"
-                class="w-full rounded-md border border-text/20 bg-transparent px-3 py-2 outline-none focus:ring-2 focus:ring-text/30"
-                placeholder="Ex: Équipe Produit"
+                  v-model="form.name"
+                  type="text"
+                  class="w-full rounded-md border border-text/20 bg-transparent px-3 py-2 outline-none focus:ring-2 focus:ring-text/30"
+                  placeholder="Ex: Équipe Produit"
               />
               <p v-if="errors.name" class="mt-1 text-sm text-red-500">{{ errors.name }}</p>
             </div>
@@ -24,37 +24,26 @@
             <div>
               <label class="block text-sm mb-1">Description</label>
               <textarea
-                v-model="form.description"
-                rows="3"
-                class="w-full rounded-md border border-text/20 bg-transparent px-3 py-2 outline-none focus:ring-2 focus:ring-text/30"
-                placeholder="Optionnel"
+                  v-model="form.description"
+                  rows="3"
+                  class="w-full rounded-md border border-text/20 bg-transparent px-3 py-2 outline-none focus:ring-2 focus:ring-text/30"
+                  placeholder="Optionnel"
               />
-            </div>
-
-            <div>
-              <label class="block text-sm mb-1">Visibilité <span class="text-red-500">*</span></label>
-              <select
-                v-model="form.visibility"
-                class="w-full rounded-md border border-text/20 bg-transparent px-3 py-2 outline-none focus:ring-2 focus:ring-text/30"
-              >
-                <option value="private">Privé (recommandé)</option>
-                <option value="public">Public</option>
-              </select>
             </div>
 
             <div class="flex justify-end gap-2 pt-2">
               <button
-                type="button"
-                class="rounded-md border border-text/20 px-4 py-2 text-sm"
-                @click="close()"
-                :disabled="loading"
+                  type="button"
+                  class="rounded-md border border-text/20 px-4 py-2 text-sm"
+                  @click="close()"
+                  :disabled="loading"
               >
                 Annuler
               </button>
               <button
-                type="submit"
-                class="rounded-md bg-text text-primary px-4 py-2 text-sm disabled:opacity-50"
-                :disabled="loading"
+                  type="submit"
+                  class="rounded-md bg-text text-primary px-4 py-2 text-sm disabled:opacity-50"
+                  :disabled="loading"
               >
                 <span v-if="loading">Création…</span>
                 <span v-else>Créer</span>
@@ -68,18 +57,16 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive } from 'vue'
+import {computed, reactive} from 'vue'
 
-type Visibility = 'private' | 'public'
 interface CreateWorkspacePayload {
   name: string
   description?: string
-  visibility: Visibility
 }
 
 const props = withDefaults(
-  defineProps<{ open: boolean; loading?: boolean }>(),
-  { loading: false }
+    defineProps<{ open: boolean; loading?: boolean }>(),
+    {loading: false}
 )
 
 const emit = defineEmits<{
@@ -95,7 +82,6 @@ const isOpen = computed({
 const form = reactive<CreateWorkspacePayload>({
   name: '',
   description: '',
-  visibility: 'private',
 })
 
 const errors = reactive<{ name?: string }>({})
@@ -117,7 +103,6 @@ function onSubmit() {
   emit('submit', {
     name: form.name.trim(),
     description: (form.description || '').trim() || undefined,
-    visibility: form.visibility,
   })
   close()
 }
