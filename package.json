@@ -10,7 +10,8 @@
     "down-v": "docker compose -f docker-compose.dev.yml down -v",
     "build": "pnpm -r build",
     "clean": "pnpm -r clean",
-    "format": "pnpm -r format"
+    "format": "pnpm -r format",
+    "docker:nuke":  "docker system prune -a --volumes -f"
   },
   "keywords": [],
   "author": "",
