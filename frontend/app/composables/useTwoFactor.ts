@@ -101,12 +101,17 @@ export const useTwoFactor = () => {
     }
   }
 
-  const disableTwoFactor = async (userId: string, password: string) => {
+  const disableTwoFactor = async (userId: string, password: string): Promise<any> => {
     isLoading.value = true
     error.value = null
     try {
-      // TODO: Implement disable endpoint
-      throw new Error('Disable 2FA not implemented on backend yet')
+      const response = await apiClient.post('/api/auth/disable-2fa', { userId, password })
+
+      if (!response.success) {
+        throw new Error(response.error || response.message || 'Failed to disable 2FA')
+      }
+
+      return response.data
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'An error occurred'
       throw err

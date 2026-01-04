@@ -1,20 +1,35 @@
-<template >
+<template>
   <section class="space-y-6 bg-primary min-h-screen text-text">
-    <div class="relative flex flex-col items-center justify-center py-10 mb-6 bg-linear-to-r from-accent/30 to-secondary/30 rounded-b-3xl shadow-lg">
-      <button @click="showEdit = true" class="absolute top-4 right-4 bg-accent text-secondary px-4 py-2 rounded-lg font-semibold shadow hover:bg-accent/80 transition-all flex items-center gap-2">
+    <div
+      class="relative flex flex-col items-center justify-center py-10 mb-6 bg-linear-to-r from-accent/30 to-secondary/30 rounded-b-3xl shadow-lg">
+      <button @click="showEdit = true"
+        class="absolute top-4 right-4 bg-accent text-secondary px-4 py-2 rounded-lg font-semibold shadow hover:bg-accent/80 transition-all flex items-center gap-2">
         Modifier
       </button>
-      <label class="w-28 h-28 rounded-full overflow-hidden border-4 border-accent shadow-lg mb-4 cursor-pointer group relative" title="Changer l'avatar">
+      <label
+        class="w-28 h-28 rounded-full overflow-hidden border-4 border-accent shadow-lg mb-4 cursor-pointer group relative"
+        title="Changer l'avatar">
         <input type="file" accept="image/*" class="hidden" @change="onAvatarChange" />
-        <img :src="(user?.profile?.avatar) || user?.avatar || '/assets/icons/user.svg'" alt="Fallback Avatar" class="object-cover w-full h-full p-4" />
-        <span class="absolute bottom-2 right-2 bg-accent text-secondary rounded-full p-1 shadow group-hover:scale-110 transition-transform">
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path fill-rule="evenodd" clip-rule="evenodd" d="m3.99 16.854-1.314 3.504a.75.75 0 0 0 .966.965l3.503-1.314a3 3 0 0 0 1.068-.687L18.36 9.175s-.354-1.061-1.414-2.122c-1.06-1.06-2.122-1.414-2.122-1.414L4.677 15.786a3 3 0 0 0-.687 1.068zm12.249-12.63 1.383-1.383c.248-.248.579-.406.925-.348.487.08 1.232.322 1.934 1.025.703.703.945 1.447 1.025 1.934.058.346-.1.677-.348.925L19.774 7.76s-.353-1.06-1.414-2.12c-1.06-1.062-2.121-1.415-2.121-1.415z" fill="#000000"></path></g></svg>
+        <img :src="(user?.profile?.avatar) || user?.avatar || '/assets/icons/user.svg'" alt="Fallback Avatar"
+          class="object-cover w-full h-full p-4" />
+        <span
+          class="absolute bottom-2 right-2 bg-accent text-secondary rounded-full p-1 shadow group-hover:scale-110 transition-transform">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+            <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+            <g id="SVGRepo_iconCarrier">
+              <path fill-rule="evenodd" clip-rule="evenodd"
+                d="m3.99 16.854-1.314 3.504a.75.75 0 0 0 .966.965l3.503-1.314a3 3 0 0 0 1.068-.687L18.36 9.175s-.354-1.061-1.414-2.122c-1.06-1.06-2.122-1.414-2.122-1.414L4.677 15.786a3 3 0 0 0-.687 1.068zm12.249-12.63 1.383-1.383c.248-.248.579-.406.925-.348.487.08 1.232.322 1.934 1.025.703.703.945 1.447 1.025 1.934.058.346-.1.677-.348.925L19.774 7.76s-.353-1.06-1.414-2.12c-1.06-1.062-2.121-1.415-2.121-1.415z"
+                fill="#000000"></path>
+            </g>
+          </svg>
         </span>
       </label>
       <h1 class="text-3xl font-bold tracking-tight">{{ user?.firstName }} {{ user?.lastName }}</h1>
       <p class="text-lg text-accent font-semibold">Niveau {{ getLevelFromPoints(user?.points) }}</p>
       <p v-if="user?.points" class="text-sm text-white/70">
-        {{ user?.points }} pts • Prochain palier: {{ getNextLevelPoints(getLevelFromPoints(user?.points ?? 0) + 1) }} pts
+        {{ user?.points }} pts • Prochain palier: {{ getNextLevelPoints(getLevelFromPoints(user?.points ?? 0) + 1) }}
+        pts
       </p>
     </div>
     <div class="space-y-4">
@@ -39,9 +54,9 @@
         <Card :icon="starIcon" title="titi" description="Niveau" />
       </div>
     </div>
-    <div class="rounded-lg border border-white/10 bg-secondary p-6 space-y-4" >
+    <div class="rounded-lg border border-white/10 bg-secondary p-6 space-y-4">
       <h3>Paramètres</h3>
-      
+
       <!-- 2FA Section -->
       <div class="space-y-4 border-t border-white/10 pt-4">
         <h4>Sécurité</h4>
@@ -51,38 +66,23 @@
             <p class="text-sm text-text/60">Protégez votre compte avec une couche de sécurité supplémentaire</p>
           </div>
           <div class="flex gap-2">
-            <NuxtLink
-              v-if="!user?.isTwoFactorEnabled"
-              to="/setup-2fa"
-              class="px-4 py-2 rounded-lg bg-accent hover:bg-accent/90 text-secondary font-medium transition-colors text-sm"
-            >
+            <NuxtLink v-if="!user?.isTwoFactorEnabled" to="/setup-2fa"
+              class="px-4 py-2 rounded-lg bg-accent hover:bg-accent/90 text-secondary font-medium transition-colors text-sm">
               Activer
             </NuxtLink>
-            <button
-              v-else
-              @click="showDisable2FAModal = true"
-              class="px-4 py-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 font-medium transition-colors text-sm"
-            >
+            <button v-else @click="showDisable2FAModal = true"
+              class="px-4 py-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 font-medium transition-colors text-sm">
               Désactiver
             </button>
-            <span
-              v-if="user?.isTwoFactorEnabled"
-              class="px-4 py-2 rounded-lg bg-green-500/10 border border-green-500/20 text-green-400 font-medium text-sm flex items-center gap-2"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"></path>
-              </svg>
-              Activée
-            </span>
           </div>
         </div>
       </div>
 
       <div>
         <h4>Apparence</h4>
-        <div class="flex gap-4 justify-between items-center" >
+        <div class="flex gap-4 justify-between items-center">
           <p>Thème</p>
-          <div class="flex gap-2" >
+          <div class="flex gap-2">
             <button class="bg-accent text-secondary font-medium py-2 px-4 rounded-md cursor-pointer">Sombre</button>
             <button class="bg-white/10 text-white font-medium py-2 px-4 rounded-md ml-2 cursor-pointer">Clair</button>
             <button class="bg-white/10 text-white font-medium py-2 px-4 rounded-md ml-2 cursor-pointer">Système</button>
@@ -92,22 +92,19 @@
     </div>
   </section>
   <EditProfileModal :show="showEdit" :user="user || undefined" @close="showEdit = false" @save="onSave" />
-  
+
   <!-- Disable 2FA Modal -->
   <div v-if="showDisable2FAModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
     <div class="bg-secondary rounded-lg border border-white/10 p-6 max-w-md w-full">
       <h3 class="text-xl font-bold mb-4">Désactiver la double authentification</h3>
-      <p class="text-text/70 mb-4">Êtes-vous sûr de vouloir désactiver la double authentification? Votre compte sera moins sécurisé.</p>
-      
+      <p class="text-text/70 mb-4">Êtes-vous sûr de vouloir désactiver la double authentification? Votre compte sera
+        moins sécurisé.</p>
+
       <div v-if="showPassword" class="space-y-4 mb-4">
         <div>
           <label class="block text-sm font-medium mb-2">Mot de passe</label>
-          <input
-            v-model="disablePassword"
-            type="password"
-            placeholder="Entrez votre mot de passe"
-            class="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/10 focus:border-accent outline-none transition-colors"
-          />
+          <input v-model="disablePassword" type="password" placeholder="Entrez votre mot de passe"
+            class="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/10 focus:border-accent outline-none transition-colors" />
         </div>
         <div v-if="disableError" class="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
           {{ disableError }}
@@ -115,25 +112,16 @@
       </div>
 
       <div class="flex gap-3">
-        <button
-          v-if="!showPassword"
-          @click="showPassword = true"
-          class="flex-1 px-4 py-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 font-medium transition-colors"
-        >
+        <button v-if="!showPassword" @click="showPassword = true"
+          class="flex-1 px-4 py-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 font-medium transition-colors">
           Continuer
         </button>
-        <button
-          v-else
-          @click="confirmDisable2FA"
-          :disabled="!disablePassword || isDisablingLoading"
-          class="flex-1 px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
+        <button v-else @click="confirmDisable2FA" :disabled="!disablePassword || isDisablingLoading"
+          class="flex-1 px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
           {{ isDisablingLoading ? 'Désactivation...' : 'Désactiver' }}
         </button>
-        <button
-          @click="showDisable2FAModal = false; showPassword = false; disablePassword = ''; disableError = ''"
-          class="flex-1 px-4 py-2 rounded-lg border border-white/10 hover:bg-white/5 text-text font-medium transition-colors"
-        >
+        <button @click="showDisable2FAModal = false; showPassword = false; disablePassword = ''; disableError = ''"
+          class="flex-1 px-4 py-2 rounded-lg border border-white/10 hover:bg-white/5 text-text font-medium transition-colors">
           Annuler
         </button>
       </div>
@@ -225,9 +213,14 @@ async function confirmDisable2FA() {
   disableError.value = '';
 
   try {
-    const response = await disableTwoFactor(user.value._id, disablePassword.value);
-    if (response.success) {
-      authStore.user = response.data.user as any;
+    const data = await disableTwoFactor(user.value._id, disablePassword.value);
+
+    // Si on arrive ici, c'est que ça a marché (sinon useTwoFactor aurait throw)
+    if (data && data.user) {
+      authStore.setUser(data.user); // Update user directly or trigger a fetch
+      // Force refresh user to be sure
+      // await authStore.fetchCurrentUser(); // Not needed if we set it directly
+
       showDisable2FAModal.value = false;
       showPassword.value = false;
       disablePassword.value = '';
