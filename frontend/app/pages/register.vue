@@ -137,6 +137,16 @@ const password = ref('')
 const confirmPassword = ref('')
 const errorMessage = ref('')
 const successMessage = ref('')
+const errors = ref<Record<string, string>>({})
+
+useHead({
+  title: 'Inscription - Procrastinator',
+  meta: [
+    { name: 'description', content: 'Créez votre compte Procrastinator gratuitement et commencez à gérer vos tâches efficacement.' },
+    { property: 'og:title', content: 'Inscription - Procrastinator' },
+  ],
+})
+
 const isLoading = ref(false)
 
 const handleRegister = async () => {
