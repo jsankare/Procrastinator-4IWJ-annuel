@@ -15,10 +15,18 @@
         <!-- Authenticated State -->
         <template v-else-if="isAuthenticated">
             <div class="w-full max-w-5xl">
-                <h2 class="text-lg sm:text-xl font-semibold mb-3 text-center sm:text-left">
-                    Statistiques Générales
+                <h2
+                    class="text-lg sm:text-xl font-semibold mb-3 text-center sm:text-left flex items-center justify-between">
+                    <span>Aperçu & Progression</span>
                 </h2>
-                <div class="grid gap-4 grid-cols-1 sm:grid-cols-3">
+
+                <!-- Gamification Header -->
+                <div class="mb-6">
+                    <UserLevelProgress :points="userStats.points" :level="userStats.level" />
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="grid gap-4 grid-cols-1 sm:grid-cols-3 mb-8">
                     <Card :icon="checkIcon" :title="userStats.completedTasks.toString()" description="Tâches terminées"
                         layout="side" icon-color="text-green-500" />
                     <Card :icon="fireIcon" :title="userStats.streak.toString()" description="Jours de streak"
@@ -60,12 +68,14 @@ useHead({
 })
 import { ref, onMounted } from "vue";
 import Card from "~/components/global/card.vue";
+import UserLevelProgress from "~/components/gamification/UserLevelProgress.vue";
 import fireIcon from "~/assets/icons/fire.svg";
 import checkIcon from "~/assets/icons/check.svg";
 import starIcon from "~/assets/icons/star.svg";
 import PersonalKanban from "~/components/kanban/personalKanban.vue";
 import { apiClient } from "~/utils/api";
 import { useAuthStore } from '~/composables/useAuthStore';
+import type { Badge } from "~/composables/useAuth";
 
 const authStore = useAuthStore();
 const isAuthenticated = authStore.isAuthenticated;
@@ -75,6 +85,8 @@ interface UserStats {
     completedTasks: number
     streak: number
     points: number
+    level: number
+    badges: Badge[]
 }
 
 // User statistics
@@ -82,6 +94,8 @@ const userStats = ref<UserStats>({
     completedTasks: 0,
     streak: 0,
     points: 0,
+    level: 1,
+    badges: []
 });
 
 // Load user statistics
@@ -97,14 +111,16 @@ const loadUserStats = async () => {
                 completedTasks: response.data.completedTasks || 0,
                 streak: response.data.streak || 0,
                 points: response.data.points || 0,
+                level: response.data.level || 1,
+                badges: response.data.badges || []
             };
         } else {
             console.error("Failed to fetch user profile:", response.error || "Unknown error");
-            userStats.value = { completedTasks: 0, streak: 0, points: 0 };
+            userStats.value = { completedTasks: 0, streak: 0, points: 0, level: 1, badges: [] };
         }
     } catch (error) {
         console.error("Error loading user stats:", error);
-        userStats.value = { completedTasks: 0, streak: 0, points: 0 };
+        userStats.value = { completedTasks: 0, streak: 0, points: 0, level: 1, badges: [] };
     }
 };
 
