@@ -109,48 +109,53 @@ import { useTwoFactor } from '~/composables/useTwoFactor'
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
-const { isLoading, error: twoFactorError, verifyTwoFactorToken, clearError } = useTwoFactor()
+const { isLoading, error: twoFactorError, validateLogin, clearError } = useTwoFactor()
 
 const verificationCode = ref('')
 const activeTab = ref<'totp' | 'backup'>('totp')
 const userId = ref<string>('')
 const error = ref<string | null>(null)
 
+const tempToken = ref<string>('')
+
 onMounted(() => {
   // Check if userId is in session/route
   userId.value = route.query.userId as string || ''
+  tempToken.value = route.query.tempToken as string || ''
   
-  if (!userId.value) {
+  if (!userId.value || !tempToken.value) {
+    console.error('Missing userId or tempToken')
     router.push('/login')
   }
 })
 
 const verifyToken = async () => {
-  if (!verificationCode.value || !userId.value) return
+  if (!verificationCode.value || !tempToken.value) return
 
   error.value = null
   clearError()
 
   try {
-    const response = await verifyTwoFactorToken(userId.value, verificationCode.value)
+    const response = await validateLogin(tempToken.value, verificationCode.value)
     
-    if (response.success) {
+    if (response) { // Response is data directly from validateLogin wrapper
       console.log('[2FA Verify] Response:', response)
       
       // Save token to localStorage with correct key
-      const token = response.data.token
-      const user = response.data.user
+      const token = response.token
+      const user = response.user
       
       if (process.client) {
         localStorage.setItem('auth_token', token)
         localStorage.setItem('auth_user', JSON.stringify(user))
-        if (response.data.refreshToken) {
-          localStorage.setItem('refresh_token', response.data.refreshToken)
+        if (response.expiresAt) {
+           // Handle expiration if needed
         }
       }
       
       // Update auth store
       authStore.user = user
+      authStore.token = token // Set token directly if exposed or re-init
       authStore.init() // Reload from localStorage
       
       console.log('[2FA Verify] Redirecting to home...')

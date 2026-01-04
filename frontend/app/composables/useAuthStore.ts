@@ -34,11 +34,12 @@ export const useAuthStore = () => {
 
       if (response.success) {
         // Check if 2FA is required
-        if (response.data?.requiresTwoFactor) {
+        if ((response.data as any)?.require2fa) {
           return {
             success: true,
             requiresTwoFactor: true,
-            userId: response.data.userId
+            userId: (response.data as any).userId,
+            tempToken: (response.data as any).tempToken
           }
         }
 
@@ -77,14 +78,14 @@ export const useAuthStore = () => {
 
     try {
       const response = await authApi.register(data)
-      
+
       if (response.success) {
         // Registration successful - no auto-login, user needs to verify email
         // Only save user data if token is provided (shouldn't be for email verification flow)
         if (response.data?.token) {
           user.value = response.data.user
           token.value = response.data.token
-          
+
           // Save to localStorage
           if (import.meta.client) {
             localStorage.setItem('auth_token', response.data.token)
@@ -94,7 +95,7 @@ export const useAuthStore = () => {
             }
           }
         }
-        
+
         return { success: true }
       } else {
         error.value = response.error || 'Erreur lors de l\'inscription'
@@ -111,19 +112,19 @@ export const useAuthStore = () => {
   // Logout
   const logout = async () => {
     isLoading.value = true
-    
+
     // Clear state
     user.value = null
     token.value = null
     error.value = null
-    
+
     // Clear localStorage
     if (import.meta.client) {
       localStorage.removeItem('auth_token')
       localStorage.removeItem('auth_user')
       localStorage.removeItem('refresh_token')
     }
-    
+
     isLoading.value = false
   }
 
@@ -132,13 +133,13 @@ export const useAuthStore = () => {
     if (!token.value) return
 
     isLoading.value = true
-    
+
     try {
       const response = await authApi.getCurrentUser()
-      
+
       if (response.success && response.data) {
         user.value = response.data
-        
+
         if (import.meta.client) {
           localStorage.setItem('auth_user', JSON.stringify(response.data))
         }
@@ -166,11 +167,11 @@ export const useAuthStore = () => {
 
       if (response.success && response.data) {
         user.value = response.data
-        
+
         if (import.meta.client) {
           localStorage.setItem('auth_user', JSON.stringify(response.data))
         }
-        
+
         return { success: true }
       } else {
         error.value = response.error || 'Erreur de mise à jour'
@@ -191,7 +192,7 @@ export const useAuthStore = () => {
     isAuthenticated,
     isLoading,
     error,
-    
+
     // Actions
     init,
     login,

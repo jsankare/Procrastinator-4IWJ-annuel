@@ -565,14 +565,7 @@ export class UserModel {
     }
   }
 
-  static async findByEmail(email: string): Promise<User | null> {
-    try {
-      return await this.collection.findOne({ email });
-    } catch (error) {
-      console.error('Error finding user by email:', error);
-      throw error;
-    }
-  }
+
 
   static async verifyResetToken(
     userId: string,

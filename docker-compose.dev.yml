@@ -16,30 +16,6 @@ services:
             - task-manager-network
         restart: unless-stopped
 
-    # # Reverse Proxy : Traefik (commented out)
-    # traefik:
-    #     image: traefik:latest
-    #     container_name: traefik
-    #     command:
-    #         - "--api.insecure=true"
-    #         - "--providers.docker=true"
-    #         - "--providers.docker.exposedbydefault=false"
-    #         - "--entrypoints.web.address=:80"
-    #         - "--log.level=INFO"
-    #         - "--entrypoints.web.forwardedHeaders.insecure=true"
-    #         - "--serversTransport.insecureSkipVerify=true"
-    #         - "--global.sendAnonymousUsage=false"
-    #     ports:
-    #         - "80:80" #HTTP
-    #         - "8080:8080" #Dashboard traefik
-    #     volumes:
-    #         - /var/run/docker.sock:/var/run/docker.sock:ro
-    #         - ./infra/traefik/traefik.yml:/etc/traefik/traefik.yml:ro
-    #     networks:
-    #         - task-manager-network
-    #     restart: unless-stopped
-
-    # Database : MongoDB
     mongodb:
         image: mongo:latest
         container_name: task-manager-mongodb
@@ -67,10 +43,12 @@ services:
             context: ./frontend
             dockerfile: Dockerfile
         container_name: task-manager-frontend
-        ports:
-            - "3000:3000"
-            - "3333:3000"
-            - "5173:5173"
+        # Ports commented out to force usage of Caddy on port 80
+        # Uncomment for direct access during debugging if needed
+        # ports:
+        #     - "3000:3000"
+        #     - "3333:3000"
+        #     - "5173:5173"
         environment:
             - NODE_ENV=development
             - NUXT_HOST=0.0.0.0
@@ -99,7 +77,7 @@ services:
             dockerfile: Dockerfile
         container_name: auth-service
         environment:
-            - NODE_ENV=development
+            - NODE_ENV=${NODE_ENV:-development}
             - PORT=3001
             - SERVICE_NAME=auth-service
             - CORS_ORIGIN=http://localhost
