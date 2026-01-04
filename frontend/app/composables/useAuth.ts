@@ -29,6 +29,8 @@ export interface User {
   }
   avatar?: string
   points?: number
+  streak?: number
+  completedTasks?: number
 }
 
 export interface LoginCredentials {
@@ -116,6 +118,15 @@ export const authApi = {
   // Update my profile (current user)
   async updateMyProfile(data: Partial<User>): Promise<ApiResponse<User>> {
     return apiClient.put<User>("/api/auth/profile", data);
+  },
+
+  // Update user stats (gamification)
+  async updateStats(stats: {
+    incrementPoints?: number;
+    incrementStreak?: number;
+    incrementCompletedTasks?: number;
+  }): Promise<ApiResponse<any>> {
+    return apiClient.put<any>("/api/auth/stats", stats);
   },
 
   // Admin: list users with optional filters/pagination
