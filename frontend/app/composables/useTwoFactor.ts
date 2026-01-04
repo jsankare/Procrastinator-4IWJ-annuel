@@ -108,7 +108,7 @@ export const useTwoFactor = () => {
     }
   }
 
-  const disableTwoFactor = async (userId: string, password: string) => {
+  const disableTwoFactor = async (userId: string, password: string): Promise<any> => {
     isLoading.value = true
     error.value = null
     try {

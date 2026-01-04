@@ -354,22 +354,77 @@ const cancelSetup = () => {
 
 const copyToClipboard = async (text: string) => {
   try {
-    await navigator.clipboard.writeText(text)
-    copyMessage.value = 'Copié!'
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+    } else {
+      // Fallback for non-secure contexts (http)
+      const textArea = document.createElement("textarea");
+      textArea.value = text;
+      textArea.style.position = "fixed";
+      textArea.style.left = "-999999px";
+      textArea.style.top = "-999999px";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+
+      try {
+        document.execCommand('copy');
+        textArea.remove();
+      } catch (err) {
+        console.error('Fallback copy failed', err);
+        textArea.remove();
+        throw new Error('Impossible de copier');
+      }
+    }
+
+    copyMessage.value = 'Copié !';
     setTimeout(() => {
-      copyMessage.value = 'Copier'
-    }, 2000)
+      copyMessage.value = 'Copier';
+    }, 2000);
   } catch (err) {
-    console.error('Error copying to clipboard:', err)
+    console.error('Error copying to clipboard:', err);
+    copyMessage.value = 'Erreur';
+    setTimeout(() => {
+      copyMessage.value = 'Copier';
+    }, 2000);
   }
 }
+
+const backupCopyMessage = ref('Copier')
+
+// ... (existing code)
 
 const copyBackupCodes = async () => {
   if (!setupData.value) return
   try {
     const text = setupData.value.backupCodes.join('\n')
-    await navigator.clipboard.writeText(text)
-    alert('Codes de sauvegarde copiés!')
+
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+    } else {
+      // Fallback
+      const textArea = document.createElement("textarea");
+      textArea.value = text;
+      textArea.style.position = "fixed";
+      textArea.style.left = "-999999px";
+      textArea.style.top = "-999999px";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        textArea.remove();
+      } catch (err) {
+        textArea.remove();
+        throw new Error('Impossible de copier');
+      }
+    }
+
+    backupCopyMessage.value = 'Copié !'
+    setTimeout(() => {
+      backupCopyMessage.value = 'Copier'
+    }, 2000)
+
   } catch (err) {
     console.error('Error copying backup codes:', err)
   }
