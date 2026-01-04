@@ -11,7 +11,8 @@
     "build": "pnpm -r build",
     "clean": "pnpm -r clean",
     "format": "pnpm -r format",
-    "docker:nuke":  "docker system prune -a --volumes -f"
+    "docker:nuke":  "docker stop $(docker ps -aq) 2>/dev/null || true && docker rm -f $(docker ps -aq) 2>/dev/null || true && docker rmi -f $(docker images -aq) 2>/dev/null || true && docker volume rm -f $(docker volume ls -q) 2>/dev/null || true && docker network rm $(docker network ls -q) 2>/dev/null || true && docker system prune -a --volumes -f",
+    "docker:reset": "pnpm docker:nuke && pnpm dev-b"
   },
   "keywords": [],
   "author": "",
