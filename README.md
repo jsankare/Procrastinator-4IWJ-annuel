@@ -188,7 +188,7 @@ pnpm format
 NODE_ENV=development
 PORT=3001
 MONGODB_URI=mongodb://procrastinator_user:procrastinator_pass@mongodb:27017/procrastinator?authSource=procrastinator
-JWT_SECRET=your-super-secret-jwt-key-change-in-production
+JWT_SECRET=your_super_secret_jwt_key_change_in_production_please
 JWT_EXPIRES_IN=7d
 JWT_REFRESH_EXPIRES_IN=30d
 CORS_ORIGIN=http://localhost
