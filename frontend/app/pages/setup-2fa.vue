@@ -3,14 +3,17 @@
     <div class="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8 py-10">
       <!-- Header -->
       <div class="mb-8">
-        <NuxtLink to="/profile" class="text-accent hover:text-accent/80 text-sm font-medium flex items-center gap-2 mb-4">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <NuxtLink to="/profile"
+          class="text-accent hover:text-accent/80 text-sm font-medium flex items-center gap-2 mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2">
             <path d="M15 19l-7-7 7-7"></path>
           </svg>
           Retour au profil
         </NuxtLink>
         <h1 class="text-3xl font-bold">Configuration de la double authentification</h1>
-        <p class="text-text/60 mt-2">Sécurisez votre compte avec Google Authenticator, Microsoft Authenticator ou Authy</p>
+        <p class="text-text/60 mt-2">Sécurisez votre compte avec Google Authenticator, Microsoft Authenticator ou Authy
+        </p>
       </div>
 
       <div class="space-y-8">
@@ -26,19 +29,18 @@
               <h3 class="text-lg font-semibold mb-2">Téléchargez une application d'authentification</h3>
               <p class="text-text/70 mb-4">Téléchargez l'une de ces applications sur votre téléphone :</p>
               <div class="flex flex-wrap gap-3">
-                <a href="https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2" 
-                   target="_blank" rel="noopener noreferrer"
-                   class="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-sm font-medium transition-colors">
+                <a href="https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2"
+                  target="_blank" rel="noopener noreferrer"
+                  class="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-sm font-medium transition-colors">
                   Google Authenticator
                 </a>
-                <a href="https://play.google.com/store/apps/details?id=com.microsoft.authenticator" 
-                   target="_blank" rel="noopener noreferrer"
-                   class="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-sm font-medium transition-colors">
+                <a href="https://play.google.com/store/apps/details?id=com.microsoft.authenticator" target="_blank"
+                  rel="noopener noreferrer"
+                  class="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-sm font-medium transition-colors">
                   Microsoft Authenticator
                 </a>
-                <a href="https://authy.com/download/"
-                   target="_blank" rel="noopener noreferrer"
-                   class="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-sm font-medium transition-colors">
+                <a href="https://authy.com/download/" target="_blank" rel="noopener noreferrer"
+                  class="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-sm font-medium transition-colors">
                   Authy
                 </a>
               </div>
@@ -56,15 +58,12 @@
             </div>
             <div class="flex-1">
               <h3 class="text-lg font-semibold mb-4">Scannez le code QR</h3>
-              
+
               <div v-if="!setupData" class="space-y-4">
                 <p class="text-text/70">Cliquez sur le bouton ci-dessous pour générer votre code QR.</p>
-                <button
-                  @click="generateQRCode"
-                  :disabled="isLoading || !isInitialized"
+                <button @click="generateQRCode" :disabled="isLoading || !isInitialized"
                   class="px-6 py-2 rounded-lg bg-accent hover:bg-accent/90 text-secondary font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  :title="!isInitialized ? 'Chargement du profil...' : ''"
-                >
+                  :title="!isInitialized ? 'Chargement du profil...' : ''">
                   {{ isLoading ? 'Génération...' : !isInitialized ? 'Chargement...' : 'Générer le code QR' }}
                 </button>
               </div>
@@ -80,12 +79,15 @@
                   <p class="text-sm text-text/60 mb-2">Clé secrète (à conserver en lieu sûr) :</p>
                   <div class="flex items-center gap-2">
                     <code class="flex-1 font-mono text-sm break-all text-accent">{{ setupData.secret }}</code>
-                    <button
-                      @click="copyToClipboard(setupData.secret)"
-                      class="p-2 rounded-lg hover:bg-white/10 transition-colors"
-                      :title="copyMessage"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <button @click="copyToClipboard(setupData.secret)"
+                      class="p-2 rounded-lg hover:bg-white/10 transition-colors" :title="copyMessage">
+                      <svg v-if="copyMessage === 'Copié !'" xmlns="http://www.w3.org/2000/svg"
+                        class="w-4 h-4 text-green-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                      </svg>
+                      <svg v-else xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2">
                         <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
                         <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
                       </svg>
@@ -94,10 +96,8 @@
                 </div>
 
                 <!-- Action -->
-                <button
-                  @click="showVerification = true"
-                  class="w-full px-6 py-2 rounded-lg bg-accent hover:bg-accent/90 text-secondary font-medium transition-colors"
-                >
+                <button @click="showVerification = true"
+                  class="w-full px-6 py-2 rounded-lg bg-accent hover:bg-accent/90 text-secondary font-medium transition-colors">
                   J'ai scanné le code → Vérifier
                 </button>
               </div>
@@ -115,36 +115,25 @@
             </div>
             <div class="flex-1">
               <h3 class="text-lg font-semibold mb-4">Entrez le code de vérification</h3>
-              
+
               <div class="space-y-4">
                 <div>
                   <label class="block text-sm font-medium mb-2">Code à 6 chiffres</label>
-                  <input
-                    v-model="verificationCode"
-                    type="text"
-                    inputmode="numeric"
-                    placeholder="000000"
-                    maxlength="6"
-                    class="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/10 focus:border-accent outline-none transition-colors text-center text-2xl tracking-widest font-mono"
-                  />
+                  <input v-model="verificationCode" type="text" inputmode="numeric" placeholder="000000" maxlength="6"
+                    class="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/10 focus:border-accent outline-none transition-colors text-center text-2xl tracking-widest font-mono" />
                 </div>
 
                 <div v-if="error" class="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
                   {{ error }}
                 </div>
 
-                <button
-                  @click="confirmEnableTwoFactor"
-                  :disabled="verificationCode.length !== 6 || isLoading"
-                  class="w-full px-6 py-2 rounded-lg bg-green-500 hover:bg-green-600 text-white font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
+                <button @click="confirmEnableTwoFactor" :disabled="verificationCode.length !== 6 || isLoading"
+                  class="w-full px-6 py-2 rounded-lg bg-green-500 hover:bg-green-600 text-white font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                   {{ isLoading ? 'Vérification...' : 'Vérifier et activer' }}
                 </button>
 
-                <button
-                  @click="cancelSetup"
-                  class="w-full px-6 py-2 rounded-lg border border-white/10 hover:bg-white/5 text-text font-medium transition-colors"
-                >
+                <button @click="cancelSetup"
+                  class="w-full px-6 py-2 rounded-lg border border-white/10 hover:bg-white/5 text-text font-medium transition-colors">
                   Annuler
                 </button>
               </div>
@@ -157,32 +146,45 @@
           <div class="flex items-start gap-4">
             <div class="shrink-0">
               <div class="flex items-center justify-center h-12 w-12 rounded-lg bg-yellow-500/20">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-yellow-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-yellow-500" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2">
+                  <path
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
+                  </path>
                 </svg>
               </div>
             </div>
             <div class="flex-1">
               <h3 class="text-lg font-semibold mb-2 text-yellow-200">Codes de sauvegarde</h3>
-              <p class="text-yellow-200/70 mb-4">Sauvegardez ces codes dans un endroit sûr. Ils peuvent être utilisés pour accéder à votre compte si vous perdez votre téléphone.</p>
-              
-              <div class="grid grid-cols-2 gap-2 mb-4 p-4 rounded-lg bg-white/5 border border-white/10">
-                <div v-for="(code, index) in setupData.backupCodes" :key="index" class="font-mono text-sm text-text/80">
-                  {{ code }}
+              <p class="text-yellow-200/70 mb-4">Sauvegardez ces codes dans un endroit sûr. Ils peuvent être utilisés
+                pour accéder à votre compte si vous perdez votre téléphone.</p>
+
+              <div class="relative mb-4 p-4 rounded-lg bg-white/5 border border-white/10">
+                <button @click="copyBackupCodes"
+                  class="absolute top-2 right-2 p-2 rounded-lg hover:bg-white/10 transition-colors"
+                  :title="backupCopyMessage">
+                  <svg v-if="backupCopyMessage === 'Copié !'" xmlns="http://www.w3.org/2000/svg"
+                    class="w-4 h-4 text-green-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                  <svg v-else xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-text/60" viewBox="0 0 24 24"
+                    fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                    <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                  </svg>
+                </button>
+                <div class="grid grid-cols-2 gap-2 text-center pr-10">
+                  <div v-for="(code, index) in setupData.backupCodes" :key="index"
+                    class="font-mono text-sm text-text/80">
+                    {{ code }}
+                  </div>
                 </div>
               </div>
 
               <div class="flex gap-3">
-                <button
-                  @click="copyBackupCodes"
-                  class="flex-1 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-sm font-medium transition-colors"
-                >
-                  📋 Copier les codes
-                </button>
-                <button
-                  @click="finalizeTwoFactor"
-                  class="flex-1 px-4 py-2 rounded-lg bg-green-500 hover:bg-green-600 text-white text-sm font-medium transition-colors"
-                >
+                <button @click="finalizeTwoFactor"
+                  class="flex-1 px-4 py-2 rounded-lg bg-green-500 hover:bg-green-600 text-white text-sm font-medium transition-colors">
                   ✓ J'ai sauvegardé les codes
                 </button>
               </div>
@@ -195,7 +197,8 @@
           <div class="flex items-start gap-4">
             <div class="shrink-0">
               <div class="flex items-center justify-center h-12 w-12 rounded-lg bg-green-500/20">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-green-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-green-500" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2">
                   <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
                   <polyline points="22 4 12 14.01 9 11.01"></polyline>
                 </svg>
@@ -204,10 +207,8 @@
             <div class="flex-1">
               <h3 class="text-lg font-semibold text-green-500 mb-2">Double authentification activée !</h3>
               <p class="text-green-200 mb-4">Votre compte est maintenant protégé par la double authentification.</p>
-              <NuxtLink
-                to="/profile"
-                class="inline-block px-6 py-2 rounded-lg bg-accent hover:bg-accent/90 text-secondary font-medium transition-colors"
-              >
+              <NuxtLink to="/profile"
+                class="inline-block px-6 py-2 rounded-lg bg-accent hover:bg-accent/90 text-secondary font-medium transition-colors">
                 Retour au profil
               </NuxtLink>
             </div>
@@ -267,7 +268,7 @@ const generateQRCode = async () => {
     console.error('User ID not available')
     return
   }
-  
+
   console.log('[2FA Setup Page] Generating QR code for user:', userId.value)
   try {
     console.log('[2FA Setup Page] Calling setupTwoFactor...')
@@ -299,21 +300,21 @@ const confirmEnableTwoFactor = async () => {
 const finalizeTwoFactor = async () => {
   showBackupCodes.value = false
   showSuccess.value = true
-  
+
   try {
     // First, initialize the auth store to load the token from localStorage
     authStore.init()
-    
+
     // Get the token
     const token = localStorage.getItem('auth_token')
-    
+
     if (!token) {
       console.error('[2FA] No token found in localStorage')
       return
     }
-    
+
     console.log('[2FA] Found token, fetching user data...')
-    
+
     // Fetch the latest user data from the backend
     const response = await fetch('http://localhost/api/auth/me', {
       method: 'GET',
@@ -322,22 +323,22 @@ const finalizeTwoFactor = async () => {
         'Authorization': `Bearer ${token}`
       }
     })
-    
+
     if (response.ok) {
       const data = await response.json()
       const userData = data.data || data
-      
+
       console.log('[2FA] Backend response:', data)
       console.log('[2FA] User data:', userData)
-      
+
       // Update the store with the fresh user data
       authStore.user = userData
-      
+
       // Save to localStorage
       if (import.meta.client) {
         localStorage.setItem('auth_user', JSON.stringify(userData))
       }
-      
+
       console.log('[2FA] User data refreshed, isTwoFactorEnabled:', userData.isTwoFactorEnabled)
     } else {
       console.error('[2FA] Failed to refresh user:', response.status, await response.text())
@@ -345,10 +346,10 @@ const finalizeTwoFactor = async () => {
   } catch (err) {
     console.error('[2FA] Error refreshing user data:', err)
   }
-  
+
   // Clear the setup data
   clearSetupData()
-  
+
   // Redirect to profile after 3 seconds
   setTimeout(() => {
     router.push('/profile')
@@ -363,22 +364,77 @@ const cancelSetup = () => {
 
 const copyToClipboard = async (text: string) => {
   try {
-    await navigator.clipboard.writeText(text)
-    copyMessage.value = 'Copié!'
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+    } else {
+      // Fallback for non-secure contexts (http)
+      const textArea = document.createElement("textarea");
+      textArea.value = text;
+      textArea.style.position = "fixed";
+      textArea.style.left = "-999999px";
+      textArea.style.top = "-999999px";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+
+      try {
+        document.execCommand('copy');
+        textArea.remove();
+      } catch (err) {
+        console.error('Fallback copy failed', err);
+        textArea.remove();
+        throw new Error('Impossible de copier');
+      }
+    }
+
+    copyMessage.value = 'Copié !';
     setTimeout(() => {
-      copyMessage.value = 'Copier'
-    }, 2000)
+      copyMessage.value = 'Copier';
+    }, 2000);
   } catch (err) {
-    console.error('Error copying to clipboard:', err)
+    console.error('Error copying to clipboard:', err);
+    copyMessage.value = 'Erreur';
+    setTimeout(() => {
+      copyMessage.value = 'Copier';
+    }, 2000);
   }
 }
+
+const backupCopyMessage = ref('Copier')
+
+// ... (existing code)
 
 const copyBackupCodes = async () => {
   if (!setupData.value) return
   try {
     const text = setupData.value.backupCodes.join('\n')
-    await navigator.clipboard.writeText(text)
-    alert('Codes de sauvegarde copiés!')
+
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+    } else {
+      // Fallback
+      const textArea = document.createElement("textarea");
+      textArea.value = text;
+      textArea.style.position = "fixed";
+      textArea.style.left = "-999999px";
+      textArea.style.top = "-999999px";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        textArea.remove();
+      } catch (err) {
+        textArea.remove();
+        throw new Error('Impossible de copier');
+      }
+    }
+
+    backupCopyMessage.value = 'Copié !'
+    setTimeout(() => {
+      backupCopyMessage.value = 'Copier'
+    }, 2000)
+
   } catch (err) {
     console.error('Error copying backup codes:', err)
   }
