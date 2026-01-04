@@ -30,7 +30,7 @@ const allowedOrigins = [
 
 const database = Database.getInstance();
 
-// Trust proxy - Required for Traefik
+// Trust proxy - Required for Caddy reverse proxy
 app.set('trust proxy', 1);
 
 // Middlewares de sécurité

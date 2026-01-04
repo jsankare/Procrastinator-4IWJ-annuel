@@ -49,6 +49,7 @@ export interface AuthResponse {
   token: string
   refreshToken: string
   requiresTwoFactor?: boolean
+  tempToken?: string
   userId?: string
 }
 
@@ -56,7 +57,12 @@ export interface AuthResponse {
 export const authApi = {
   // Login
   async login(credentials: LoginCredentials): Promise<ApiResponse<AuthResponse>> {
-    return apiClient.post<AuthResponse>('/api/auth/login', credentials)
+    const response = await apiClient.post<AuthResponse>('/api/auth/login', credentials);
+    // Handle 2FA requirement - check if data contains require2fa flag
+    if (response.success && response.data && (response.data as any).require2fa) {
+      return response; // Return as-is, data already contains require2fa, tempToken, userId
+    }
+    return response;
   },
 
   // Register

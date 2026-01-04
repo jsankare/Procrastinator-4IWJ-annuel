@@ -14,40 +14,39 @@ const PORT = parseInt(process.env.PORT || '3001', 10);
 const SERVICE_NAME = process.env.SERVICE_NAME || 'auth-service';
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
-// Allow multiple origins for CORS
+// CORS configuration - Caddy handles routing on port 80
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost';
 process.env.FRONTEND_URL = FRONTEND_URL;
 
-const frontendHost = FRONTEND_URL.replace(/:\d+$/, '');
+// Allowed origins for production CORS (Caddy on port 80)
 const allowedOrigins = [
-  FRONTEND_URL,
-  `${frontendHost}:3000`,
-  `${frontendHost}:85`,
-  'http://127.0.0.1',
-  'http://127.0.0.1:3000',
-  'http://127.0.0.1:85',
+  FRONTEND_URL,              // http://localhost
+  'http://127.0.0.1',        // Localhost IP
 ];
 
 const database = Database.getInstance();
 
-// Trust proxy - Required for Traefik
+// Trust proxy - Required for Caddy reverse proxy
 app.set('trust proxy', 1);
 
 // Middlewares de sécurité
 app.use(helmet());
+
+// CORS configuration - permissive in development since Caddy handles it
 app.use(
   cors({
-    origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps, curl, etc.)
-      if (!origin) return callback(null, true);
-      
-      if (allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        console.warn(`CORS blocked request from origin: ${origin}`);
-        callback(new Error('Not allowed by CORS'));
+    origin: NODE_ENV === 'production'
+      ? (origin, callback) => {
+        // Strict checking in production
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.includes(origin)) {
+          callback(null, true);
+        } else {
+          console.warn(`CORS blocked request from origin: ${origin}`);
+          callback(new Error('Not allowed by CORS'));
+        }
       }
-    },
+      : true, // Allow all origins in development
     credentials: true,
   }),
 );

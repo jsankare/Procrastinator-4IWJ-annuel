@@ -1,7 +1,8 @@
 import { Router } from 'express';
 import { UserController } from '../controllers/userController.js';
+import { authMiddleware } from '../middleware/authMiddleware.js';
 
-const router = Router();
+const router: Router = Router();
 
 // Authentication routes
 router.post('/register', UserController.register);
@@ -21,10 +22,15 @@ router.post('/enable-2fa', UserController.enableTwoFactor);
 router.post('/verify-2fa', UserController.verifyTwoFactorToken);
 router.post('/disable-2fa', UserController.disableTwoFactor);
 
+// 2FA Routes
+router.post('/2fa/generate', authMiddleware, UserController.generate2FA);
+router.post('/2fa/verify', authMiddleware, UserController.verify2FA);
+router.post('/2fa/validate-login', UserController.validate2FALogin);
+
 // User profile routes (requires authentication)
 router.get('/profile', UserController.getProfile);
 router.get('/me', UserController.getProfile); // Alias for /profile
-router.put('/profile', UserController.updateProfile);
+router.put('/profile', authMiddleware, UserController.updateProfile);
 
 // Admin routes for user management
 router.get('/users/stats', UserController.getUserStats);

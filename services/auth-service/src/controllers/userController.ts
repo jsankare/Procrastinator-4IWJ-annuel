@@ -1,7 +1,10 @@
 import { Request, Response } from 'express';
 import { UserModel } from '../models/User.js';
-import { JWTUtils } from '../utils/jwt.js';
+import jwt from 'jsonwebtoken';
 import { EmailService } from '../utils/email.js';
+import { authenticator } from 'otplib';
+import { toDataURL } from 'qrcode';
+import { JWTUtils } from '../utils/jwt.js';
 import { TOTPUtils } from '../utils/totp.js';
 import {
   CreateUserRequest,
@@ -94,7 +97,7 @@ export class UserController {
       if (!user) {
         res.status(401).json({
           success: false,
-          message: 'Identifiants non valides',
+          message: 'Invalid email or password',
           timestamp: new Date().toISOString(),
         });
         return;
@@ -126,19 +129,26 @@ export class UserController {
       if (!isPasswordValid) {
         res.status(401).json({
           success: false,
-          message: 'Identifiants non valides',
+          message: 'Invalid email or password', // Generic message for security
           timestamp: new Date().toISOString(),
         });
         return;
       }
 
-      // Check if 2FA is enabled
+      // Check for 2FA
       if (user.isTwoFactorEnabled) {
+        const tempToken = jwt.sign(
+          { userId: user._id, role: user.role, type: '2fa-pending' },
+          process.env.JWT_SECRET || 'default_secret',
+          { expiresIn: '5m' } // Short lived
+        );
+
         res.status(200).json({
           success: true,
           message: 'Two-factor authentication required',
           data: {
-            requiresTwoFactor: true,
+            require2fa: true,
+            tempToken,
             userId: user._id!.toString(),
           },
           timestamp: new Date().toISOString(),
@@ -186,6 +196,128 @@ export class UserController {
    * Get current user profile
    * GET /profile
    */
+  static async generate2FA(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = (req as any).user?.userId;
+      const user = await UserModel.findById(userId);
+
+      if (!user) {
+        res.status(404).json({ success: false, message: 'User not found' });
+        return;
+      }
+
+      const secret = authenticator.generateSecret();
+      const otpauth = authenticator.keyuri(user.email, 'Procrastinator', secret);
+      const qrCode = await toDataURL(otpauth);
+
+      // Generate backup codes
+      const backupCodes = TOTPUtils.generateBackupCodes();
+      const hashedBackupCodes = backupCodes.map(code => TOTPUtils.hashBackupCode(code));
+
+      // Save secret and backup codes but don't enable yet
+      await UserModel.updateById(userId, {
+        totpSecret: secret,
+        backupCodes: hashedBackupCodes
+      });
+
+      res.status(200).json({
+        success: true,
+        data: {
+          secret,
+          qrCode,
+          backupCodes, // Return plain codes to user
+        }
+      });
+    } catch (error) {
+      console.error('2FA Generate error:', error);
+      res.status(500).json({ success: false, message: 'Server error' });
+    }
+  }
+
+  static async verify2FA(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = (req as any).user?.userId;
+      const { token } = req.body;
+      const user = await UserModel.findById(userId);
+
+      if (!user || !user.totpSecret) {
+        res.status(400).json({ success: false, message: '2FA not initialized' });
+        return;
+      }
+
+      const isValid = authenticator.check(token, user.totpSecret);
+
+      if (!isValid) {
+        res.status(400).json({ success: false, message: 'Invalid token' });
+        return;
+      }
+
+      await UserModel.updateById(userId, { isTwoFactorEnabled: true });
+
+      res.status(200).json({ success: true, message: '2FA enabled successfully' });
+    } catch (error) {
+      console.error('2FA Verify error:', error);
+      res.status(500).json({ success: false, message: 'Server error' });
+    }
+  }
+
+  static async validate2FALogin(req: Request, res: Response): Promise<void> {
+    try {
+      const { tempToken, token } = req.body;
+
+      if (!tempToken || !token) {
+        res.status(400).json({ success: false, message: 'Missing token' });
+        return;
+      }
+
+      // Verify temp token
+      const decoded = jwt.verify(tempToken, process.env.JWT_SECRET || 'default_secret') as any;
+      if (decoded.type !== '2fa-pending') {
+        res.status(401).json({ success: false, message: 'Invalid token type' });
+        return;
+      }
+
+      const user = await UserModel.findById(decoded.userId);
+      if (!user || !user.isTwoFactorEnabled || !user.totpSecret) {
+        res.status(400).json({ success: false, message: '2FA setup invalid' });
+        return;
+      }
+
+      const isValid = authenticator.check(token, user.totpSecret);
+      if (!isValid) {
+        res.status(401).json({ success: false, message: 'Invalid 2FA code' });
+        return;
+      }
+
+      // Generate real token
+      const finalToken = jwt.sign(
+        { userId: user._id!.toString(), email: user.email, role: user.role },
+        process.env.JWT_SECRET || 'default_secret',
+        { expiresIn: '24h' }
+      );
+
+      // Update last login time
+      await UserModel.updateLastLogin(user._id!.toString());
+
+      // Remove password from response
+      const { password: _, ...userWithoutPassword } = user;
+
+      res.status(200).json({
+        success: true,
+        message: 'Login successful',
+        data: {
+          token: finalToken,
+          user: userWithoutPassword,
+          expiresAt: JWTUtils.getTokenExpirationDate(finalToken),
+        },
+      });
+
+    } catch (error) {
+      console.error('2FA Validate error:', error);
+      res.status(401).json({ success: false, message: 'Invalid or expired session' });
+    }
+  }
+
   static async getProfile(req: Request, res: Response): Promise<void> {
     try {
       const authHeader = req.headers.authorization;
@@ -943,7 +1075,7 @@ export class UserController {
         isBackupCodeValid = TOTPUtils.verifyBackupCode(token, user.backupCodes);
         if (isBackupCodeValid) {
           // Remove used backup code
-          const newBackupCodes = user.backupCodes.filter((code) => code !== TOTPUtils.hashBackupCode(token));
+          const newBackupCodes = user.backupCodes.filter((code: string) => code !== TOTPUtils.hashBackupCode(token));
           await UserModel.updateById(userId, { backupCodes: newBackupCodes });
         }
       }

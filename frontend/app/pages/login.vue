@@ -103,7 +103,10 @@ const handleLogin = async () => {
         setTimeout(() => {
           router.push({
             path: '/verify-2fa',
-            query: { userId: result.userId }
+            query: { 
+              userId: result.userId,
+              tempToken: result.tempToken
+            }
           })
         }, 1000)
       } else {

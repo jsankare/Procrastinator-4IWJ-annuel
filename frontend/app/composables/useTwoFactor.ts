@@ -1,5 +1,5 @@
-import { ref, computed } from 'vue'
-import { API_BASE_URL } from "~/utils/api";
+import { ref } from 'vue'
+import { apiClient } from '~/utils/api';
 
 const setupData = ref<{
   secret: string
@@ -10,9 +10,6 @@ const setupData = ref<{
 const isLoading = ref(false)
 const error = ref<string | null>(null)
 
-// Base URL pour l'auth service via Traefik (configurable via NUXT_PUBLIC_API_BASE_URL / utils/api)
-const AUTH_SERVICE_URL = `${API_BASE_URL}/api/auth`;
-
 export const useTwoFactor = () => {
   // Setup 2FA - génère secret et QR code
   const setupTwoFactor = async (userId: string) => {
@@ -20,23 +17,15 @@ export const useTwoFactor = () => {
     error.value = null
     try {
       console.log('[2FA] Setting up 2FA for user:', userId)
-      const response = await fetch(`${AUTH_SERVICE_URL}/setup-2fa`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId }),
-      })
+      const response = await apiClient.post<{ secret: string; qrCode: string; backupCodes: string[] }>('/api/auth/2fa/generate')
 
-      console.log('[2FA] Setup response status:', response.status)
-      if (!response.ok) {
-        const errData = await response.json()
-        console.error('[2FA] Setup error:', errData)
-        throw new Error('Failed to setup 2FA')
+      if (!response.success || !response.data) {
+        throw new Error(response.error || response.message || 'Failed to setup 2FA')
       }
 
-      const data = await response.json()
       console.log('[2FA] Setup success, got QR code')
-      setupData.value = data.data
-      return data.data
+      setupData.value = response.data
+      return response.data
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'An error occurred'
       console.error('[2FA] Setup error:', error.value)
@@ -56,20 +45,14 @@ export const useTwoFactor = () => {
     isLoading.value = true
     error.value = null
     try {
-      const response = await fetch(`${AUTH_SERVICE_URL}/enable-2fa`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, secret, token, backupCodes }),
-      })
+      // Note: Backend verification only needs token.
+      const response = await apiClient.post('/api/auth/2fa/verify', { token })
 
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.message || 'Failed to enable 2FA')
+      if (!response.success) {
+        throw new Error(response.error || response.message || 'Failed to enable 2FA')
       }
 
-      // Ne pas effacer setupData ici - on en a besoin pour afficher les codes de sauvegarde
-      // setupData.value = null
-      return await response.json()
+      return response.data
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'An error occurred'
       throw err
@@ -78,23 +61,38 @@ export const useTwoFactor = () => {
     }
   }
 
-  // Verify 2FA token during login
+  // Validate 2FA login with tempToken
+  const validateLogin = async (tempToken: string, token: string) => {
+    isLoading.value = true
+    error.value = null
+    try {
+      const response = await apiClient.post<any>('/api/auth/2fa/validate-login', { tempToken, token })
+
+      if (!response.success) {
+        throw new Error(response.error || response.message || 'Invalid 2FA code')
+      }
+
+      return response.data
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : 'An error occurred'
+      throw err
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  // Verify 2FA token during settings verification
   const verifyTwoFactorToken = async (userId: string, token: string) => {
     isLoading.value = true
     error.value = null
     try {
-      const response = await fetch(`${AUTH_SERVICE_URL}/verify-2fa`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, token }),
-      })
+      const response = await apiClient.post('/api/auth/2fa/verify', { token })
 
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.message || 'Invalid 2FA token')
+      if (!response.success) {
+        throw new Error(response.error || response.message || 'Invalid 2FA token')
       }
 
-      return await response.json()
+      return response.data
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'An error occurred'
       throw err
@@ -103,23 +101,12 @@ export const useTwoFactor = () => {
     }
   }
 
-  // Disable 2FA
   const disableTwoFactor = async (userId: string, password: string) => {
     isLoading.value = true
     error.value = null
     try {
-      const response = await fetch(`${AUTH_SERVICE_URL}/disable-2fa`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, password }),
-      })
-
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.message || 'Failed to disable 2FA')
-      }
-
-      return await response.json()
+      // TODO: Implement disable endpoint
+      throw new Error('Disable 2FA not implemented on backend yet')
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'An error occurred'
       throw err
@@ -143,6 +130,7 @@ export const useTwoFactor = () => {
     setupTwoFactor,
     enableTwoFactor,
     verifyTwoFactorToken,
+    validateLogin,
     disableTwoFactor,
     clearSetupData,
     clearError,
