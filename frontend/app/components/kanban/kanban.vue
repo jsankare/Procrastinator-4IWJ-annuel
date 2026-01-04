@@ -2,39 +2,17 @@
     <div class="flex flex-col gap-4 w-full">
         <!-- Column Management Section -->
         <div v-if="canManageColumns" class="px-2 sm:px-0">
-            <form
-                @submit.prevent="addColumn"
-                class="flex gap-2 items-center mb-2"
-            >
-                <input
-                    v-model="newColumnTitle"
-                    placeholder="Nouvelle colonne..."
-                    class="rounded-md p-2 bg-primary text-text border border-white/10 w-full max-w-xs"
-                />
-                <button
-                    type="submit"
-                    :disabled="!newColumnTitle.trim() || addingColumn"
-                    class="bg-accent text-secondary px-4 py-2 rounded-md font-semibold whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                >
-                    <svg
-                        v-if="addingColumn"
-                        class="animate-spin h-4 w-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                    >
-                        <circle
-                            class="opacity-25"
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="currentColor"
-                            stroke-width="4"
-                        ></circle>
-                        <path
-                            class="opacity-75"
-                            fill="currentColor"
-                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        ></path>
+            <form @submit.prevent="addColumn" class="flex gap-2 items-center mb-2">
+                <input v-model="newColumnTitle" placeholder="Nouvelle colonne..."
+                    class="rounded-md p-2 bg-primary text-text border border-white/10 w-full max-w-xs" />
+                <button type="submit" :disabled="!newColumnTitle.trim() || addingColumn"
+                    class="bg-accent text-secondary px-4 py-2 rounded-md font-semibold whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+                    <svg v-if="addingColumn" class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                        </circle>
+                        <path class="opacity-75" fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                        </path>
                     </svg>
                     {{ addingColumn ? "Ajout..." : "Ajouter" }}
                 </button>
@@ -43,28 +21,13 @@
 
         <!-- No Permission Message -->
         <div v-else-if="!loading && !error && workspace" class="px-2 sm:px-0">
-            <div
-                class="bg-secondary/40 border border-white/10 rounded-lg p-4 text-center"
-            >
-                <div
-                    class="flex items-center justify-center gap-2 text-white/60 mb-2"
-                >
-                    <svg
-                        class="w-5 h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            d="M12 15v2m-6 0h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                        />
+            <div class="bg-secondary/40 border border-white/10 rounded-lg p-4 text-center">
+                <div class="flex items-center justify-center gap-2 text-white/60 mb-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M12 15v2m-6 0h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                     </svg>
-                    <span class="text-sm"
-                        >Contactez un admin pour ajouter une colonne</span
-                    >
+                    <span class="text-sm">Contactez un admin pour ajouter une colonne</span>
                 </div>
                 <p class="text-xs text-white/40">
                     Seuls les propriétaires et administrateurs peuvent gérer les
@@ -76,79 +39,40 @@
         <!-- Loading state -->
         <div v-if="loading" class="flex items-center justify-center py-12">
             <div class="text-center">
-                <svg
-                    class="animate-spin h-8 w-8 mx-auto mb-3 text-accent"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                >
-                    <circle
-                        class="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        stroke-width="4"
-                    ></circle>
-                    <path
-                        class="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
+                <svg class="animate-spin h-8 w-8 mx-auto mb-3 text-accent" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                    </path>
                 </svg>
                 <div class="text-white/70">Chargement des colonnes...</div>
             </div>
         </div>
 
         <!-- Error state -->
-        <div
-            v-else-if="error"
-            class="bg-red-500/10 border border-red-500/20 rounded-lg p-4 text-red-400 text-center"
-        >
+        <div v-else-if="error" class="bg-red-500/10 border border-red-500/20 rounded-lg p-4 text-red-400 text-center">
             <div class="mb-3">
-                <svg
-                    class="w-8 h-8 mx-auto mb-2 text-red-400"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.5"
-                    viewBox="0 0 24 24"
-                >
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"
-                    />
+                <svg class="w-8 h-8 mx-auto mb-2 text-red-400" fill="none" stroke="currentColor" stroke-width="1.5"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
                 </svg>
             </div>
             <p class="mb-3">{{ error }}</p>
-            <button
-                @click="loadWorkspace()"
-                class="bg-red-500/20 hover:bg-red-500/30 text-red-400 px-4 py-2 rounded-md transition-colors"
-            >
+            <button @click="loadWorkspace()"
+                class="bg-red-500/20 hover:bg-red-500/30 text-red-400 px-4 py-2 rounded-md transition-colors">
                 Réessayer
             </button>
         </div>
 
         <!-- No Columns Fallback -->
-        <div
-            v-else-if="!loading && !error && columns.length === 0"
-            class="flex items-center justify-center py-16"
-        >
-            <div
-                class="text-center bg-secondary/20 border border-white/10 rounded-lg p-8 max-w-md"
-            >
+        <div v-else-if="!loading && !error && columns.length === 0" class="flex items-center justify-center py-16">
+            <div class="text-center bg-secondary/20 border border-white/10 rounded-lg p-8 max-w-md">
                 <div class="mb-4">
-                    <svg
-                        class="w-12 h-12 mx-auto text-white/30 mb-3"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.5"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-12a3.375 3.375 0 00-3.375 3.375v2.625M6.75 10.5h10.5M12 3.75v6.75"
-                        />
+                    <svg class="w-12 h-12 mx-auto text-white/30 mb-3" fill="none" stroke="currentColor"
+                        stroke-width="1.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-12a3.375 3.375 0 00-3.375 3.375v2.625M6.75 10.5h10.5M12 3.75v6.75" />
                     </svg>
                 </div>
                 <h3 class="text-lg font-semibold text-white mb-2">
@@ -165,33 +89,21 @@
                             : "Contactez un administrateur pour configurer les colonnes."
                     }}
                 </p>
-                <button
-                    @click="loadWorkspace"
-                    class="text-accent hover:text-accent/80 text-sm underline hover:no-underline transition-colors"
-                >
+                <button @click="loadWorkspace"
+                    class="text-accent hover:text-accent/80 text-sm underline hover:no-underline transition-colors">
                     Actualiser
                 </button>
             </div>
         </div>
 
         <!-- Columns -->
-        <div
-            v-else-if="!loading && !error && columns.length > 0"
+        <div v-else-if="!loading && !error && columns.length > 0"
             class="flex gap-4 overflow-x-auto pb-6 scrollbar-thin scrollbar-thumb-accent/40 scrollbar-track-transparent"
-            style="min-height: 350px"
-        >
-            <KanbanColumn
-                v-for="col in columns"
-                :key="col._id"
-                :column-id="col._id"
-                :title="col.name"
-                :color="col.color"
-                :tasks="col.tasks"
-                :can-delete="columns.length > 1 && canManageColumns"
-                @drop="handleDrop"
-                @delete="deleteColumn(col._id)"
-                class="min-w-[260px] w-full max-w-xs shrink-0"
-            />
+            style="min-height: 350px">
+            <KanbanColumn v-for="col in columns" :key="col._id" :column-id="col._id" :title="col.name"
+                :color="col.color" :tasks="col.tasks" :can-delete="columns.length > 1 && canManageColumns"
+                @update:tasks="(newTasks: any) => { col.tasks = newTasks; persistTasks(); }" @change="persistTasks"
+                @delete="deleteColumn(col._id)" class="min-w-[260px] w-full max-w-xs shrink-0" />
         </div>
     </div>
 </template>
@@ -227,12 +139,44 @@ const userRole = ref<string>("member"); // Default to member
 const currentUserId = ref<string>(""); // Current user ID
 
 // Reactive data
-const workspace = ref<any>(null);
+const workspace = ref<any>(null); // Use any to bypass strict type check on rapid development
 const columns = ref<WorkspaceColumn[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
 const newColumnTitle = ref("");
 const addingColumn = ref(false);
+
+// Persistence Helper
+const persistTasks = () => {
+    if (!import.meta.client) return;
+
+    // update task properties based on their new column
+    const allTasks = columns.value.flatMap(col =>
+        col.tasks.map(t => ({
+            ...t,
+            columnId: col._id,
+            status: col.name, // Sync status with column name
+            columnName: col.name
+        }))
+    );
+
+    try {
+        localStorage.setItem(`kanban_tasks_${props.workspaceId}`, JSON.stringify(allTasks));
+    } catch (e) {
+        console.error("Failed to save tasks to localStorage", e);
+    }
+};
+
+const loadTasksFromStorage = (workspaceId: string): Task[] | null => {
+    if (!import.meta.client) return null;
+    try {
+        const stored = localStorage.getItem(`kanban_tasks_${workspaceId}`);
+        return stored ? JSON.parse(stored) : null;
+    } catch (e) {
+        console.error("Failed to load tasks from localStorage", e);
+        return null;
+    }
+};
 
 // Load workspace data
 const loadWorkspace = async () => {
@@ -269,7 +213,7 @@ const loadWorkspace = async () => {
         );
 
         if (response.success) {
-            workspace.value = response.data?.workspace;
+            workspace.value = (response.data as any)?.workspace;
 
             // Determine user role in this workspace
             determineUserRole();
@@ -279,20 +223,37 @@ const loadWorkspace = async () => {
                 (a: any, b: any) => a.position - b.position,
             );
 
-            // Generate mock tasks for all columns
-            const mockTasks = generateMockTasksForWorkspace(
-                props.workspaceId,
-                sortedColumns,
-                { minTasks: 0, maxTasks: 3 },
-            );
+            // Try loading from LocalStorage first (Persistence Layer)
+            const storedTasks = loadTasksFromStorage(props.workspaceId);
+            let tasksToUse: MockTask[] = [];
+
+            if (storedTasks && storedTasks.length > 0) {
+                tasksToUse = storedTasks;
+            } else {
+                // Fallback to random generation if no saved state
+                tasksToUse = generateMockTasksForWorkspace(
+                    props.workspaceId,
+                    sortedColumns,
+                    { minTasks: 0, maxTasks: 3 },
+                );
+            }
 
             // Assign tasks to columns
             const columnsWithTasks = sortedColumns.map((col: any) => ({
                 ...col,
-                tasks: mockTasks.filter((task) => task.columnId === col._id),
+                tasks: tasksToUse.filter((task) =>
+                    // Match by ID if possible, otherwise by status name (legacy support)
+                    task.columnId === col._id || task.status === col.name
+                ),
             }));
 
             columns.value = columnsWithTasks;
+
+            // Persist initial state to ensure consistency if we just generated mocks
+            if (!storedTasks) {
+                persistTasks();
+            }
+
         } else {
             error.value = response.error || "Failed to load workspace";
         }
@@ -362,66 +323,20 @@ const deleteColumn = async (columnId: string) => {
     }
 };
 
-// Handle task drop (for future task management)
-const handleDrop = (details: {
-    fromColumnId: string;
-    toColumnId: string;
-    taskId: number | string;
-    fromIndex: number;
-    toIndex: number;
-}) => {
-    const { fromColumnId, toColumnId, taskId, fromIndex } = details;
-    let { toIndex } = details;
-
-    const fromCol = columns.value.find((c) => c._id === fromColumnId);
-    const toCol = columns.value.find((c) => c._id === toColumnId);
-    if (!fromCol || !toCol) return;
-
-    // No-op guard: same column and no real movement
-    if (
-        fromCol === toCol &&
-        (toIndex === fromIndex || toIndex === fromIndex + 1)
-    ) {
-        return;
-    }
-
-    // Remove from source
-    if (fromIndex < 0 || fromIndex >= fromCol.tasks.length) return;
-    const [item] = fromCol.tasks.splice(fromIndex, 1);
-    if (!item || String(item.id) !== String(taskId)) return;
-
-    // Adjust index if same column and inserting lower
-    if (fromCol === toCol && toIndex > fromIndex) {
-        toIndex -= 1;
-    }
-
-    // Clamp safety
-    if (toIndex < 0) toIndex = 0;
-    if (toIndex > toCol.tasks.length) toIndex = toCol.tasks.length;
-
-    // Insert at destination
-    toCol.tasks.splice(toIndex, 0, item);
-
-    // Update column ID if column changed
-    if (fromCol !== toCol) {
-        item.columnId = toCol._id;
-    }
-
-    // TODO: Make API call to update task column/position
-    console.log("Task moved:", { taskId, fromColumnId, toColumnId, toIndex });
-};
-
 // Determine user role in workspace
 const determineUserRole = () => {
     if (!workspace.value) return;
 
-    // Get current user ID from localStorage (you might have a different auth pattern)
+    // Get current user ID from localStorage
     if (import.meta.client) {
         const token = localStorage.getItem("auth_token");
         if (token) {
             try {
-                const payload = JSON.parse(atob(token.split(".")[1]));
-                currentUserId.value = payload.userId;
+                const part = token.split(".")[1];
+                if (part) {
+                    const payload = JSON.parse(atob(part));
+                    currentUserId.value = payload.userId;
+                }
             } catch (e) {
                 console.error("Error parsing token:", e);
             }
