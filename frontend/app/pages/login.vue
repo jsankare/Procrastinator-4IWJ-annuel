@@ -83,7 +83,17 @@ const email = ref('')
 const password = ref('')
 const errorMessage = ref('')
 const successMessage = ref('')
+const error = ref('')
 const isLoading = ref(false)
+
+useHead({
+  title: 'Connexion - Procrastinator',
+  meta: [
+    { name: 'description', content: 'Connectez-vous à votre compte Procrastinator avec authentification sécurisée.' },
+    { name: 'robots', content: 'noindex, nofollow' }, // Login typically shouldn't be indexed
+    { property: 'og:title', content: 'Connexion - Procrastinator' },
+  ],
+})
 
 const handleLogin = async () => {
   errorMessage.value = ''

@@ -81,12 +81,7 @@
                     <code class="flex-1 font-mono text-sm break-all text-accent">{{ setupData.secret }}</code>
                     <button @click="copyToClipboard(setupData.secret)"
                       class="p-2 rounded-lg hover:bg-white/10 transition-colors" :title="copyMessage">
-                      <svg v-if="copyMessage === 'Copié !'" xmlns="http://www.w3.org/2000/svg"
-                        class="w-4 h-4 text-green-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        stroke-width="2">
-                        <polyline points="20 6 9 17 4 12"></polyline>
-                      </svg>
-                      <svg v-else xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
+                      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2">
                         <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
                         <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
@@ -159,30 +154,17 @@
               <p class="text-yellow-200/70 mb-4">Sauvegardez ces codes dans un endroit sûr. Ils peuvent être utilisés
                 pour accéder à votre compte si vous perdez votre téléphone.</p>
 
-              <div class="relative mb-4 p-4 rounded-lg bg-white/5 border border-white/10">
-                <button @click="copyBackupCodes"
-                  class="absolute top-2 right-2 p-2 rounded-lg hover:bg-white/10 transition-colors"
-                  :title="backupCopyMessage">
-                  <svg v-if="backupCopyMessage === 'Copié !'" xmlns="http://www.w3.org/2000/svg"
-                    class="w-4 h-4 text-green-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                    stroke-width="2">
-                    <polyline points="20 6 9 17 4 12"></polyline>
-                  </svg>
-                  <svg v-else xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-text/60" viewBox="0 0 24 24"
-                    fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
-                    <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
-                  </svg>
-                </button>
-                <div class="grid grid-cols-2 gap-2 text-center pr-10">
-                  <div v-for="(code, index) in setupData.backupCodes" :key="index"
-                    class="font-mono text-sm text-text/80">
-                    {{ code }}
-                  </div>
+              <div class="grid grid-cols-2 gap-2 mb-4 p-4 rounded-lg bg-white/5 border border-white/10">
+                <div v-for="(code, index) in setupData.backupCodes" :key="index" class="font-mono text-sm text-text/80">
+                  {{ code }}
                 </div>
               </div>
 
               <div class="flex gap-3">
+                <button @click="copyBackupCodes"
+                  class="flex-1 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-sm font-medium transition-colors">
+                  📋 Copier les codes
+                </button>
                 <button @click="finalizeTwoFactor"
                   class="flex-1 px-4 py-2 rounded-lg bg-green-500 hover:bg-green-600 text-white text-sm font-medium transition-colors">
                   ✓ J'ai sauvegardé les codes
@@ -224,7 +206,6 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '~/composables/useAuthStore'
 import { useTwoFactor } from '~/composables/useTwoFactor'
-import { authApi } from '~/composables/useAuth'
 
 definePageMeta({
   layout: 'default',
@@ -232,6 +213,15 @@ definePageMeta({
 
 const router = useRouter()
 const authStore = useAuthStore()
+const { user } = authStore
+
+useHead({
+  title: 'Configuration 2FA - Procrastinator',
+  meta: [
+    { name: 'robots', content: 'noindex, nofollow' },
+  ],
+})
+
 const { setupData, isLoading, error, setupTwoFactor, enableTwoFactor: enableTwoFactorAPI, clearSetupData } = useTwoFactor()
 
 const showVerification = ref(false)

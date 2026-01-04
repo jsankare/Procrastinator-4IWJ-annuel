@@ -1,5 +1,12 @@
 import { ref } from 'vue'
 import { apiClient } from '~/utils/api';
+import type { User } from './useAuth';
+
+interface ValidateLoginResponse {
+  token: string
+  user: User
+  expiresAt: string
+}
 
 const setupData = ref<{
   secret: string
@@ -46,7 +53,7 @@ export const useTwoFactor = () => {
     error.value = null
     try {
       // Note: Backend verification only needs token.
-      const response = await apiClient.post('/api/auth/2fa/verify', { token })
+      const response = await apiClient.post<void>('/api/auth/2fa/verify', { token })
 
       if (!response.success) {
         throw new Error(response.error || response.message || 'Failed to enable 2FA')
@@ -66,7 +73,7 @@ export const useTwoFactor = () => {
     isLoading.value = true
     error.value = null
     try {
-      const response = await apiClient.post<any>('/api/auth/2fa/validate-login', { tempToken, token })
+      const response = await apiClient.post<ValidateLoginResponse>('/api/auth/2fa/validate-login', { tempToken, token })
 
       if (!response.success) {
         throw new Error(response.error || response.message || 'Invalid 2FA code')
@@ -86,7 +93,7 @@ export const useTwoFactor = () => {
     isLoading.value = true
     error.value = null
     try {
-      const response = await apiClient.post('/api/auth/2fa/verify', { token })
+      const response = await apiClient.post<void>('/api/auth/2fa/verify', { token })
 
       if (!response.success) {
         throw new Error(response.error || response.message || 'Invalid 2FA token')
@@ -105,13 +112,13 @@ export const useTwoFactor = () => {
     isLoading.value = true
     error.value = null
     try {
-      const response = await apiClient.post('/api/auth/disable-2fa', { userId, password })
+      const response = await apiClient.post<{ user: User }>('/api/auth/disable-2fa', { userId, password })
 
       if (!response.success) {
         throw new Error(response.error || response.message || 'Failed to disable 2FA')
       }
 
-      return response.data
+      return response
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'An error occurred'
       throw err

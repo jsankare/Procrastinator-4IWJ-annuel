@@ -74,6 +74,13 @@
               class="px-4 py-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 font-medium transition-colors text-sm">
               Désactiver
             </button>
+            <span v-if="user?.isTwoFactorEnabled"
+              class="px-4 py-2 rounded-lg bg-green-500/10 border border-green-500/20 text-green-400 font-medium text-sm flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"></path>
+              </svg>
+              Activée
+            </span>
           </div>
         </div>
       </div>
@@ -151,6 +158,13 @@ const disablePassword = ref('');
 const disableError = ref('');
 const isDisablingLoading = ref(false);
 
+useHead({
+  title: 'Mon Profil - Procrastinator',
+  meta: [
+    { name: 'robots', content: 'noindex, nofollow' },
+  ],
+})
+
 onMounted(async () => {
   await authStore.init();
   if (authStore.token?.value) {
@@ -213,14 +227,9 @@ async function confirmDisable2FA() {
   disableError.value = '';
 
   try {
-    const data = await disableTwoFactor(user.value._id, disablePassword.value);
-
-    // Si on arrive ici, c'est que ça a marché (sinon useTwoFactor aurait throw)
-    if (data && data.user) {
-      authStore.setUser(data.user); // Update user directly or trigger a fetch
-      // Force refresh user to be sure
-      // await authStore.fetchCurrentUser(); // Not needed if we set it directly
-
+    const response = await disableTwoFactor(user.value._id, disablePassword.value);
+    if (response.success) {
+      authStore.user = (response as any).data.user;
       showDisable2FAModal.value = false;
       showPassword.value = false;
       disablePassword.value = '';
