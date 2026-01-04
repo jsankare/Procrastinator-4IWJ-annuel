@@ -1,6 +1,14 @@
 import { apiClient, type ApiResponse } from '~/utils/api'
 
 // Types
+export interface Badge {
+  id: string
+  name: string
+  description: string
+  icon: string
+  obtainedAt: string // Date string from JSON
+}
+
 export interface User {
   _id: string
   username: string
@@ -31,6 +39,8 @@ export interface User {
   points?: number
   streak?: number
   completedTasks?: number
+  level?: number
+  badges?: Badge[]
 }
 
 export interface LoginCredentials {

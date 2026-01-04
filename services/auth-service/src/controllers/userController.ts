@@ -12,7 +12,9 @@ import {
   LoginRequest,
   UserFilters,
   ValidationError,
+  Badge,
 } from '../types/User.js';
+import { calculateLevel, checkNewBadges } from '../utils/gamification.js';
 
 export class UserController {
   /**
@@ -476,10 +478,53 @@ export class UserController {
         return;
       }
 
+      // Check for Level Up and New Badges
+      let finalData = result.data;
+      const notifications: any = {};
+
+      if (finalData) {
+        // Construct user state for checking
+        // Ensure properties exist
+        const currentUserState: any = {
+          points: finalData.points || 0,
+          streak: finalData.streak || 0,
+          completedTasks: finalData.completedTasks || 0,
+          level: finalData.level || 1,
+          badges: finalData.badges || []
+        };
+
+        const newLevel = calculateLevel(currentUserState.points);
+        const earnedBadges = checkNewBadges(currentUserState);
+
+        const secondaryUpdates: any = {};
+
+        if (newLevel > currentUserState.level) {
+          secondaryUpdates.level = newLevel - currentUserState.level; // Calculate delta for $inc
+          notifications.levelUp = true;
+          notifications.newLevel = newLevel;
+        }
+
+        if (earnedBadges.length > 0) {
+          secondaryUpdates.badge = earnedBadges;
+          notifications.newBadges = earnedBadges;
+        }
+
+        // Apply secondary updates if needed
+        if (Object.keys(secondaryUpdates).length > 0) {
+          const secondaryResult = await UserModel.incrementStats(payload.userId, secondaryUpdates);
+          if (secondaryResult.success && secondaryResult.data) {
+            finalData = secondaryResult.data;
+          }
+        }
+      }
+
       res.json({
         success: true,
         message: 'Stats updated successfully',
-        data: result.data,
+        data: {
+          ...finalData,
+          notifications // Send notifications about what just happened
+        },
         timestamp: new Date().toISOString(),
       });
     } catch (error) {

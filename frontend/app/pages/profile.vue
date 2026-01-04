@@ -41,17 +41,9 @@
       </div>
     </div>
     <div class="space-y-4">
-      <h3>Badges</h3>
-      <div class="grid gap-4 sm:grid-cols-6">
-        <Card :icon="checkIcon" title="1247" description="Tâches terminées" />
-        <Card :icon="fireIcon" title="74" description="Jours de streak" />
-        <Card :icon="starIcon" title="titi" description="Niveau" />
-        <Card :icon="checkIcon" title="1247" description="Tâches terminées" />
-        <Card :icon="fireIcon" title="74" description="Jours de streak" />
-        <Card :icon="starIcon" title="titi" description="Niveau" />
-        <Card :icon="checkIcon" title="1247" description="Tâches terminées" />
-        <Card :icon="fireIcon" title="74" description="Jours de streak" />
-        <Card :icon="starIcon" title="titi" description="Niveau" />
+      <h3>Hauts-faits</h3>
+      <div class="mb-6">
+        <BadgesGallery :user-badges="user?.badges" />
       </div>
     </div>
     <div class="rounded-lg border border-white/10 bg-secondary p-6 space-y-4">
@@ -99,41 +91,7 @@
     </div>
   </section>
   <EditProfileModal :show="showEdit" :user="user || undefined" @close="showEdit = false" @save="onSave" />
-
-  <!-- Disable 2FA Modal -->
-  <div v-if="showDisable2FAModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-    <div class="bg-secondary rounded-lg border border-white/10 p-6 max-w-md w-full">
-      <h3 class="text-xl font-bold mb-4">Désactiver la double authentification</h3>
-      <p class="text-text/70 mb-4">Êtes-vous sûr de vouloir désactiver la double authentification? Votre compte sera
-        moins sécurisé.</p>
-
-      <div v-if="showPassword" class="space-y-4 mb-4">
-        <div>
-          <label class="block text-sm font-medium mb-2">Mot de passe</label>
-          <input v-model="disablePassword" type="password" placeholder="Entrez votre mot de passe"
-            class="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/10 focus:border-accent outline-none transition-colors" />
-        </div>
-        <div v-if="disableError" class="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
-          {{ disableError }}
-        </div>
-      </div>
-
-      <div class="flex gap-3">
-        <button v-if="!showPassword" @click="showPassword = true"
-          class="flex-1 px-4 py-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 font-medium transition-colors">
-          Continuer
-        </button>
-        <button v-else @click="confirmDisable2FA" :disabled="!disablePassword || isDisablingLoading"
-          class="flex-1 px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-          {{ isDisablingLoading ? 'Désactivation...' : 'Désactiver' }}
-        </button>
-        <button @click="showDisable2FAModal = false; showPassword = false; disablePassword = ''; disableError = ''"
-          class="flex-1 px-4 py-2 rounded-lg border border-white/10 hover:bg-white/5 text-text font-medium transition-colors">
-          Annuler
-        </button>
-      </div>
-    </div>
-  </div>
+  <!-- ... -->
 </template>
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
@@ -141,13 +99,14 @@ import { useAuthStore } from '~/composables/useAuthStore';
 import { useTwoFactor } from '~/composables/useTwoFactor';
 import Card from "~/components/global/card.vue";
 import EditProfileModal from "~/components/global/EditProfileModal.vue";
+import BadgesGallery from "~/components/gamification/BadgesGallery.vue";
 import fireIcon from "~/assets/icons/fire.svg";
 import checkIcon from "~/assets/icons/check.svg";
 import starIcon from "~/assets/icons/star.svg";
 import { getLevelFromPoints, getNextLevelPoints } from "~/utils/levelSystem";
-import data from "../data.json";
 
 const authStore = useAuthStore();
+
 const { isLoading: isTwoFactorLoading, disableTwoFactor } = useTwoFactor();
 
 const user = computed(() => authStore.user.value);

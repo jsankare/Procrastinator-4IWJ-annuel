@@ -8,6 +8,7 @@ import {
   UpdateUserRequest,
   UserFilters,
   ValidationError,
+  Badge,
 } from '../types/User.js';
 
 export class UserModel {
@@ -170,6 +171,8 @@ export class UserModel {
         points: 0,
         streak: 0,
         completedTasks: 0,
+        level: 1,
+        badges: [],
       };
 
       const result = await this.collection.insertOne(newUser);
@@ -240,22 +243,53 @@ export class UserModel {
       points?: number;
       streak?: number;
       completedTasks?: number;
+      level?: number;
+      badge?: Badge | Badge[];
     }
-  ): Promise<{ success: boolean; data?: { points: number; streak: number; completedTasks: number } }> {
+  ): Promise<{ success: boolean; data?: { points: number; streak: number; completedTasks: number; level: number; badges: Badge[] } }> {
     try {
       if (!ObjectId.isValid(id)) {
         return { success: false };
       }
 
-      const updateFields: any = {};
+      const updateOps: any = {};
+      const incFields: any = {};
 
-      if (stats.points) updateFields.points = stats.points;
-      if (stats.streak) updateFields.streak = stats.streak;
-      if (stats.completedTasks) updateFields.completedTasks = stats.completedTasks;
+      if (stats.points) incFields.points = stats.points;
+      if (stats.streak) incFields.streak = stats.streak;
+      if (stats.completedTasks) incFields.completedTasks = stats.completedTasks;
+      if (stats.level) incFields.level = stats.level; // Logic to set level directly if needed (e.g. strict calculation)
+      // Actually, for level, we might want $set if we calculated absolute value, or $inc if relative. 
+      // But here incFields puts it in $inc. 
+      // If we want to set absolute level, we should separate it.
+      // But wait, the controller calculates absolute level. 
+      // So if I pass `level: 5` to a function that puts it in `$inc`, it will add 5 to current level. 
+      // I need to change this behavior or separate absolute set overrides.
+      // Let's assume `level` in `stats` for `incrementStats` implies INCREMENT. 
+      // If I want to SET level, I should use `updateById` or a generic update.
+      // OR, I check if `stats.level` is provided and treat it differently? 
+      // Users usually just "Gain a level". So $inc is fine for +1. 
+      // But `calculateLevel` returns absolute level (e.g. 5).
+      // So I should calculate delta? Or use $set.
+      // Let's stick to $inc for consistency with name `incrementStats`. 
+      // Controller will check `newLevel > currentLevel`. If true, diff is 1 usually.
+
+      if (Object.keys(incFields).length > 0) {
+        updateOps.$inc = incFields;
+      }
+
+      if (stats.badge) {
+        const badgesToAdd = Array.isArray(stats.badge) ? stats.badge : [stats.badge];
+        updateOps.$addToSet = { badges: { $each: badgesToAdd } };
+      }
+
+      if (Object.keys(updateOps).length === 0) {
+        return { success: true };
+      }
 
       const result = await this.collection.findOneAndUpdate(
         { _id: new ObjectId(id) },
-        { $inc: updateFields },
+        updateOps,
         { returnDocument: 'after' }
       );
 
@@ -268,7 +302,9 @@ export class UserModel {
         data: {
           points: result.points,
           streak: result.streak,
-          completedTasks: result.completedTasks
+          completedTasks: result.completedTasks,
+          level: result.level,
+          badges: result.badges
         }
       };
     } catch (error) {

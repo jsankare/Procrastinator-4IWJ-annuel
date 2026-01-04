@@ -16,6 +16,14 @@ export interface UserProfile {
   website?: string | null;
 }
 
+export interface Badge {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  obtainedAt: Date;
+}
+
 export interface User {
   _id?: ObjectId;
   username: string;
@@ -42,6 +50,8 @@ export interface User {
   points: number;
   streak: number;
   completedTasks: number;
+  level: number;
+  badges: Badge[];
 }
 
 export interface CreateUserRequest {
@@ -76,6 +86,9 @@ export interface UpdateStatsRequest {
   incrementStreak?: number;
   completedTasks?: number;
   incrementCompletedTasks?: number;
+  level?: number;
+  incrementLevel?: number;
+  badge?: Badge | Badge[]; // For adding single or multiple badges
 }
 
 export interface LoginRequest {
