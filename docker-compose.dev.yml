@@ -83,7 +83,7 @@ services:
             - CORS_ORIGIN=http://localhost
             - MONGODB_URI=mongodb://procrastinator_user:procrastinator_pass@mongodb:27017/procrastinator?authSource=procrastinator
             - DB_NAME=procrastinator
-            - JWT_SECRET=your-super-secret-jwt-key-change-in-production-please
+            - JWT_SECRET=your_super_secret_jwt_key_change_in_production_please
             - JWT_EXPIRES_IN=7d
             - JWT_REFRESH_EXPIRES_IN=30d
         # Pour production, décommenter et utiliser un fichier .env :
@@ -113,7 +113,7 @@ services:
             - CORS_ORIGIN=http://localhost
             - MONGODB_URI=mongodb://procrastinator_user:procrastinator_pass@mongodb:27017/procrastinator?authSource=procrastinator
             - DB_NAME=procrastinator
-            - JWT_SECRET=your-super-secret-jwt-key-change-in-production-please
+            - JWT_SECRET=your_super_secret_jwt_key_change_in_production_please
             - FRONTEND_URL=http://localhost
         # Pour production, décommenter et utiliser un fichier .env :
         # env_file:
