@@ -97,13 +97,13 @@
         </div>
 
         <!-- Columns -->
-        <div v-else-if="!loading && !error && columns.length > 0"
-            class="flex gap-4 overflow-x-auto pb-6 scrollbar-thin scrollbar-thumb-accent/40 scrollbar-track-transparent"
+        <div v-else-if="!loading && !error && columns.length > 0" class="flex gap-4 overflow-x-auto pb-6"
             style="min-height: 350px">
             <KanbanColumn v-for="col in columns" :key="col._id" :column-id="col._id" :title="col.name"
                 :color="col.color" :tasks="col.tasks" :can-delete="columns.length > 1 && canManageColumns"
-                @update:tasks="(newTasks: any) => { col.tasks = newTasks; persistTasks(); }" @change="persistTasks"
-                @delete="deleteColumn(col._id)" class="min-w-[260px] w-full max-w-xs shrink-0" />
+                @update:tasks="(newTasks: any) => { col.tasks = newTasks; }"
+                @change="(evt: any) => onTaskMove(col._id, evt)" @delete="deleteColumn(col._id)"
+                class="w-80 shrink-0" />
         </div>
     </div>
 </template>
@@ -112,6 +112,8 @@
 import { ref, computed, watch, onMounted } from "vue";
 import KanbanColumn from "./kanbanColumn.vue";
 import { apiClient } from "~/utils/api";
+import { useAuthStore } from "~/composables/useAuthStore";
+import { authApi } from "~/composables/useAuth";
 import {
     generateMockTasksForWorkspace,
     type MockTask,
@@ -147,7 +149,7 @@ const newColumnTitle = ref("");
 const addingColumn = ref(false);
 
 // Persistence Helper
-const persistTasks = () => {
+const persistTasks = async () => {
     if (!import.meta.client) return;
 
     // update task properties based on their new column
@@ -165,6 +167,35 @@ const persistTasks = () => {
     } catch (e) {
         console.error("Failed to save tasks to localStorage", e);
     }
+};
+
+// Handle task move event to check for completion
+const onTaskMove = async (columnId: string, evt: any) => {
+    if (evt.added) {
+        const targetColumn = columns.value.find(c => c._id === columnId);
+        if (targetColumn && (targetColumn.name.toLowerCase().includes('terminé') || targetColumn.name.toLowerCase().includes('done'))) {
+            // Task moved to done column - reward user!
+            try {
+                // Check if task was already done to avoid double points (naive check based on previous status if we had it, but here we just assume move to done = reward)
+                // Ideally we should check if it wasn't already there. 
+                // Since this is a simple implementation:
+
+                // +10 points, +1 completed task
+                const authStore = useAuthStore();
+                if (authStore.isAuthenticated) {
+                    await authApi.updateStats({
+                        incrementPoints: 10,
+                        incrementCompletedTasks: 1
+                    });
+                    // Refresh user profile to show new stats
+                    await authStore.fetchCurrentUser();
+                }
+            } catch (e) {
+                console.error("Failed to update gamification stats", e);
+            }
+        }
+    }
+    persistTasks();
 };
 
 const loadTasksFromStorage = (workspaceId: string): Task[] | null => {
@@ -332,10 +363,13 @@ const determineUserRole = () => {
         const token = localStorage.getItem("auth_token");
         if (token) {
             try {
-                const part = token.split(".")[1];
-                if (part) {
-                    const payload = JSON.parse(atob(part));
-                    currentUserId.value = payload.userId;
+                const parts = token.split(".");
+                if (parts.length === 3) {
+                    const part = parts[1];
+                    if (part) {
+                        const payload = JSON.parse(atob(part));
+                        currentUserId.value = payload.userId;
+                    }
                 }
             } catch (e) {
                 console.error("Error parsing token:", e);

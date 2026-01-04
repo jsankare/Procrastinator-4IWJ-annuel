@@ -431,6 +431,68 @@ export class UserController {
   }
 
   /**
+   * Update user stats (Points, Streak, CompletedTasks)
+   * PUT /stats
+   */
+  static async updateUserStats(req: Request, res: Response): Promise<void> {
+    try {
+      const authHeader = req.headers.authorization;
+      const token = JWTUtils.extractTokenFromHeader(authHeader);
+
+      if (!token) {
+        res.status(401).json({
+          success: false,
+          message: 'Authorization token is required',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      const payload = JWTUtils.verifyToken(token);
+
+      if (!payload) {
+        res.status(401).json({
+          success: false,
+          message: 'Invalid or expired token',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      const { incrementPoints, incrementStreak, incrementCompletedTasks } = req.body;
+
+      const result = await UserModel.incrementStats(payload.userId, {
+        points: incrementPoints,
+        streak: incrementStreak,
+        completedTasks: incrementCompletedTasks
+      });
+
+      if (!result.success) {
+        res.status(400).json({
+          success: false,
+          message: 'Failed to update stats',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      res.json({
+        success: true,
+        message: 'Stats updated successfully',
+        data: result.data,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('Update stats error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error while updating stats',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+
+  /**
    * Get all users (Admin only)
    * GET /users
    */

@@ -38,6 +38,10 @@ export interface User {
   lastLoginAt?: Date | null;
   preferences: UserPreferences;
   profile: UserProfile;
+  // Gamification stats
+  points: number;
+  streak: number;
+  completedTasks: number;
 }
 
 export interface CreateUserRequest {
@@ -63,6 +67,15 @@ export interface UpdateUserRequest {
   isTwoFactorEnabled?: boolean;
   totpSecret?: string | null;
   backupCodes?: string[];
+}
+
+export interface UpdateStatsRequest {
+  points?: number;
+  incrementPoints?: number;
+  streak?: number;
+  incrementStreak?: number;
+  completedTasks?: number;
+  incrementCompletedTasks?: number;
 }
 
 export interface LoginRequest {

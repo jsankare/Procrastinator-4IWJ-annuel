@@ -166,6 +166,10 @@ export class UserModel {
           location: null,
           website: null,
         },
+        // Initialize gamification stats
+        points: 0,
+        streak: 0,
+        completedTasks: 0,
       };
 
       const result = await this.collection.insertOne(newUser);
@@ -225,6 +229,50 @@ export class UserModel {
       return await this.collection.findOne({ emailVerificationToken: token });
     } catch (error) {
       console.error('Error finding user by verification token:', error);
+      throw error;
+    }
+  }
+
+  // Increment user stats atomically
+  static async incrementStats(
+    id: string,
+    stats: {
+      points?: number;
+      streak?: number;
+      completedTasks?: number;
+    }
+  ): Promise<{ success: boolean; data?: { points: number; streak: number; completedTasks: number } }> {
+    try {
+      if (!ObjectId.isValid(id)) {
+        return { success: false };
+      }
+
+      const updateFields: any = {};
+
+      if (stats.points) updateFields.points = stats.points;
+      if (stats.streak) updateFields.streak = stats.streak;
+      if (stats.completedTasks) updateFields.completedTasks = stats.completedTasks;
+
+      const result = await this.collection.findOneAndUpdate(
+        { _id: new ObjectId(id) },
+        { $inc: updateFields },
+        { returnDocument: 'after' }
+      );
+
+      if (!result) {
+        return { success: false };
+      }
+
+      return {
+        success: true,
+        data: {
+          points: result.points,
+          streak: result.streak,
+          completedTasks: result.completedTasks
+        }
+      };
+    } catch (error) {
+      console.error('Error incrementing stats:', error);
       throw error;
     }
   }

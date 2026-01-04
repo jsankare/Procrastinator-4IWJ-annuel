@@ -31,6 +31,7 @@ router.post('/2fa/validate-login', UserController.validate2FALogin);
 router.get('/profile', UserController.getProfile);
 router.get('/me', UserController.getProfile); // Alias for /profile
 router.put('/profile', authMiddleware, UserController.updateProfile);
+router.put('/stats', authMiddleware, UserController.updateUserStats);
 
 // Admin routes for user management
 router.get('/users/stats', UserController.getUserStats);

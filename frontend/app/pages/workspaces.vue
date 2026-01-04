@@ -116,11 +116,19 @@ const loadWorkspaces = async () => {
     if (response.success && Array.isArray(response.data)) {
       workspaces.value = response.data as Workspace[]
     } else {
-      error.value = response.error || "Failed to load workspaces";
+      if (response.error && (response.error.includes('404') || response.error.includes('not found'))) {
+        workspaces.value = [];
+      } else {
+        error.value = response.error || "Failed to load workspaces";
+      }
     }
   } catch (err: any) {
-    console.error("Error loading workspaces:", err);
-    error.value = err.message || "Failed to load workspaces";
+    if (err.message && (err.message.includes('404') || err.message.includes('not found'))) {
+      workspaces.value = [];
+    } else {
+      console.error("Error loading workspaces:", err);
+      error.value = err.message || "Failed to load workspaces";
+    }
   } finally {
     loading.value = false;
   }

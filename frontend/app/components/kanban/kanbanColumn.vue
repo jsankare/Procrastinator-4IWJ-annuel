@@ -1,5 +1,5 @@
 <template>
-  <div class="shrink-0 w-full lg:w-auto bg-secondary/60 rounded-xl p-4 border border-white/10 flex flex-col"
+  <div class="shrink-0 w-80 bg-secondary/60 rounded-xl p-4 border border-white/10 flex flex-col"
     :style="{ borderTopColor: color || '#64748b', borderTopWidth: '3px' }">
     <h2 class="text-lg font-semibold mb-3 flex items-center justify-between">
       <span class="flex items-center gap-2">
@@ -9,7 +9,7 @@
       <div class="flex items-center gap-2">
         <span class="text-xs text-white/40 font-normal">{{
           localTasks.length
-        }}</span>
+          }}</span>
         <button v-if="canDelete" @click="$emit('delete')"
           class="p-1 hover:bg-red-500/20 rounded text-red-400 hover:text-red-300 transition-colors opacity-60 hover:opacity-100"
           title="Supprimer cette colonne">
