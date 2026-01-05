@@ -112,15 +112,11 @@ const loadWorkspaces = async () => {
   try {
     loading.value = true;
     error.value = null;
-    const response = await apiClient.get('/api/workspaces')
-    if (response.success && Array.isArray(response.data)) {
-      workspaces.value = response.data as Workspace[]
+    const response = await apiClient.get('/api/workspaces/')
+    if (response.success) {
+      workspaces.value = response.data?.workspaces || [];
     } else {
-      if (response.error && (response.error.includes('404') || response.error.includes('not found'))) {
-        workspaces.value = [];
-      } else {
-        error.value = response.error || "Failed to load workspaces";
-      }
+      error.value = response.error || "Failed to load workspaces";
     }
   } catch (err: any) {
     if (err.message && (err.message.includes('404') || err.message.includes('not found'))) {
