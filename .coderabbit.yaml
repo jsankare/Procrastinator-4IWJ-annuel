@@ -43,15 +43,16 @@ chat:
 language: "en-US"
 
 # File patterns to focus reviews on
-path_filters:
-  - "!node_modules/**"
-  - "!dist/**"
-  - "!build/**"
-  - "!coverage/**"
-  - "!*.log"
-  - "!package-lock.json"
-  - "!pnpm-lock.yaml"
-  - "!yarn.lock"
+reviews:
+  path_filters:
+    - "!node_modules/**"
+    - "!dist/**"
+    - "!build/**"
+    - "!coverage/**"
+    - "!*.log"
+    - "!package-lock.json"
+    - "!pnpm-lock.yaml"
+    - "!yarn.lock"
 
 # Custom prompts for different file types
 knowledge_base:
