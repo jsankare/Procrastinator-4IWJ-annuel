@@ -55,7 +55,10 @@ const allBadges = [
   { id: 'on_fire', name: 'On Fire', description: 'Atteindre une série de 3 jours', icon: '🔥' },
   { id: 'unstoppable', name: 'Inarrêtable', description: 'Atteindre une série de 7 jours', icon: '⚡' },
   { id: 'level_5', name: 'Niveau 5', description: 'Atteindre le niveau 5', icon: '🎖️' },
-  { id: 'level_10', name: 'Niveau 10', description: 'Atteindre le niveau 10', icon: '👑' }
+  { id: 'level_10', name: 'Niveau 10', description: 'Atteindre le niveau 10', icon: '👑' },
+  { id: 'social_butterfly', name: 'Papillon social', description: 'Inviter 5 amis', icon: '🦋' },
+  { id: 'marathoner', name: 'Marathonien', description: 'Travailler 8 heures en une journée', icon: '🏃‍♂️' },
+  { id: 'early_bird', name: 'Lève-tôt', description: 'Terminer une tâche avant 6h du matin', icon: '🌅' },
 ];
 
 const props = defineProps<{
