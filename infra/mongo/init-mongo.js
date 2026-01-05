@@ -22,7 +22,7 @@ db.users.createIndex({username: 1}, {unique: true});
 db.users.createIndex({createdAt: 1});
 db.users.createIndex({isActive: 1});
 
-// Create tasks collection (for future use)
+// Create tasks collection
 db.createCollection("tasks");
 db.tasks.createIndex({userId: 1});
 db.tasks.createIndex({status: 1});

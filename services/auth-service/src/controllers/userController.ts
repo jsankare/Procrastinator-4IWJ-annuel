@@ -14,7 +14,8 @@ import {
   ValidationError,
   Badge,
 } from '../types/User.js';
-import { calculateLevel, checkNewBadges } from '../utils/gamification.js';
+import { checkNewBadges } from '../utils/gamification.js';
+import { getLevelFromPoints } from '../utils/levelSystem.js';
 
 export class UserController {
   /**
@@ -481,6 +482,7 @@ export class UserController {
       // Check for Level Up and New Badges
       let finalData = result.data;
       const notifications: any = {};
+      console.log(finalData);
 
       if (finalData) {
         // Construct user state for checking
@@ -493,7 +495,7 @@ export class UserController {
           badges: finalData.badges || []
         };
 
-        const newLevel = calculateLevel(currentUserState.points);
+        const newLevel = getLevelFromPoints(currentUserState.points);
         const earnedBadges = checkNewBadges(currentUserState);
 
         const secondaryUpdates: any = {};
