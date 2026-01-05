@@ -1,145 +1,174 @@
-#docker-copmpose.prod.example.yml
+#docker-compose.prod.example.yml
+# Configuration de production avec Caddy comme reverse proxy
+# À adapter selon votre domaine et configuration
+
 services:
-  traefik:
-    image: traefik:v3.0
-    command:
-      - "--api.dashboard=true"
-      - "--api.insecure=true"  # À désactiver en prod
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--entrypoints.web.address=:80"
-      - "--entrypoints.websecure.address=:443"
-      - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
-      - "--certificatesresolvers.letsencrypt.acme.email=your-email@domain.com"
-      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+  # Reverse Proxy : Caddy avec HTTPS automatique
+  caddy:
+    image: caddy:2.11
+    container_name: caddy-prod
     ports:
       - "80:80"
       - "443:443"
-      - "8080:8080"  # Dashboard Traefik
+      - "2019:2019" # Admin API (à désactiver en prod si non nécessaire)
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - letsencrypt_data:/letsencrypt
+      - ./infra/caddy/Caddyfile.prod:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
     networks:
-      - traefik
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.traefik.rule=Host(`traefik.yourdomain.com`)"
-      - "traefik.http.routers.traefik.tls.certresolver=letsencrypt"
+      - web
+      - internal
+    restart: unless-stopped
+    environment:
+      - DOMAIN=${DOMAIN:-yourdomain.com}
+      - API_DOMAIN=${API_DOMAIN:-api.yourdomain.com}
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+    container_name: procrastinator-frontend
+    environment:
+      - NODE_ENV=production
+      - NUXT_HOST=0.0.0.0
+      - NUXT_PORT=3000
+      - NUXT_PUBLIC_API_BASE_URL=https://${API_DOMAIN:-api.yourdomain.com}
     volumes:
       - ./frontend:/app
       - /app/node_modules
+      - /app/.nuxt
     depends_on:
       - auth-service
-      - task-service
-      - gamification-service
-      - collaboration-service
-      - notification-service
+      - workspace-service
     networks:
-      - traefik
       - internal
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.frontend.rule=Host(`yourdomain.com`)"
-      - "traefik.http.routers.frontend.tls.certresolver=letsencrypt"
-      - "traefik.http.services.frontend.loadbalancer.server.port=3000"
+    restart: unless-stopped
 
   auth-service:
-    build: ./services/auth
+    build:
+      context: ./services/auth-service
+      dockerfile: Dockerfile.prod
+    container_name: auth-service-prod
     environment:
-      - DATABASE_URL=postgresql://produser:prodpassword@postgres:5432/proddb
+      - NODE_ENV=production
+      - PORT=3001
+      - SERVICE_NAME=auth-service
+      - CORS_ORIGIN=https://${DOMAIN:-yourdomain.com}
+      - MONGODB_URI=${MONGODB_URI}
+      - DB_NAME=${DB_NAME:-procrastinator}
       - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRES_IN=7d
+      - JWT_REFRESH_EXPIRES_IN=30d
+    env_file:
+      - ./services/auth-service/.env.production
     depends_on:
-      - postgres
+      - mongodb
     networks:
-      - traefik
       - internal
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.auth.rule=Host(`api.yourdomain.com`) && PathPrefix(`/auth`)"
-      - "traefik.http.routers.auth.tls.certresolver=letsencrypt"
-      - "traefik.http.services.auth.loadbalancer.server.port=3001"
+    restart: unless-stopped
 
-  task-service:
-    build: ./services/task
+  workspace-service:
+    build:
+      context: ./services/workspace-service
+      dockerfile: Dockerfile.prod
+    container_name: workspace-service-prod
     environment:
-      - DATABASE_URL=postgresql://produser:prodpassword@postgres:5432/proddb
+      - NODE_ENV=production
+      - PORT=3002
+      - SERVICE_NAME=workspace-service
+      - CORS_ORIGIN=https://${DOMAIN:-yourdomain.com}
+      - MONGODB_URI=${MONGODB_URI}
+      - DB_NAME=${DB_NAME:-procrastinator}
+      - JWT_SECRET=${JWT_SECRET}
+      - FRONTEND_URL=https://${DOMAIN:-yourdomain.com}
+    env_file:
+      - ./services/workspace-service/.env.production
     depends_on:
-      - postgres
+      - mongodb
     networks:
-      - traefik
       - internal
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.tasks.rule=Host(`api.yourdomain.com`) && PathPrefix(`/tasks`)"
-      - "traefik.http.routers.tasks.tls.certresolver=letsencrypt"
-      - "traefik.http.services.tasks.loadbalancer.server.port=3002"
+    restart: unless-stopped
 
-  gamification-service:
-    build: ./services/gamification
-    environment:
-      - DATABASE_URL=postgresql://produser:prodpassword@postgres:5432/proddb
-    depends_on:
-      - postgres
-    networks:
-      - traefik
-      - internal
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.gamification.rule=Host(`api.yourdomain.com`) && PathPrefix(`/gamification`)"
-      - "traefik.http.routers.gamification.tls.certresolver=letsencrypt"
-      - "traefik.http.services.gamification.loadbalancer.server.port=3003"
+  # Services futurs (à décommenter quand implémentés)
+  # task-service:
+  #   build:
+  #     context: ./services/task-service
+  #     dockerfile: Dockerfile.prod
+  #   container_name: task-service-prod
+  #   environment:
+  #     - NODE_ENV=production
+  #     - PORT=3003
+  #     - SERVICE_NAME=task-service
+  #     - MONGODB_URI=${MONGODB_URI}
+  #   env_file:
+  #     - ./services/task-service/.env.production
+  #   depends_on:
+  #     - mongodb
+  #   networks:
+  #     - internal
+  #   restart: unless-stopped
 
-  collaboration-service:
-    build: ./services/collaboration
-    environment:
-      - DATABASE_URL=postgresql://produser:prodpassword@postgres:5432/proddb
-    depends_on:
-      - postgres
-    networks:
-      - traefik
-      - internal
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.collaboration.rule=Host(`api.yourdomain.com`) && PathPrefix(`/collaboration`)"
-      - "traefik.http.routers.collaboration.tls.certresolver=letsencrypt"
-      - "traefik.http.services.collaboration.loadbalancer.server.port=3004"
+  # gamification-service:
+  #   build:
+  #     context: ./services/gamification-service
+  #     dockerfile: Dockerfile.prod
+  #   container_name: gamification-service-prod
+  #   environment:
+  #     - NODE_ENV=production
+  #     - PORT=3004
+  #     - SERVICE_NAME=gamification-service
+  #     - MONGODB_URI=${MONGODB_URI}
+  #   env_file:
+  #     - ./services/gamification-service/.env.production
+  #   depends_on:
+  #     - mongodb
+  #   networks:
+  #     - internal
+  #   restart: unless-stopped
 
-  notification-service:
-    build: ./services/notification
-    environment:
-      - DATABASE_URL=postgresql://produser:prodpassword@postgres:5432/proddb
-    depends_on:
-      - postgres
-    networks:
-      - traefik
-      - internal
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.notifications.rule=Host(`api.yourdomain.com`) && PathPrefix(`/notifications`)"
-      - "traefik.http.routers.notifications.tls.certresolver=letsencrypt"
-      - "traefik.http.services.notifications.loadbalancer.server.port=3005"
+  # notification-service:
+  #   build:
+  #     context: ./services/notification-service
+  #     dockerfile: Dockerfile.prod
+  #   container_name: notification-service-prod
+  #   environment:
+  #     - NODE_ENV=production
+  #     - PORT=3005
+  #     - SERVICE_NAME=notification-service
+  #     - MONGODB_URI=${MONGODB_URI}
+  #   env_file:
+  #     - ./services/notification-service/.env.production
+  #   depends_on:
+  #     - mongodb
+  #   networks:
+  #     - internal
+  #   restart: unless-stopped
 
-  postgres:
-    image: postgres:17
+  mongodb:
+    image: mongo:7.0
+    container_name: mongodb-prod
     environment:
-      POSTGRES_USER: produser
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: proddb
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_ROOT_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_ROOT_PASSWORD}
+      - MONGO_INITDB_DATABASE=${DB_NAME:-procrastinator}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - mongodb_data:/data/db
+      - ./infra/mongo/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
     networks:
       - internal
-    # Pas d'exposition directe en prod
+    restart: unless-stopped
+    # Pas d'exposition directe en prod - accès uniquement via réseau interne
 
 volumes:
-  postgres_data:
-  letsencrypt_data:
+  mongodb_data:
+    driver: local
+  caddy_data:
+    driver: local
+  caddy_config:
+    driver: local
 
 networks:
-  traefik:
-    external: true
+  web:
+    driver: bridge
   internal:
     driver: bridge
