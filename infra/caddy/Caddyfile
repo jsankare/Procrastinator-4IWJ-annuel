@@ -37,6 +37,17 @@ http://localhost {
         }
     }
 
+    # Matomo analytics
+    handle_path /matomo* {
+        reverse_proxy matomo:80 {
+            header_up Host {upstream_hostport}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+            header_up X-Forwarded-Prefix /matomo
+        }
+    }
+
     # All other requests go to the frontend (Nuxt app)
     handle /* {
         reverse_proxy task-manager-frontend:3000 {

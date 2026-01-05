@@ -9,7 +9,7 @@
         </NuxtLink>
 
         <div class="hidden md:flex items-center gap-6">
-          <NuxtLink to="/" class="hover:text-accent transition-colors">Home</NuxtLink>
+          <NuxtLink v-if="user" to="/" class="hover:text-accent transition-colors">Home</NuxtLink>
           <NuxtLink v-if="user" to="/workspaces" class="hover:text-accent transition-colors">Workspaces</NuxtLink>
           <NuxtLink v-if="user" to="/profile" class="hover:text-accent transition-colors">Profil</NuxtLink>
           <AdminDropdown />
@@ -66,7 +66,7 @@
         leave-from-class="opacity-100 scale-100" leave-to-class="opacity-0 scale-95">
         <div v-if="menuOpen"
           class="md:hidden px-4 pb-4 flex flex-col gap-3 text-base bg-secondary/95 backdrop-blur lg:rounded-b-3xl border-t border-white/10">
-          <NuxtLink to="/" class="hover:text-accent transition-colors py-2" @click="menuOpen = false">Home</NuxtLink>
+          <NuxtLink v-if="user" to="/" class="hover:text-accent transition-colors py-2" @click="menuOpen = false">Home</NuxtLink>
           <NuxtLink v-if="user" to="/workspaces" class="hover:text-accent transition-colors py-2"
             @click="menuOpen = false">Workspaces</NuxtLink>
           <NuxtLink v-if="user" to="/profile" class="hover:text-accent transition-colors py-2"

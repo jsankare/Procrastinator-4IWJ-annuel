@@ -89,9 +89,12 @@ export default defineNuxtConfig({
         },
     },
 
-    runtimeConfig: {
-        public: {
-            apiBase: process.env.NUXT_PUBLIC_API_BASE_URL || "http://localhost",
-        },
+  runtimeConfig: {
+    public: {
+      apiBase: process.env.NUXT_PUBLIC_API_BASE_URL || "http://localhost",
+      matomoHost:
+        process.env.NUXT_PUBLIC_MATOMO_HOST || "http://localhost:8080",
+      matomoSiteId: process.env.NUXT_PUBLIC_MATOMO_SITE_ID || 1,
     },
+  },
 });

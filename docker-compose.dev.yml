@@ -201,6 +201,42 @@ services:
     #     - task-manager-network
     #   restart: unless-stopped
 
+    # Matomo Analytics
+    matomo:
+      image: matomo:latest
+      container_name: matomo
+      depends_on:
+        - matomo-db
+      ports:
+        - "8080:80"
+      environment:
+        - MATOMO_DATABASE_HOST=matomo-db
+        - MATOMO_DATABASE_ADAPTER=mysql
+        - MATOMO_DATABASE_TABLES_PREFIX=matomo_
+        - MATOMO_DATABASE_USERNAME=matomo
+        - MATOMO_DATABASE_PASSWORD=matomo_password
+        - MATOMO_DATABASE_DBNAME=matomo
+      volumes:
+        - matomo_data:/var/www/html
+      networks:
+        - task-manager-network
+      restart: unless-stopped
+
+    # Matomo Database (MariaDB)
+    matomo-db:
+      image: mariadb:10.11
+      container_name: matomo-db
+      environment:
+        - MYSQL_ROOT_PASSWORD=root_password
+        - MYSQL_DATABASE=matomo
+        - MYSQL_USER=matomo
+        - MYSQL_PASSWORD=matomo_password
+      volumes:
+        - matomo_db_data:/var/lib/mysql
+      networks:
+        - task-manager-network
+      restart: unless-stopped
+
 networks:
     task-manager-network:
         driver: bridge
@@ -211,4 +247,8 @@ volumes:
     caddy_data:
         driver: local
     caddy_config:
+        driver: local
+    matomo_data:
+        driver: local
+    matomo_db_data:
         driver: local
