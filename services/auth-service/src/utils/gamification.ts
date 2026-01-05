@@ -61,7 +61,7 @@ export const BADGES_DEFINITIONS = [
   {
     id: 'marathoner',
     name: 'Marathonien',
-    description: 'Travailler 8 heures en une journée',
+    description: 'Atteindre une série de 100 jours',
     icon: '🏃‍♂️',
     condition: (user: User) => user.streak >= 100,
   },

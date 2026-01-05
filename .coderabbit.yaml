@@ -5,6 +5,17 @@ reviews:
   # Auto-generate PR titles based on changes
   auto_title: true
 
+  # File patterns to focus reviews on
+  path_filters:
+    - "!node_modules/**"
+    - "!dist/**"
+    - "!build/**"
+    - "!coverage/**"
+    - "!*.log"
+    - "!package-lock.json"
+    - "!pnpm-lock.yaml"
+    - "!yarn.lock"
+
   # Custom instructions for generating PR titles
   auto_title_instructions: |
     Generate concise, descriptive PR titles that:
@@ -41,18 +52,6 @@ chat:
 
 # Language settings
 language: "en-US"
-
-# File patterns to focus reviews on
-reviews:
-  path_filters:
-    - "!node_modules/**"
-    - "!dist/**"
-    - "!build/**"
-    - "!coverage/**"
-    - "!*.log"
-    - "!package-lock.json"
-    - "!pnpm-lock.yaml"
-    - "!yarn.lock"
 
 # Custom prompts for different file types
 knowledge_base:
