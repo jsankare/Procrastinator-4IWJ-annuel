@@ -47,7 +47,7 @@
     >
       <div
           v-for="(task, index) in tasks"
-          :key="task.id"
+          :key="task._id || task.id"
           class="rounded-lg"
           draggable="true"
           @dragstart="onDragStart($event, index)"
@@ -62,6 +62,7 @@
             :description="task.description"
             :due-date="task.dueDate"
             :user="task.user"
+            @task-click="$emit('task-click', task)"
         />
       </div>
 
@@ -77,7 +78,8 @@ import {ref} from "vue";
 import KanbanTask from "./kanbanTask.vue";
 
 export interface Task {
-  id: number | string;
+  _id?: string;
+  id?: number | string;
   title: string;
   description: string;
   dueDate: string;
@@ -107,6 +109,7 @@ const emit = defineEmits<{
       },
   ): void;
   (e: "delete"): void;
+  (e: "task-click", task: Task): void;
 }>();
 
 // État local pour survol
@@ -131,7 +134,7 @@ function onDragStart(e: DragEvent, index: number) {
   const payload: DragPayload = {
     fromCol: props.columnId,
     fromIndex: index,
-    taskId: task.id,
+    taskId: task._id || task.id,
   };
   e.dataTransfer?.setData("text/plain", JSON.stringify(payload));
   if (e.dataTransfer) {
