@@ -1,77 +1,71 @@
 <template>
-    <div
-        v-if="isOpen"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
-        @click.self="closeModal"
-    >
+    <Transition name="modal">
         <div
-            class="bg-secondary rounded-xl border border-white/10 p-6 w-full max-w-md mx-4 shadow-2xl"
+            v-if="isOpen"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+            @click.self="closeModal"
         >
-            <div class="flex items-center justify-between mb-6">
-                <h3 class="text-xl font-semibold">Modifier la tâche</h3>
-                <button
-                    @click="closeModal"
-                    class="p-1 hover:bg-white/10 rounded text-white/70 hover:text-white transition-colors"
-                >
-                    <svg
-                        class="w-5 h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        viewBox="0 0 24 24"
+            <div
+                class="bg-secondary rounded-2xl border border-white/10 w-full max-w-md shadow-2xl transform transition-all max-h-[85vh] flex flex-col"
+            >
+                <!-- Header -->
+                <div class="flex items-center justify-between px-3 py-2 border-b border-white/10">
+                    <h3 class="text-base font-semibold">Modifier la tâche</h3>
+                    <button
+                        @click="closeModal"
+                        class="p-0.5 hover:bg-white/10 rounded-lg text-white/60 hover:text-white transition-all hover:rotate-90 duration-300"
                     >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            d="M6 18L18 6M6 6l12 12"
-                        />
-                    </svg>
-                </button>
-            </div>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
 
-            <form @submit.prevent="handleSubmit" class="space-y-4">
+                <!-- Form Content -->
+                <div class="px-3 py-2 space-y-2">
+
                 <!-- Title -->
                 <div>
-                    <label class="block text-sm font-medium mb-2">Titre *</label>
+                    <label class="block text-xs font-medium mb-1">Titre *</label>
                     <input
                         v-model="formData.title"
                         type="text"
                         required
-                        class="w-full bg-primary/50 border border-white/20 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent"
+                        class="w-full bg-primary/50 border border-white/20 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-accent"
                         placeholder="Ex: Finir le rapport"
                     />
                 </div>
 
                 <!-- Description -->
                 <div>
-                    <label class="block text-sm font-medium mb-2">Description *</label>
+                    <label class="block text-xs font-medium mb-1">Description *</label>
                     <textarea
                         v-model="formData.description"
                         required
-                        rows="3"
-                        class="w-full bg-primary/50 border border-white/20 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent resize-none"
+                        rows="2"
+                        class="w-full bg-primary/50 border border-white/20 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-accent resize-none"
                         placeholder="Détails de la tâche..."
                     ></textarea>
                 </div>
 
                 <!-- Due Date -->
                 <div>
-                    <label class="block text-sm font-medium mb-2">Date d'échéance *</label>
+                    <label class="block text-xs font-medium mb-1">Date d'échéance *</label>
                     <input
                         v-model="formData.dueDate"
                         type="date"
                         required
-                        class="w-full bg-primary/50 border border-white/20 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent"
+                        class="w-full bg-primary/50 border border-white/20 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-accent"
                     />
                 </div>
 
                 <!-- Priority -->
                 <div>
-                    <label class="block text-sm font-medium mb-2">Priorité *</label>
+                    <label class="block text-xs font-medium mb-1">Priorité *</label>
                     <select
                         v-model="formData.priority"
                         required
-                        class="w-full bg-primary/50 border border-white/20 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent"
+                        class="w-full bg-primary/50 border border-white/20 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-accent"
                     >
                         <option value="low">Faible</option>
                         <option value="medium">Moyenne</option>
@@ -81,11 +75,11 @@
 
                 <!-- Column (if columns are provided) -->
                 <div v-if="columns && columns.length > 0">
-                    <label class="block text-sm font-medium mb-2">Colonne *</label>
+                    <label class="block text-xs font-medium mb-1">Colonne *</label>
                     <select
                         v-model="formData.columnName"
                         required
-                        class="w-full bg-primary/50 border border-white/20 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent"
+                        class="w-full bg-primary/50 border border-white/20 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-accent"
                     >
                         <option v-for="col in columns" :key="col._id" :value="col.name">
                             {{ col.name }}
@@ -93,51 +87,76 @@
                     </select>
                 </div>
 
-                <!-- Error message -->
-                <div v-if="error" class="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-lg p-3">
-                    {{ error }}
+                    <!-- Assigned Members -->
+                    <div v-if="workspaceMembers && workspaceMembers.length > 0">
+                        <label class="block text-xs font-medium mb-1">Membres assignés</label>
+                        <select
+                            v-model="selectedMembers"
+                            multiple
+                            class="w-full bg-primary/50 border border-white/20 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-accent min-h-[60px] max-h-20"
+                        >
+                            <option 
+                                v-for="member in workspaceMembers" 
+                                :key="member.userId"
+                                :value="member.userId"
+                                class="py-0.5"
+                            >
+                                {{ member.firstName }} {{ member.lastName }} ({{ member.username }})
+                            </option>
+                        </select>
+                        <p class="text-[10px] text-white/40 mt-0.5">
+                            {{ selectedMembers.length }} membre(s) - Maintenez Ctrl/Cmd pour sélectionner plusieurs
+                        </p>
+                    </div>
+
+                    <!-- Error message -->
+                    <div v-if="error" class="text-red-400 text-[11px] bg-red-500/10 border border-red-500/20 rounded-lg p-2">
+                        {{ error }}
+                    </div>
                 </div>
 
-                <!-- Action buttons -->
-                <div class="flex items-center justify-between gap-3 pt-2">
+                <!-- Footer with Actions -->
+                <div class="flex items-center justify-between gap-2 px-3 py-2 border-t border-white/10 bg-primary/10">
                     <button
                         type="button"
                         @click="showDeleteConfirm = true"
                         :disabled="loading || deleting"
-                        class="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 hover:text-red-300 rounded-lg font-semibold transition-colors border border-red-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                        class="px-2.5 py-1 bg-red-500/20 hover:bg-red-500/30 text-red-400 hover:text-red-300 rounded-lg text-xs font-medium transition-colors border border-red-500/30 disabled:opacity-50"
                     >
                         Supprimer
                     </button>
                     
-                    <div class="flex gap-3">
+                    <div class="flex gap-1.5">
                         <button
                             type="button"
                             @click="closeModal"
                             :disabled="loading || deleting"
-                            class="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            class="px-3 py-1 bg-white/10 hover:bg-white/20 rounded-lg text-xs font-medium transition-colors disabled:opacity-50"
                         >
                             Annuler
                         </button>
                         <button
                             type="submit"
+                            @click="handleSubmit"
                             :disabled="loading || deleting"
-                            class="px-4 py-2 bg-accent hover:bg-accent/90 text-primary rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            class="px-4 py-1 bg-accent hover:bg-accent/90 text-white rounded-lg text-xs font-semibold transition-colors disabled:opacity-50"
                         >
                             {{ loading ? 'Modification...' : 'Enregistrer' }}
                         </button>
                     </div>
                 </div>
-            </form>
+            </div>
         </div>
-    </div>
+    </Transition>
 
     <!-- Delete Confirmation Modal -->
-    <div
-        v-if="showDeleteConfirm"
-        class="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm"
-        @click.self="showDeleteConfirm = false"
-    >
-        <div class="bg-secondary rounded-xl border border-red-500/30 p-6 w-full max-w-sm mx-4 shadow-2xl">
+    <Transition name="modal">
+        <div
+            v-if="showDeleteConfirm"
+            class="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+            @click.self="showDeleteConfirm = false"
+        >
+            <div class="bg-secondary rounded-2xl border border-red-500/30 p-6 w-full max-w-sm shadow-2xl transform transition-all">
             <div class="flex items-center gap-3 mb-4">
                 <div class="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center">
                     <svg class="w-6 h-6 text-red-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -173,8 +192,32 @@
                 </button>
             </div>
         </div>
-    </div>
+        </div>
+    </Transition>
 </template>
+
+<style scoped>
+.modal-enter-active,
+.modal-leave-active {
+    transition: opacity 0.3s ease;
+}
+
+.modal-enter-active > div,
+.modal-leave-active > div {
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.modal-enter-from,
+.modal-leave-to {
+    opacity: 0;
+}
+
+.modal-enter-from > div,
+.modal-leave-to > div {
+    transform: scale(0.95);
+    opacity: 0;
+}
+</style>
 
 <script setup lang="ts">
 import { ref, watch } from 'vue';
@@ -195,10 +238,19 @@ interface Column {
     name: string;
 }
 
+interface WorkspaceMember {
+    userId: string;
+    username: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+}
+
 const props = defineProps<{
     isOpen: boolean;
     task: Task | null;
     columns?: Column[];
+    workspaceMembers?: WorkspaceMember[];
 }>();
 
 const emit = defineEmits<{
@@ -219,6 +271,7 @@ const loading = ref(false);
 const deleting = ref(false);
 const error = ref<string | null>(null);
 const showDeleteConfirm = ref(false);
+const selectedMembers = ref<string[]>([]);
 
 // Reset form when modal opens with task data
 watch(() => props.task, (task) => {
@@ -226,10 +279,12 @@ watch(() => props.task, (task) => {
         formData.value = {
             title: task.title,
             description: task.description,
-            dueDate: task.dueDate.split('T')[0], // Format YYYY-MM-DD
+            dueDate: task.dueDate?.split('T')[0] || '', // Format YYYY-MM-DD
             priority: task.priority,
             columnName: task.columnName || '',
         };
+        // Initialize selected members from task
+        selectedMembers.value = (task as any).assignedMembers || [];
         error.value = null;
         showDeleteConfirm.value = false;
     }
@@ -265,6 +320,7 @@ const handleSubmit = async () => {
             priority: formData.value.priority,
             columnName: formData.value.columnName,
             columnId: columnId,
+            assignedMembers: selectedMembers.value,
         });
 
         if (response.success) {

@@ -106,7 +106,7 @@ export const getTask = async (req: AuthRequest, res: Response): Promise<void> =>
         }
 
         // Check if user has access to this task
-        if (task.assignedTo !== req.user.userId) {
+        if (!task.assignedMembers.includes(req.user.userId)) {
             res.status(403).json({
                 success: false,
                 error: 'Forbidden',
@@ -179,9 +179,10 @@ export const createTask = async (req: AuthRequest, res: Response): Promise<void>
             columnId,
             columnName,
             workspaceId,
-            assignedTo: req.user.userId,
+            assignedMembers: [req.user.userId],
             createdBy: req.user.userId,
         });
+
 
         res.status(201).json({
             success: true,
@@ -386,6 +387,109 @@ export const getTaskStats = async (req: AuthRequest, res: Response): Promise<voi
             success: false,
             error: 'Internal Server Error',
             message: 'Failed to fetch task statistics',
+            timestamp: new Date().toISOString(),
+        });
+    }
+};
+
+/**
+ * Assign a member to a task
+ */
+export const assignMember = async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+        if (!req.user) {
+            res.status(401).json({
+                success: false,
+                error: 'Unauthorized',
+                message: 'User not authenticated',
+                timestamp: new Date().toISOString(),
+            });
+            return;
+        }
+
+        const { id } = req.params;
+        const { userId } = req.body;
+
+        if (!userId) {
+            res.status(400).json({
+                success: false,
+                error: 'Bad Request',
+                message: 'userId is required',
+                timestamp: new Date().toISOString(),
+            });
+            return;
+        }
+
+        const task = await TaskModel.addMember(id, req.user.userId, userId);
+
+        if (!task) {
+            res.status(404).json({
+                success: false,
+                error: 'Not Found',
+                message: 'Task not found or access denied',
+                timestamp: new Date().toISOString(),
+            });
+            return;
+        }
+
+        res.json({
+            success: true,
+            data: { task },
+            message: 'Member assigned successfully',
+            timestamp: new Date().toISOString(),
+        });
+    } catch (error) {
+        console.error('Error assigning member:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Internal Server Error',
+            message: error instanceof Error ? error.message : 'Failed to assign member',
+            timestamp: new Date().toISOString(),
+        });
+    }
+};
+
+/**
+ * Unassign a member from a task
+ */
+export const unassignMember = async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+        if (!req.user) {
+            res.status(401).json({
+                success: false,
+                error: 'Unauthorized',
+                message: 'User not authenticated',
+                timestamp: new Date().toISOString(),
+            });
+            return;
+        }
+
+        const { id, userId } = req.params;
+
+        const task = await TaskModel.removeMember(id, req.user.userId, userId);
+
+        if (!task) {
+            res.status(404).json({
+                success: false,
+                error: 'Not Found',
+                message: 'Task not found or access denied',
+                timestamp: new Date().toISOString(),
+            });
+            return;
+        }
+
+        res.json({
+            success: true,
+            data: { task },
+            message: 'Member unassigned successfully',
+            timestamp: new Date().toISOString(),
+        });
+    } catch (error) {
+        console.error('Error unassigning member:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Internal Server Error',
+            message: error instanceof Error ? error.message : 'Failed to unassign member',
             timestamp: new Date().toISOString(),
         });
     }

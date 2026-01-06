@@ -83,8 +83,10 @@ export interface Task {
   title: string;
   description: string;
   dueDate: string;
+  priority?: 'low' | 'medium' | 'high';
+  columnName?: string;
   status?: string;
-  workspaceId?: number;
+  workspaceId?: string;
   assignedTo?: number;
   user?: { firstName: string; lastName: string } | null;
 }
@@ -134,7 +136,7 @@ function onDragStart(e: DragEvent, index: number) {
   const payload: DragPayload = {
     fromCol: props.columnId,
     fromIndex: index,
-    taskId: task._id || task.id,
+    taskId: task._id || task.id || '',
   };
   e.dataTransfer?.setData("text/plain", JSON.stringify(payload));
   if (e.dataTransfer) {

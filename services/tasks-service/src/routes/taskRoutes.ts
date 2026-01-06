@@ -17,4 +17,9 @@ router.put('/:id', taskController.updateTask);
 router.patch('/:id/column', taskController.updateTaskColumn);
 router.delete('/:id', taskController.deleteTask);
 
+// Member management routes
+router.post('/:id/members', taskController.assignMember);
+router.delete('/:id/members/:userId', taskController.unassignMember);
+
+
 export default router;

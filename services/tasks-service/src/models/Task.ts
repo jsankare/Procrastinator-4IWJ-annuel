@@ -18,6 +18,7 @@ export class TaskModel {
     static async create(taskData: Omit<Task, '_id' | 'createdAt' | 'updatedAt' | 'isActive'>): Promise<TaskResponse> {
         const task: Task = {
             ...taskData,
+            assignedMembers: taskData.assignedMembers || [taskData.createdBy],
             createdAt: new Date(),
             updatedAt: new Date(),
             isActive: true,
@@ -62,7 +63,7 @@ export class TaskModel {
     static async findByUserId(userId: string): Promise<TaskResponse[]> {
         try {
             const tasks = await TaskModel.collection
-                .find({ assignedTo: userId, isActive: true })
+                .find({ assignedMembers: { $in: [userId] }, isActive: true })
                 .sort({ createdAt: -1 })
                 .toArray();
 
@@ -98,7 +99,7 @@ export class TaskModel {
         workspaceId?: string
     ): Promise<TaskResponse[]> {
         try {
-            const query: any = { assignedTo: userId, isActive: true };
+            const query: any = { assignedMembers: { $in: [userId] }, isActive: true };
 
             if (workspaceId) {
                 query.workspaceId = workspaceId;
@@ -127,7 +128,7 @@ export class TaskModel {
             const { _id, createdAt, createdBy, isActive, ...safeUpdateData } = updateData as any;
 
             const result = await TaskModel.collection.updateOne(
-                { _id: objectId, assignedTo: userId, isActive: true },
+                { _id: objectId, assignedMembers: { $in: [userId] }, isActive: true },
                 {
                     $set: {
                         ...safeUpdateData,
@@ -160,7 +161,7 @@ export class TaskModel {
             const objectId = new ObjectId(id);
 
             const result = await TaskModel.collection.updateOne(
-                { _id: objectId, assignedTo: userId, isActive: true },
+                { _id: objectId, assignedMembers: { $in: [userId] }, isActive: true },
                 {
                     $set: {
                         columnId,
@@ -194,7 +195,7 @@ export class TaskModel {
             const objectId = new ObjectId(id);
 
             const result = await TaskModel.collection.updateOne(
-                { _id: objectId, assignedTo: userId },
+                { _id: objectId, assignedMembers: { $in: [userId] } },
                 {
                     $set: {
                         isActive: false,
@@ -256,6 +257,90 @@ export class TaskModel {
     }
 
     /**
+     * Add a member to a task
+     */
+    static async addMember(id: string, requesterId: string, memberUserId: string): Promise<TaskResponse | null> {
+        try {
+            const objectId = new ObjectId(id);
+
+            // Check if requester is assigned to the task
+            const task = await TaskModel.collection.findOne({
+                _id: objectId,
+                assignedMembers: { $in: [requesterId] },
+                isActive: true
+            });
+
+            if (!task) {
+                return null;
+            }
+
+            // Check if member is already assigned
+            if (task.assignedMembers.includes(memberUserId)) {
+                return TaskModel.toResponse(task);
+            }
+
+            const result = await TaskModel.collection.updateOne(
+                { _id: objectId },
+                {
+                    $addToSet: { assignedMembers: memberUserId },
+                    $set: { updatedAt: new Date() },
+                }
+            );
+
+            if (result.modifiedCount === 0) {
+                return null;
+            }
+
+            return await TaskModel.findById(id);
+        } catch (error) {
+            console.error('Error adding member to task:', error);
+            return null;
+        }
+    }
+
+    /**
+     * Remove a member from a task
+     */
+    static async removeMember(id: string, requesterId: string, memberUserId: string): Promise<TaskResponse | null> {
+        try {
+            const objectId = new ObjectId(id);
+
+            // Check if requester is assigned to the task
+            const task = await TaskModel.collection.findOne({
+                _id: objectId,
+                assignedMembers: { $in: [requesterId] },
+                isActive: true
+            });
+
+            if (!task) {
+                return null;
+            }
+
+            // Prevent removing the last member
+            if (task.assignedMembers.length <= 1) {
+                throw new Error('Cannot remove the last member from a task');
+            }
+
+            const result = await TaskModel.collection.updateOne(
+                { _id: objectId },
+                {
+                    $pull: { assignedMembers: memberUserId },
+                    $set: { updatedAt: new Date() },
+                }
+            );
+
+            if (result.modifiedCount === 0) {
+                return null;
+            }
+
+            return await TaskModel.findById(id);
+        } catch (error) {
+            console.error('Error removing member from task:', error);
+            return null;
+        }
+    }
+
+    /**
      * Convert database document to response format
      */
     private static toResponse(task: Task): TaskResponse {
@@ -269,7 +354,7 @@ export class TaskModel {
             columnId: task.columnId,
             columnName: task.columnName,
             workspaceId: task.workspaceId,
-            assignedTo: task.assignedTo,
+            assignedMembers: task.assignedMembers || [],
             createdBy: task.createdBy,
             createdAt: task.createdAt,
             updatedAt: task.updatedAt,

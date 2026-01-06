@@ -38,7 +38,7 @@ export const useTaskStore = defineStore('task', () => {
             const response = await apiClient.get(url);
 
             if (response.success && response.data) {
-                tasks.value = response.data.tasks || [];
+                tasks.value = (response.data as any).tasks || [];
             } else {
                 throw new Error(response.error || 'Failed to fetch tasks');
             }
@@ -59,7 +59,7 @@ export const useTaskStore = defineStore('task', () => {
             const response = await apiClient.get(`/api/tasks/workspace/${workspaceId}`);
 
             if (response.success && response.data) {
-                const workspaceTasks = response.data.tasks || [];
+                const workspaceTasks = (response.data as any).tasks || [];
                 // Update only the tasks for this workspace
                 tasks.value = tasks.value.filter((t) => t.workspaceId !== workspaceId);
                 tasks.value.push(...workspaceTasks);
@@ -82,7 +82,7 @@ export const useTaskStore = defineStore('task', () => {
             const response = await apiClient.post('/api/tasks', taskData);
 
             if (response.success && response.data) {
-                const newTask = response.data.task;
+                const newTask = (response.data as any).task;
                 tasks.value.unshift(newTask);
                 return newTask;
             } else {
@@ -105,7 +105,7 @@ export const useTaskStore = defineStore('task', () => {
             const response = await apiClient.put(`/api/tasks/${taskId}`, updateData);
 
             if (response.success && response.data) {
-                const updatedTask = response.data.task;
+                const updatedTask = (response.data as any).task;
                 const index = tasks.value.findIndex((t) => t._id === taskId);
                 if (index !== -1) {
                     tasks.value[index] = updatedTask;
@@ -131,7 +131,7 @@ export const useTaskStore = defineStore('task', () => {
             });
 
             if (response.success && response.data) {
-                const updatedTask = response.data.task;
+                const updatedTask = (response.data as any).task;
                 const index = tasks.value.findIndex((t) => t._id === taskId);
                 if (index !== -1) {
                     tasks.value[index] = updatedTask;
@@ -174,7 +174,7 @@ export const useTaskStore = defineStore('task', () => {
             const response = await apiClient.get('/api/tasks/stats');
 
             if (response.success && response.data) {
-                stats.value = response.data.stats;
+                stats.value = (response.data as any).stats;
             }
         } catch (err: any) {
             console.error('Error fetching task stats:', err);
@@ -185,6 +185,49 @@ export const useTaskStore = defineStore('task', () => {
         tasks.value = [];
         error.value = null;
     };
+
+    const assignMember = async (taskId: string, userId: string) => {
+        try {
+            const response = await apiClient.post(`/api/tasks/${taskId}/members`, { userId });
+
+            if (response.success && response.data) {
+                const updatedTask = (response.data as any).task;
+                const index = tasks.value.findIndex((t) => t._id === taskId);
+                if (index !== -1) {
+                    tasks.value[index] = updatedTask;
+                }
+                return updatedTask;
+            } else {
+                throw new Error(response.error || 'Failed to assign member');
+            }
+        } catch (err: any) {
+            error.value = err.message || 'Error assigning member';
+            console.error('Error assigning member:', err);
+            throw err;
+        }
+    };
+
+    const unassignMember = async (taskId: string, userId: string) => {
+        try {
+            const response = await apiClient.delete(`/api/tasks/${taskId}/members/${userId}`);
+
+            if (response.success && response.data) {
+                const updatedTask = (response.data as any).task;
+                const index = tasks.value.findIndex((t) => t._id === taskId);
+                if (index !== -1) {
+                    tasks.value[index] = updatedTask;
+                }
+                return updatedTask;
+            } else {
+                throw new Error(response.error || 'Failed to unassign member');
+            }
+        } catch (err: any) {
+            error.value = err.message || 'Error unassigning member';
+            console.error('Error unassigning member:', err);
+            throw err;
+        }
+    };
+
 
     return {
         // State
@@ -204,5 +247,7 @@ export const useTaskStore = defineStore('task', () => {
         deleteTask,
         fetchStats,
         clearTasks,
+        assignMember,
+        unassignMember,
     };
 });

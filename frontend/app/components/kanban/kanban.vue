@@ -224,6 +224,7 @@
             :is-open="showCreateTaskModal"
             :workspace-id="workspaceId"
             :columns="workspace?.columns || []"
+            :workspace-members="workspace?.members || []"
             @close="showCreateTaskModal = false"
             @created="handleTaskCreated"
         />
@@ -233,6 +234,7 @@
             :is-open="showEditTaskModal"
             :task="selectedTask"
             :columns="workspace?.columns || []"
+            :workspace-members="workspace?.members || []"
             @close="handleCloseEditModal"
             @updated="handleTaskUpdated"
             @deleted="handleTaskDeleted"
@@ -324,7 +326,7 @@ const loadWorkspace = async () => {
         );
 
         if (response.success) {
-            workspace.value = response.data?.workspace;
+            workspace.value = (response.data as any)?.workspace;
 
             // Determine user role in this workspace
             determineUserRole();
@@ -358,7 +360,7 @@ const loadWorkspaceTasks = async (sortedColumns: any[]) => {
         const response = await apiClient.get(`/api/tasks/workspace/${props.workspaceId}`);
         
         if (response.success && response.data) {
-            const workspaceTasks = response.data.tasks || [];
+            const workspaceTasks = (response.data as any).tasks || [];
             
             // Assign tasks to their corresponding columns
             const columnsWithTasks = sortedColumns.map((col: any) => {
@@ -530,8 +532,11 @@ const determineUserRole = () => {
         const token = localStorage.getItem("auth_token");
         if (token) {
             try {
-                const payload = JSON.parse(atob(token.split(".")[1]));
-                currentUserId.value = payload.userId;
+                const tokenParts = token.split(".");
+                if (tokenParts[1]) {
+                    const payload = JSON.parse(atob(tokenParts[1])) as any;
+                    currentUserId.value = payload.userId;
+                }
             } catch (e) {
                 console.error("Error parsing token:", e);
             }
@@ -568,8 +573,8 @@ const handleTaskCreated = async () => {
 };
 
 // Handle task click - open edit modal
-const handleTaskClick = (task: Task) => {
-    selectedTask.value = task;
+const handleTaskClick = (task: any) => {
+    selectedTask.value = task as Task;
     showEditTaskModal.value = true;
 };
 

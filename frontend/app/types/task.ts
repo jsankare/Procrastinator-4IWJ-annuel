@@ -8,13 +8,14 @@ export interface Task {
     columnId?: string;
     columnName: string;
     workspaceId?: string;
-    assignedTo: string;
+    assignedMembers: string[];
     createdBy: string;
     createdAt: Date;
     updatedAt: Date;
     isActive: boolean;
     completedAt?: Date;
 }
+
 
 export interface CreateTaskInput {
     title: string;
@@ -24,6 +25,7 @@ export interface CreateTaskInput {
     columnId?: string;
     columnName: string;
     workspaceId?: string;
+    assignedMembers?: string[];
 }
 
 export interface UpdateTaskInput {
@@ -33,7 +35,9 @@ export interface UpdateTaskInput {
     priority?: 'low' | 'medium' | 'high';
     columnId?: string;
     columnName?: string;
+    assignedMembers?: string[];
 }
+
 
 export interface TaskStats {
     total: number;

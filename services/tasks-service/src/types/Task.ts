@@ -10,13 +10,14 @@ export interface Task {
     columnId?: string; // The column ID in workspace
     columnName: string; // The column display name
     workspaceId?: string;
-    assignedTo: string; // User ID
+    assignedMembers: string[]; // Array of User IDs
     createdBy: string; // User ID
     createdAt: Date;
     updatedAt: Date;
     isActive: boolean;
     completedAt?: Date;
 }
+
 
 export interface TaskResponse {
     _id: string;
@@ -28,10 +29,11 @@ export interface TaskResponse {
     columnId?: string;
     columnName: string;
     workspaceId?: string;
-    assignedTo: string;
+    assignedMembers: string[];
     createdBy: string;
     createdAt: Date;
     updatedAt: Date;
     isActive: boolean;
     completedAt?: Date;
 }
+
