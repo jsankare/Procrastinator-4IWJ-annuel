@@ -8,7 +8,7 @@
       </span>
       <div class="flex items-center gap-2">
         <span class="text-xs text-white/40 font-normal">{{
-          localTasks.length
+          tasks.length
           }}</span>
         <button v-if="canDelete" @click="$emit('delete')"
           class="p-1 hover:bg-red-500/20 rounded text-red-400 hover:text-red-300 transition-colors opacity-60 hover:opacity-100"
@@ -30,7 +30,7 @@
         </div>
       </draggable>
 
-      <p v-if="!localTasks.length" class="text-white/40 text-sm italic mt-2 pointer-events-none">
+      <p v-if="!tasks.length" class="text-white/40 text-sm italic mt-2 pointer-events-none">
         Aucune tâche
       </p>
     </div>
@@ -66,6 +66,8 @@ const emit = defineEmits<{
   (e: "update:tasks", tasks: Task[]): void;
   (e: "change", event: any): void; // Re-emit change for parent persistence
   (e: "delete"): void;
+  (e: "task-click", task: Task): void;
+  (e: "drop", details: { fromColumnId: string; toColumnId: string; taskId: number | string; fromIndex: number; toIndex: number }): void;
 }>();
 
 // Local copy for v-model binding
