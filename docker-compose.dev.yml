@@ -142,13 +142,7 @@ services:
     #   volumes:
     #     - ./services/task-service:/app
     #     - /app/node_modules
-    #   labels:
-    #     - "traefik.enable=true"
-    #     - "traefik.http.routers.tasks.rule=Host(`localhost`) && PathPrefix(`/api/tasks`)"
-    #     - "traefik.http.routers.tasks.entrypoints=web"
-    #     - "traefik.http.routers.tasks.middlewares=tasks-stripprefix"
-    #     - "traefik.http.middlewares.tasks-stripprefix.stripprefix.prefixes=/api/tasks"
-    #     - "traefik.http.services.tasks.loadbalancer.server.port=3002"
+    #   # No labels needed for Caddy - configured in Caddyfile
     #   networks:
     #     - task-manager-network
     #   restart: unless-stopped
@@ -166,13 +160,7 @@ services:
     #   volumes:
     #     - ./services/gamification-service:/app
     #     - /app/node_modules
-    #   labels:
-    #     - "traefik.enable=true"
-    #     - "traefik.http.routers.gamification.rule=Host(`localhost`) && PathPrefix(`/api/gamification`)"
-    #     - "traefik.http.routers.gamification.entrypoints=web"
-    #     - "traefik.http.routers.gamification.middlewares=gamification-stripprefix"
-    #     - "traefik.http.middlewares.gamification-stripprefix.stripprefix.prefixes=/api/gamification"
-    #     - "traefik.http.services.gamification.loadbalancer.server.port=3003"
+    #   # No labels needed for Caddy - configured in Caddyfile
     #   networks:
     #     - task-manager-network
     #   restart: unless-stopped
@@ -190,13 +178,7 @@ services:
     #   volumes:
     #     - ./services/collaboration-service:/app
     #     - /app/node_modules
-    #   labels:
-    #     - "traefik.enable=true"
-    #     - "traefik.http.routers.workspaces.rule=Host(`localhost`) && PathPrefix(`/api/workspaces`)"
-    #     - "traefik.http.routers.workspaces.entrypoints=web"
-    #     - "traefik.http.routers.workspaces.middlewares=workspaces-stripprefix"
-    #     - "traefik.http.middlewares.workspaces-stripprefix.stripprefix.prefixes=/api/workspaces"
-    #     - "traefik.http.services.workspaces.loadbalancer.server.port=3004"
+    #   # No labels needed for Caddy - configured in Caddyfile
     #   networks:
     #     - task-manager-network
     #   restart: unless-stopped
@@ -214,13 +196,7 @@ services:
     #   volumes:
     #     - ./services/notification-service:/app
     #     - /app/node_modules
-    #   labels:
-    #     - "traefik.enable=true"
-    #     - "traefik.http.routers.notifications.rule=Host(`localhost`) && PathPrefix(`/api/notifications`)"
-    #     - "traefik.http.routers.notifications.entrypoints=web"
-    #     - "traefik.http.routers.notifications.middlewares=notifications-stripprefix"
-    #     - "traefik.http.middlewares.notifications-stripprefix.stripprefix.prefixes=/api/notifications"
-    #     - "traefik.http.services.notifications.loadbalancer.server.port=3005"
+    #   # No labels needed for Caddy - configured in Caddyfile
     #   networks:
     #     - task-manager-network
     #   restart: unless-stopped

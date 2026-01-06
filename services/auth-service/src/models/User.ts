@@ -8,6 +8,7 @@ import {
   UpdateUserRequest,
   UserFilters,
   ValidationError,
+  Badge,
 } from '../types/User.js';
 
 export class UserModel {
@@ -166,6 +167,12 @@ export class UserModel {
           location: null,
           website: null,
         },
+        // Initialize gamification stats
+        points: 0,
+        streak: 0,
+        completedTasks: 0,
+        level: 1,
+        badges: [],
       };
 
       const result = await this.collection.insertOne(newUser);
@@ -225,6 +232,76 @@ export class UserModel {
       return await this.collection.findOne({ emailVerificationToken: token });
     } catch (error) {
       console.error('Error finding user by verification token:', error);
+      throw error;
+    }
+  }
+
+  // Increment user stats atomically
+  static async incrementStats(
+    id: string,
+    stats: {
+      points?: number;
+      streak?: number;
+      completedTasks?: number;
+      level?: number;
+      badge?: Badge | Badge[];
+    },
+  ): Promise<{
+    success: boolean;
+    data?: {
+      points: number;
+      streak: number;
+      completedTasks: number;
+      level: number;
+      badges: Badge[];
+    };
+  }> {
+    try {
+      if (!ObjectId.isValid(id)) {
+        return { success: false };
+      }
+
+      const updateOps: any = {};
+      const incFields: any = {};
+
+      if (stats.points) incFields.points = stats.points;
+      if (stats.streak) incFields.streak = stats.streak;
+      if (stats.completedTasks) incFields.completedTasks = stats.completedTasks;
+      if (stats.level) incFields.level = stats.level;
+
+      if (Object.keys(incFields).length > 0) {
+        updateOps.$inc = incFields;
+      }
+
+      if (stats.badge) {
+        const badgesToAdd = Array.isArray(stats.badge) ? stats.badge : [stats.badge];
+        updateOps.$addToSet = { badges: { $each: badgesToAdd } };
+      }
+
+      if (Object.keys(updateOps).length === 0) {
+        return { success: true };
+      }
+
+      const result = await this.collection.findOneAndUpdate({ _id: new ObjectId(id) }, updateOps, {
+        returnDocument: 'after',
+      });
+
+      if (!result) {
+        return { success: false };
+      }
+
+      return {
+        success: true,
+        data: {
+          points: result.points,
+          streak: result.streak,
+          completedTasks: result.completedTasks,
+          level: result.level,
+          badges: result.badges
+        }
+      };
+    } catch (error) {
+      console.error('Error incrementing stats:', error);
       throw error;
     }
   }
@@ -544,7 +621,7 @@ export class UserModel {
   static async updateResetToken(
     userId: string,
     resetToken: string,
-    resetTokenExpires: Date
+    resetTokenExpires: Date,
   ): Promise<boolean> {
     try {
       const hashedToken = await bcrypt.hash(resetToken, 10);
@@ -556,7 +633,7 @@ export class UserModel {
             passwordResetExpires: resetTokenExpires,
             updatedAt: new Date(),
           },
-        }
+        },
       );
       return result.modifiedCount > 0;
     } catch (error) {
@@ -565,12 +642,7 @@ export class UserModel {
     }
   }
 
-
-
-  static async verifyResetToken(
-    userId: string,
-    resetToken: string
-  ): Promise<boolean> {
+  static async verifyResetToken(userId: string, resetToken: string): Promise<boolean> {
     try {
       const user = await this.collection.findOne({ _id: new ObjectId(userId) });
       if (!user || !user.passwordResetToken) return false;
@@ -601,10 +673,10 @@ export class UserModel {
             updatedAt: new Date(),
           },
           $unset: {
-            passwordResetToken: "",
-            passwordResetExpires: "",
-          }
-        }
+            passwordResetToken: '',
+            passwordResetExpires: '',
+          },
+        },
       );
       return result.modifiedCount > 0;
     } catch (error) {

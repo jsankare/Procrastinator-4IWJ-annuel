@@ -35,41 +35,31 @@
 
         <!-- Task Statistics -->
         <div v-else class="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-6">
-            <div
-                class="bg-secondary/40 rounded-lg p-3 border border-white/10 text-center"
-            >
+            <div class="bg-secondary/40 rounded-lg p-3 border border-white/10 text-center">
                 <div class="text-lg font-bold text-blue-400">
                     {{ taskStats.todo }}
                 </div>
                 <div class="text-xs text-white/70">À faire</div>
             </div>
-            <div
-                class="bg-secondary/40 rounded-lg p-3 border border-white/10 text-center"
-            >
+            <div class="bg-secondary/40 rounded-lg p-3 border border-white/10 text-center">
                 <div class="text-lg font-bold text-orange-400">
                     {{ taskStats.inProgress }}
                 </div>
                 <div class="text-xs text-white/70">En cours</div>
             </div>
-            <div
-                class="bg-secondary/40 rounded-lg p-3 border border-white/10 text-center"
-            >
+            <div class="bg-secondary/40 rounded-lg p-3 border border-white/10 text-center">
                 <div class="text-lg font-bold text-green-400">
                     {{ taskStats.completed }}
                 </div>
                 <div class="text-xs text-white/70">Terminé</div>
             </div>
-            <div
-                class="bg-secondary/40 rounded-lg p-3 border border-white/10 text-center"
-            >
+            <div class="bg-secondary/40 rounded-lg p-3 border border-white/10 text-center">
                 <div class="text-lg font-bold text-purple-400">
                     {{ taskStats.review }}
                 </div>
                 <div class="text-xs text-white/70">Révision</div>
             </div>
-            <div
-                class="bg-secondary/40 rounded-lg p-3 border border-white/10 text-center"
-            >
+            <div class="bg-secondary/40 rounded-lg p-3 border border-white/10 text-center">
                 <div class="text-lg font-bold text-red-400">
                     {{ taskStats.overdue }}
                 </div>
@@ -78,24 +68,13 @@
         </div>
 
         <!-- Personal Columns -->
-        <div
-            class="flex gap-4 overflow-x-auto pb-6 scrollbar-thin scrollbar-thumb-accent/40 scrollbar-track-transparent"
-            style="min-height: 350px"
-        >
-            <div
-                v-for="column in columns"
-                :key="column.id"
-                class="shrink-0 w-full lg:w-80 bg-secondary/60 rounded-xl p-4 border border-white/10 flex flex-col"
-                :style="{ borderTopColor: column.color, borderTopWidth: '3px' }"
-            >
-                <h3
-                    class="text-lg font-semibold mb-3 flex items-center justify-between"
-                >
+        <div class="flex gap-4 overflow-x-auto pb-6" style="min-height: 350px">
+            <div v-for="column in columns" :key="column.id"
+                class="shrink-0 w-80 bg-secondary/60 rounded-xl p-4 border border-white/10 flex flex-col"
+                :style="{ borderTopColor: column.color, borderTopWidth: '3px' }">
+                <h3 class="text-lg font-semibold mb-3 flex items-center justify-between">
                     <span class="flex items-center gap-2">
-                        <div
-                            class="w-3 h-3 rounded-full"
-                            :style="{ backgroundColor: column.color }"
-                        ></div>
+                        <div class="w-3 h-3 rounded-full" :style="{ backgroundColor: column.color }"></div>
                         {{ column.name }}
                     </span>
                     <span class="text-xs text-white/40 font-normal">{{
@@ -104,32 +83,26 @@
                 </h3>
 
                 <div class="flex flex-col gap-3 flex-1">
-                    <div
-                        v-for="task in column.tasks"
-                        :key="task.id"
-                        class="bg-primary/60 rounded-lg p-3 border border-white/10 hover:border-accent/40 transition-colors"
-                    >
+                    <div v-for="task in column.tasks" :key="task.id"
+                        class="bg-primary/60 rounded-lg p-3 border border-white/10 hover:border-accent/40 transition-colors">
                         <div class="flex items-start justify-between mb-2">
                             <h4 class="font-medium text-sm leading-5">
                                 {{ task.title }}
                             </h4>
-                            <span
-                                class="text-xs px-2 py-1 rounded"
-                                :class="{
-                                    'bg-green-500/20 text-green-400':
-                                        task.priority === 'low',
-                                    'bg-yellow-500/20 text-yellow-400':
-                                        task.priority === 'medium',
-                                    'bg-red-500/20 text-red-400':
-                                        task.priority === 'high',
-                                }"
-                            >
+                            <span class="text-xs px-2 py-1 rounded" :class="{
+                                'bg-green-500/20 text-green-400':
+                                    task.priority === 'low',
+                                'bg-yellow-500/20 text-yellow-400':
+                                    task.priority === 'medium',
+                                'bg-red-500/20 text-red-400':
+                                    task.priority === 'high',
+                            }">
                                 {{
                                     task.priority === "low"
                                         ? "Faible"
                                         : task.priority === "medium"
-                                          ? "Moyen"
-                                          : "Élevé"
+                                            ? "Moyen"
+                                            : "Élevé"
                                 }}
                             </span>
                         </div>
@@ -140,21 +113,9 @@
 
                         <div class="flex items-center justify-between text-xs">
                             <div class="flex items-center gap-2 text-white/50">
-                                <svg
-                                    class="w-3 h-3"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    stroke-width="2"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <rect
-                                        x="3"
-                                        y="4"
-                                        width="18"
-                                        height="18"
-                                        rx="2"
-                                        ry="2"
-                                    ></rect>
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2"
+                                    viewBox="0 0 24 24">
+                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
                                     <line x1="16" y1="2" x2="16" y2="6"></line>
                                     <line x1="8" y1="2" x2="8" y2="6"></line>
                                     <line x1="3" y1="10" x2="21" y2="10"></line>
@@ -162,40 +123,22 @@
                                 {{ formatDate(task.dueDate) }}
                             </div>
 
-                            <div
-                                v-if="task.workspaceId"
-                                class="text-accent/70 text-xs"
-                            >
+                            <div v-if="task.workspaceId" class="text-accent/70 text-xs">
                                 {{ getWorkspaceName(task.workspaceId) }}
                             </div>
                         </div>
 
                         <!-- Overdue indicator -->
-                        <div
-                            v-if="isOverdue(task)"
-                            class="mt-2 flex items-center gap-1 text-red-400 text-xs"
-                        >
-                            <svg
-                                class="w-3 h-3"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="2"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
-                                />
+                        <div v-if="isOverdue(task)" class="mt-2 flex items-center gap-1 text-red-400 text-xs">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
                             </svg>
                             En retard
                         </div>
                     </div>
 
-                    <p
-                        v-if="!column.tasks.length"
-                        class="text-white/40 text-sm italic mt-2 text-center"
-                    >
+                    <p v-if="!column.tasks.length" class="text-white/40 text-sm italic mt-2 text-center">
                         Aucune tâche
                     </p>
                 </div>
@@ -258,7 +201,8 @@ const columns = computed(() => {
 const taskStats = computed(() => getTaskStats(tasks.value));
 
 // Utility functions
-const formatDate = (dateStr: string) => {
+const formatDate = (dateStr?: string) => {
+    if (!dateStr) return "";
     const date = new Date(dateStr);
     const today = new Date();
     const diffTime = date.getTime() - today.getTime();
@@ -273,8 +217,9 @@ const formatDate = (dateStr: string) => {
 
 const isOverdue = (task: MockTask) => {
     if (task.status.toLowerCase().includes("terminé")) return false;
+    if (!task.dueDate) return false;
     const today = new Date().toISOString().split("T")[0];
-    return task.dueDate < today;
+    return today ? task.dueDate < today : false;
 };
 
 const getWorkspaceName = (workspaceId: string) => {

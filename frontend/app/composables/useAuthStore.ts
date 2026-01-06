@@ -208,5 +208,6 @@ export const useAuthStore = () => {
     logout,
     fetchCurrentUser,
     updateProfile,
+    setUser: (u: User | null) => { user.value = u },
   }
 }

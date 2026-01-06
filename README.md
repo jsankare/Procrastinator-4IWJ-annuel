@@ -9,7 +9,7 @@ Application de gestion de tâches basée sur une architecture microservices mode
 - ✅ **API REST sécurisée** - Endpoints documentés avec validation complète
 - ✅ **Interface moderne** - Frontend Nuxt 4 avec TypeScript et Vue 3
 - ✅ **Base de données MongoDB** - Stockage persistant avec indexation optimisée
-- ✅ **Architecture microservices** - Services découplés avec reverse proxy Traefik
+- ✅ **Architecture microservices** - Services découplés avec reverse proxy Caddy
 - ✅ **Développement Docker** - Environnement complet containerisé
 
 ## 🏗️ Architecture
@@ -31,7 +31,7 @@ procrastinator/
 │       │   └── utils/       # Utilitaires (JWT, etc.)
 │       └── dist/            # Code compilé
 ├── infra/
-│   ├── traefik/             # Configuration reverse proxy
+│   ├── caddy/               # Configuration reverse proxy
 │   └── mongo/               # Scripts d'initialisation MongoDB
 ├── docker-compose.dev.yml   # Configuration développement
 └── APIDOG.md               # Documentation API complète
@@ -40,7 +40,7 @@ procrastinator/
 ### Technologies
 - **Frontend** : Nuxt v4, Vue 3, TypeScript, @nuxt/ui, TailwindCSS
 - **Backend** : Node.js, Express, TypeScript, MongoDB, JWT
-- **Infrastructure** : Docker, Traefik, MongoDB 7.0
+- **Infrastructure** : Docker, Caddy, MongoDB 7.0
 - **Développement** : pnpm workspaces, tsx, ESM modules
 
 ## 📋 Prérequis
@@ -78,8 +78,8 @@ Cette commande démarre :
 - 🐳 **MongoDB** sur le port 27017
 - 🔐 **Auth Service** (API d'authentification)
 - 🎨 **Frontend Nuxt** 
-- 🔀 **Traefik** (reverse proxy) sur le port 80
-- 📊 **Dashboard Traefik** sur le port 8080
+- 🔀 **Caddy** (reverse proxy) sur le port 80
+- 🔧 **Caddy Admin API** sur le port 2019
 
 ## 🌐 Accès aux services
 
@@ -87,7 +87,7 @@ Cette commande démarre :
 |---------|-----|-------------|
 | **Application principale** | http://localhost | Interface utilisateur Nuxt |
 | **API d'authentification** | http://localhost/api/auth | Endpoints REST |
-| **Dashboard Traefik** | http://localhost:8080 | Monitoring des services |
+| **Caddy Admin API** | http://localhost:2019 | Configuration et monitoring |
 | **MongoDB** | localhost:27017 | Base de données (accès direct) |
 
 ## 🔐 Authentification et Test
