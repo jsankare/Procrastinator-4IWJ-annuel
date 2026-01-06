@@ -21,14 +21,31 @@
       </div>
     </h2>
 
-    <div class="flex flex-col gap-3 flex-1 min-h-[50px]">
-      <draggable v-model="localTasks" group="tasks" item-key="id" class="flex flex-col gap-3 h-full"
-        ghost-class="opacity-50" drag-class="cursor-grabbing" @change="onChange">
-        <div v-for="element in localTasks" :key="element.id" class="rounded-lg cursor-grab active:cursor-grabbing">
-          <KanbanTask :title="element.title" :description="element.description" :due-date="element.dueDate"
-            :user="element.user" />
-        </div>
-      </draggable>
+    <div
+        class="flex flex-col gap-3 flex-1"
+        @dragover.prevent="onColumnDragOver"
+        @drop.prevent="onColumnDrop"
+    >
+      <div
+          v-for="(task, index) in tasks"
+          :key="task._id || task.id"
+          class="rounded-lg"
+          draggable="true"
+          @dragstart="onDragStart($event, index)"
+          @dragenter.stop.prevent="onTaskDragEnter($event, index)"
+          @dragover.stop.prevent="onTaskDragOver($event, index)"
+          @dragleave.stop="onTaskDragLeave"
+          @drop.stop.prevent="onTaskDrop($event, index)"
+          :class="dropClass(index)"
+      >
+        <KanbanTask
+            :title="task.title"
+            :description="task.description"
+            :due-date="task.dueDate"
+            :user="task.user"
+            @task-click="$emit('task-click', task)"
+        />
+      </div>
 
       <p v-if="!tasks.length" class="text-white/40 text-sm italic mt-2 pointer-events-none">
         Aucune tâche
@@ -43,13 +60,16 @@ import { VueDraggableNext as draggable } from 'vue-draggable-next';
 import KanbanTask from "./kanbanTask.vue";
 
 export interface Task {
-  id: number | string;
+  _id?: string;
+  id?: number | string;
   title: string;
   description: string;
   dueDate: string;
+  priority?: 'low' | 'medium' | 'high';
+  columnName?: string;
   status?: string;
-  workspaceId?: string | number;
-  assignedTo?: string | number;
+  workspaceId?: string;
+  assignedTo?: number;
   user?: { firstName: string; lastName: string } | null;
   [key: string]: any;
 }
@@ -70,16 +90,101 @@ const emit = defineEmits<{
   (e: "drop", details: { fromColumnId: string; toColumnId: string; taskId: number | string; fromIndex: number; toIndex: number }): void;
 }>();
 
-// Local copy for v-model binding
-const localTasks = computed({
-  get: () => props.tasks,
-  set: (val) => emit('update:tasks', val)
-});
+// État local pour survol
+const hoverIndex = ref<number | null>(null);
+const hoverAfter = ref<boolean>(false);
 
-function onChange(event: any) {
-  // Re-emit specific change event with columnId context if needed
-  // But updating the array via v-model emit upstream is usually enough for the list state.
-  // We emit a custom 'change' event to notify parent of movement details explicitly if needed.
-  emit("change", { ...event, columnId: props.columnId });
+function dropClass(index: number) {
+  if (hoverIndex.value === null) return "";
+  if (hoverIndex.value !== index) return "";
+  return "outline outline-1 outline-accent/70";
+}
+
+type DragPayload = {
+  fromCol: string;
+  fromIndex: number;
+  taskId: number | string;
+};
+
+function onDragStart(e: DragEvent, index: number) {
+  const task = props.tasks[index];
+  if (!task) return; // évite 'possibly undefined'
+  const payload: DragPayload = {
+    fromCol: props.columnId,
+    fromIndex: index,
+    taskId: task._id || task.id || '',
+  };
+  e.dataTransfer?.setData("text/plain", JSON.stringify(payload));
+  if (e.dataTransfer) {
+    e.dataTransfer.effectAllowed = "move";
+  }
+}
+
+function onTaskDragEnter(_e: DragEvent, index: number) {
+  hoverIndex.value = index;
+  hoverAfter.value = false;
+}
+
+function onTaskDragOver(e: DragEvent, index: number) {
+  const el = e.currentTarget as HTMLElement;
+  const rect = el.getBoundingClientRect();
+  const middle = rect.top + rect.height / 2;
+  hoverIndex.value = index;
+  hoverAfter.value = e.clientY > middle;
+}
+
+function onTaskDragLeave() {
+  hoverIndex.value = null;
+  hoverAfter.value = false;
+}
+
+function onTaskDrop(e: DragEvent, index: number) {
+  const raw = e.dataTransfer?.getData("text/plain");
+  if (!raw) return;
+  const data = safeParse<DragPayload>(raw);
+  if (!data) return;
+
+  let toIndex = index + (hoverAfter.value ? 1 : 0);
+  emit("drop", {
+    fromColumnId: data.fromCol,
+    toColumnId: props.columnId,
+    taskId: data.taskId,
+    fromIndex: data.fromIndex,
+    toIndex,
+  });
+
+  hoverIndex.value = null;
+  hoverAfter.value = false;
+}
+
+function onColumnDragOver() {
+  // autorise le drop en zone vide
+}
+
+function onColumnDrop(e: DragEvent) {
+  const raw = e.dataTransfer?.getData("text/plain");
+  if (!raw) return;
+  const data = safeParse<DragPayload>(raw);
+  if (!data) return;
+
+  const toIndex = props.tasks.length;
+  emit("drop", {
+    fromColumnId: data.fromCol,
+    toColumnId: props.columnId,
+    taskId: data.taskId,
+    fromIndex: data.fromIndex,
+    toIndex,
+  });
+
+  hoverIndex.value = null;
+  hoverAfter.value = false;
+}
+
+function safeParse<T>(s: string): T | null {
+  try {
+    return JSON.parse(s) as T;
+  } catch {
+    return null;
+  }
 }
 </script>

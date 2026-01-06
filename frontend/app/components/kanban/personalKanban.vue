@@ -2,8 +2,29 @@
     <div class="flex flex-col gap-4 w-full">
         <div class="flex items-center justify-between mb-4">
             <h2 class="text-xl font-semibold">Mes Tâches</h2>
-            <div class="text-sm text-white/70">
-                {{ tasks.length }} tâche{{ tasks.length > 1 ? "s" : "" }}
+            <div class="flex items-center gap-4">
+                <div class="text-sm text-white/70">
+                    {{ tasks.length }} tâche{{ tasks.length > 1 ? "s" : "" }}
+                </div>
+                <button
+                    @click="showCreateModal = true"
+                    class="px-4 py-2 bg-accent hover:bg-accent/90 text-primary rounded-lg font-semibold transition-colors flex items-center gap-2"
+                >
+                    <svg
+                        class="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M12 4v16m8-8H4"
+                        />
+                    </svg>
+                    Nouvelle tâche
+                </button>
             </div>
         </div>
 
@@ -123,90 +144,51 @@
                 </div>
             </div>
         </div>
+
+        <!-- Create Task Modal -->
+        <CreateTaskModal
+            :is-open="showCreateModal"
+            @close="showCreateModal = false"
+            @created="handleTaskCreated"
+        />
     </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
-import {
-    generateMockTasksForUser,
-    getTaskStats,
-    organizeTasksIntoColumns,
-    type MockTask,
-    type TaskColumn,
-} from "~/utils/mockTasks";
+import { useTaskStore } from "~/composables/useTaskStore";
+import type { Task } from "~/types/task";
+import { organizeTasksIntoColumns, getTaskStats } from "~/utils/mockTasks";
 import { apiClient } from "~/utils/api";
+import CreateTaskModal from "~/components/tasks/CreateTaskModal.vue";
+
+// Use task store
+const taskStore = useTaskStore();
 
 // Reactive data
-const tasks = ref<MockTask[]>([]);
 const workspaces = ref<any[]>([]);
-const loading = ref(true);
+const loading = computed(() => taskStore.loading);
+const tasks = computed(() => taskStore.tasks);
+const showCreateModal = ref(false);
 
-// Load user's workspaces and generate personal tasks
+// Load user's workspaces and tasks from real API
 const loadPersonalTasks = async () => {
     try {
-        loading.value = true;
-
-        // Get current user ID from token
-        let currentUserId = "";
-        if (import.meta.client) {
-            const token = localStorage.getItem("auth_token");
-            if (token) {
-                try {
-                    const parts = token.split(".");
-                    if (parts.length === 3) {
-                        const part = parts[1];
-                        if (part) {
-                            const payload = JSON.parse(atob(part));
-                            currentUserId = payload.userId;
-                        }
-                    }
-                } catch (e) {
-                    console.error("Error parsing token:", e);
-                }
+        // Try to get user's workspaces
+        try {
+            const response = await apiClient.get("/api/workspaces/");
+            if (response.success) {
+                workspaces.value = response.data?.workspaces || [];
             }
+        } catch (err) {
+            console.error("Error loading workspaces:", err);
+            workspaces.value = [];
         }
 
-        if (!currentUserId) {
-            // Generate tasks without workspace context for non-authenticated users
-            tasks.value = generateMockTasksForUser("guest", [], {
-                totalTasks: 8,
-            });
-        } else {
-            // Try to get user's workspaces
-            try {
-                const response = await apiClient.get<any>("/api/workspaces/");
-                if (response.success) {
-                    workspaces.value = response.data?.workspaces || [];
-                    const workspaceIds = workspaces.value.map((ws) => ws._id);
-
-                    // Generate tasks across user's workspaces
-                    tasks.value = generateMockTasksForUser(
-                        currentUserId,
-                        workspaceIds,
-                        { totalTasks: 15 },
-                    );
-                } else {
-                    // Fallback to personal tasks only
-                    tasks.value = generateMockTasksForUser(currentUserId, [], {
-                        totalTasks: 10,
-                    });
-                }
-            } catch (err) {
-                // Fallback to personal tasks if workspace API fails
-                tasks.value = generateMockTasksForUser(currentUserId, [], {
-                    totalTasks: 10,
-                });
-            }
-        }
+        // Fetch tasks from API
+        await taskStore.fetchTasks();
     } catch (error) {
         console.error("Error loading personal tasks:", error);
-        // Generate fallback tasks
-        tasks.value = generateMockTasksForUser("fallback", [], {
-            totalTasks: 6,
-        });
-    } finally {
-        loading.value = false;
     }
 };
 
