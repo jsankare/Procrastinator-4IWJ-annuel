@@ -65,30 +65,6 @@
             </button>
         </div>
 
-        <!-- Task Creation Button -->
-        <div v-if="!loading && !error && columns.length > 0" class="flex items-center justify-between mb-4 px-2 sm:px-0">
-            <h2 class="text-xl font-semibold">Tâches</h2>
-            <button
-                @click="showCreateTaskModal = true"
-                class="px-4 py-2 bg-accent hover:bg-accent/90 text-primary rounded-lg font-semibold transition-colors flex items-center gap-2"
-            >
-                <svg
-                    class="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    viewBox="0 0 24 24"
-                >
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="M12 4v16m8-8H4"
-                    />
-                </svg>
-                Nouvelle tâche
-            </button>
-        </div>
-
         <!-- No Columns Fallback -->
         <div v-else-if="!loading && !error && columns.length === 0" class="flex items-center justify-center py-16">
             <div class="text-center bg-secondary/20 border border-white/10 rounded-lg p-8 max-w-md">
@@ -121,67 +97,29 @@
         </div>
 
         <!-- Columns -->
-        <div
-            v-if="!loading && !error && columns.length > 0"
-            class="flex gap-4 overflow-x-auto pb-6 scrollbar-thin scrollbar-thumb-accent/40 scrollbar-track-transparent"
-            style="min-height: 350px"
-        >
-            <KanbanColumn
-                v-for="col in columns"
-                :key="col._id"
-                :column-id="col._id"
-                :title="col.name"
-                :color="col.color"
-                :tasks="col.tasks"
-                :can-delete="columns.length > 1 && canManageColumns"
-                @drop="handleDrop"
-                @delete="deleteColumn(col._id)"
-                @task-click="handleTaskClick"
-                class="min-w-[260px] w-full max-w-xs shrink-0"
-            />
+        <div v-else-if="!loading && !error && columns.length > 0" class="flex gap-4 overflow-x-auto pb-6"
+            style="min-height: 350px">
+            <KanbanColumn v-for="col in columns" :key="col._id" :column-id="col._id" :title="col.name"
+                :color="col.color" :tasks="col.tasks" :can-delete="columns.length > 1 && canManageColumns"
+                @update:tasks="(newTasks: any) => { col.tasks = newTasks; }"
+                @change="(evt: any) => onTaskMove(col._id, evt)" @delete="deleteColumn(col._id)"
+                class="w-80 shrink-0" />
         </div>
-
-        <!-- Create Task Modal -->
-        <CreateTaskModal
-            :is-open="showCreateTaskModal"
-            :workspace-id="workspaceId"
-            :columns="workspace?.columns || []"
-            :workspace-members="workspace?.members || []"
-            @close="showCreateTaskModal = false"
-            @created="handleTaskCreated"
-        />
-
-        <!-- Edit Task Modal -->
-        <EditTaskModal
-            :is-open="showEditTaskModal"
-            :task="selectedTask"
-            :columns="workspace?.columns || []"
-            :workspace-members="workspace?.members || []"
-            @close="handleCloseEditModal"
-            @updated="handleTaskUpdated"
-            @deleted="handleTaskDeleted"
-        />
     </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from "vue";
 import KanbanColumn from "./kanbanColumn.vue";
-import CreateTaskModal from "~/components/tasks/CreateTaskModal.vue";
-import EditTaskModal from "~/components/tasks/EditTaskModal.vue";
 import { apiClient } from "~/utils/api";
+import { useAuthStore } from "~/composables/useAuthStore";
+import { authApi } from "~/composables/useAuth";
+import {
+    generateMockTasksForWorkspace,
+    type MockTask,
+} from "~/utils/mockTasks";
 
-type Task = {
-    _id: string;
-    title: string;
-    description: string;
-    dueDate: string;
-    priority: 'low' | 'medium' | 'high';
-    status: string;
-    columnId?: string;
-    columnName: string;
-    workspaceId?: string;
-};
+type Task = MockTask;
 
 type WorkspaceColumn = {
     _id: string;
@@ -209,9 +147,6 @@ const loading = ref(true);
 const error = ref<string | null>(null);
 const newColumnTitle = ref("");
 const addingColumn = ref(false);
-const showCreateTaskModal = ref(false);
-const showEditTaskModal = ref(false);
-const selectedTask = ref<Task | null>(null);
 
 // Persistence Helper
 const persistTasks = async () => {
@@ -314,16 +249,42 @@ const loadWorkspace = async () => {
             // Determine user role in this workspace
             determineUserRole();
 
-            // Sort columns by position
+            // Sort columns by position and add tasks array
             const sortedColumns = (workspace.value?.columns || []).sort(
                 (a: any, b: any) => a.position - b.position,
             );
 
-            // Set loading to false BEFORE loading tasks so Vue can render when tasks are assigned
-            loading.value = false;
-            
-            // Load real tasks from API
-            await loadWorkspaceTasks(sortedColumns);
+            // Try loading from LocalStorage first (Persistence Layer)
+            const storedTasks = loadTasksFromStorage(props.workspaceId);
+            let tasksToUse: MockTask[] = [];
+
+            if (storedTasks && storedTasks.length > 0) {
+                tasksToUse = storedTasks;
+            } else {
+                // Fallback to random generation if no saved state
+                tasksToUse = generateMockTasksForWorkspace(
+                    props.workspaceId,
+                    sortedColumns,
+                    { minTasks: 0, maxTasks: 3 },
+                );
+            }
+
+            // Assign tasks to columns
+            const columnsWithTasks = sortedColumns.map((col: any) => ({
+                ...col,
+                tasks: tasksToUse.filter((task) =>
+                    // Match by ID if possible, otherwise by status name (legacy support)
+                    task.columnId === col._id || task.status === col.name
+                ),
+            }));
+
+            columns.value = columnsWithTasks;
+
+            // Persist initial state to ensure consistency if we just generated mocks
+            if (!storedTasks) {
+                persistTasks();
+            }
+
         } else {
             error.value = response.error || "Failed to load workspace";
         }
@@ -331,47 +292,7 @@ const loadWorkspace = async () => {
         console.error("Error loading workspace:", err);
         error.value = "Failed to load workspace";
     } finally {
-        // Ensure loading is false even if there's an error
         loading.value = false;
-    }
-};
-
-
-// Load tasks for workspace from API
-const loadWorkspaceTasks = async (sortedColumns: any[]) => {
-    try {
-        const response = await apiClient.get(`/api/tasks/workspace/${props.workspaceId}`);
-        
-        if (response.success && response.data) {
-            const workspaceTasks = (response.data as any).tasks || [];
-            
-            // Assign tasks to their corresponding columns
-            const columnsWithTasks = sortedColumns.map((col: any) => {
-                const columnTasks = workspaceTasks.filter((task: any) => 
-                    task.columnId === col._id || task.columnName === col.name
-                );
-                
-                return {
-                    ...col,
-                    tasks: columnTasks,
-                };
-            });
-
-            columns.value = columnsWithTasks;
-        } else {
-            // Show empty columns if no tasks
-            columns.value = sortedColumns.map((col: any) => ({
-                ...col,
-                tasks: [],
-            }));
-        }
-    } catch (err) {
-        console.error("Error loading workspace tasks:", err);
-        // Show empty columns on error
-        columns.value = sortedColumns.map((col: any) => ({
-            ...col,
-            tasks: [],
-        }));
     }
 };
 
@@ -433,79 +354,6 @@ const deleteColumn = async (columnId: string) => {
     }
 };
 
-// Handle task drop (for future task management)
-const handleDrop = async (details: {
-    fromColumnId: string;
-    toColumnId: string;
-    taskId: number | string;
-    fromIndex: number;
-    toIndex: number;
-}) => {
-    const { fromColumnId, toColumnId, taskId, fromIndex } = details;
-    let { toIndex } = details;
-
-    const fromCol = columns.value.find((c) => c._id === fromColumnId);
-    const toCol = columns.value.find((c) => c._id === toColumnId);
-    if (!fromCol || !toCol) return;
-
-    // No-op guard: same column and no real movement
-    if (
-        fromCol === toCol &&
-        (toIndex === fromIndex || toIndex === fromIndex + 1)
-    ) {
-        return;
-    }
-
-    // Remove from source
-    if (fromIndex < 0 || fromIndex >= fromCol.tasks.length) return;
-    const [item] = fromCol.tasks.splice(fromIndex, 1);
-    if (!item || String(item._id) !== String(taskId)) return;
-
-    // Adjust index if same column and inserting lower
-    if (fromCol === toCol && toIndex > fromIndex) {
-        toIndex -= 1;
-    }
-
-    // Clamp safety
-    if (toIndex < 0) toIndex = 0;
-    if (toIndex > toCol.tasks.length) toIndex = toCol.tasks.length;
-
-    // Insert at destination
-    toCol.tasks.splice(toIndex, 0, item);
-
-    // Update column ID and name if column changed
-    if (fromCol !== toCol) {
-        item.columnId = toCol._id;
-        item.columnName = toCol.name;
-    }
-
-    // Save to database
-    try {
-        const response = await apiClient.patch(`/api/tasks/${item._id}/column`, {
-            columnId: toCol._id,
-            columnName: toCol.name,
-        });
-        
-        if (!response.success) {
-            console.error('Failed to update task column:', response.error);
-            // Revert the move on error
-            toCol.tasks.splice(toIndex, 1);
-            fromCol.tasks.splice(fromIndex, 0, item);
-            item.columnId = fromCol._id;
-            item.columnName = fromCol.name;
-        } else {
-            console.log("✅ Task column updated successfully");
-        }
-    } catch (error) {
-        console.error('Error updating task column:', error);
-        // Revert the move on error
-        toCol.tasks.splice(toIndex, 1);
-        fromCol.tasks.splice(fromIndex, 0, item);
-        item.columnId = fromCol._id;
-        item.columnName = fromCol.name;
-    }
-};
-
 // Determine user role in workspace
 const determineUserRole = () => {
     if (!workspace.value) return;
@@ -515,10 +363,13 @@ const determineUserRole = () => {
         const token = localStorage.getItem("auth_token");
         if (token) {
             try {
-                const tokenParts = token.split(".");
-                if (tokenParts[1]) {
-                    const payload = JSON.parse(atob(tokenParts[1])) as any;
-                    currentUserId.value = payload.userId;
+                const parts = token.split(".");
+                if (parts.length === 3) {
+                    const part = parts[1];
+                    if (part) {
+                        const payload = JSON.parse(atob(part));
+                        currentUserId.value = payload.userId;
+                    }
                 }
             } catch (e) {
                 console.error("Error parsing token:", e);
@@ -543,49 +394,6 @@ const canManageColumns = computed(() => {
     const allowedRoles = ["owner", "admin", "manager"]; // 'manager' for future use
     return allowedRoles.includes(userRole.value);
 });
-
-// Handle task created - reload workspace tasks
-const handleTaskCreated = async () => {
-    // Reload workspace to refresh tasks
-    if (workspace.value?.columns) {
-        const sortedColumns = (workspace.value.columns || []).sort(
-            (a: any, b: any) => a.position - b.position,
-        );
-        await loadWorkspaceTasks(sortedColumns);
-    }
-};
-
-// Handle task click - open edit modal
-const handleTaskClick = (task: any) => {
-    selectedTask.value = task as Task;
-    showEditTaskModal.value = true;
-};
-
-// Handle close edit modal
-const handleCloseEditModal = () => {
-    showEditTaskModal.value = false;
-    selectedTask.value = null;
-};
-
-// Handle task updated - reload tasks
-const handleTaskUpdated = async () => {
-    if (workspace.value?.columns) {
-        const sortedColumns = (workspace.value.columns || []).sort(
-            (a: any, b: any) => a.position - b.position,
-        );
-        await loadWorkspaceTasks(sortedColumns);
-    }
-};
-
-// Handle task deleted - reload tasks 
-const handleTaskDeleted = async () => {
-    if (workspace.value?.columns) {
-        const sortedColumns = (workspace.value.columns || []).sort(
-            (a: any, b: any) => a.position - b.position,
-        );
-        await loadWorkspaceTasks(sortedColumns);
-    }
-};
 
 // Load workspace on mount
 onMounted(() => {
