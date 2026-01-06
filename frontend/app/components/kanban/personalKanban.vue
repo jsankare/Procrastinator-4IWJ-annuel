@@ -46,6 +46,24 @@
             </div>
         </div>
 
+        <!-- tooltip -->
+        <div class="group relative inline-block mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="text-white/50 hover:text-white transition-colors cursor-help">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 16v-4" />
+                <path d="M12 8h.01" />
+            </svg>
+            <div
+                class="absolute left-0 bottom-0 w-fit md:max-w-1/2 bg-gray-900 border border-white/10 rounded-lg p-3 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 shadow-xl">
+                <p class="text-[10px] text-white/60 leading-relaxed">
+                    La version de ce Kanban est à but visuel uniquement. Pour ajouter des colonnes, ou changer des tâches
+                    de colonne, veuillez utiliser les fonctionnalités complètes disponibles dans les workspaces.
+                </p>
+            </div>
+        </div>
+
         <!-- Personal Columns -->
         <div class="flex gap-4 overflow-x-auto pb-6" style="min-height: 350px">
             <div v-for="column in columns" :key="column.id"

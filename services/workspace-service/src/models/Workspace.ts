@@ -204,8 +204,12 @@ export class WorkspaceModel {
     try {
       const workspaces = await WorkspaceModel.collection
         .find({
-          'members.userId': userId,
-          'members.isActive': true,
+          members: {
+            $elemMatch: {
+              userId: userId,
+              isActive: true,
+            },
+          },
           isActive: true,
         })
         .toArray();
@@ -428,8 +432,12 @@ export class WorkspaceModel {
 
       const workspace = await WorkspaceModel.collection.findOne({
         _id: objectId,
-        'members.userId': userId,
-        'members.isActive': true,
+        members: {
+          $elemMatch: {
+            userId: userId,
+            isActive: true,
+          },
+        },
         isActive: true,
       });
 
@@ -452,8 +460,12 @@ export class WorkspaceModel {
 
       const workspace = await WorkspaceModel.collection.findOne({
         _id: objectId,
-        'members.userId': userId,
-        'members.isActive': true,
+        members: {
+          $elemMatch: {
+            userId: userId,
+            isActive: true,
+          },
+        },
         isActive: true,
       });
 

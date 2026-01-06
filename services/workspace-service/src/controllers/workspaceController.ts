@@ -912,11 +912,21 @@ export class WorkspaceController {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
 
-      const workspaces = await WorkspaceModel.getAllWorkspaces(page, limit);
+      const workspacesData = await WorkspaceModel.getAllWorkspaces(page, limit);
+
+      // Enrich all workspaces with user details
+      const enrichedWorkspaces = await Promise.all(
+        workspacesData.workspaces.map((workspace) =>
+          WorkspaceController.enrichMembersWithUserDetails(workspace),
+        ),
+      );
 
       res.status(200).json({
         success: true,
-        data: workspaces,
+        data: {
+          ...workspacesData,
+          workspaces: enrichedWorkspaces,
+        },
         timestamp: new Date().toISOString(),
       });
     } catch (error) {
