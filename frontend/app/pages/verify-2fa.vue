@@ -4,7 +4,8 @@
       <div class="rounded-lg border border-white/10 bg-secondary p-8 shadow-lg">
         <div class="text-center mb-8">
           <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-accent/20 flex items-center justify-center">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-accent" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2">
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
               <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
             </svg>
@@ -17,42 +18,28 @@
           <!-- Code input -->
           <div>
             <label class="block text-sm font-medium mb-2">Code à 6 chiffres</label>
-            <input
-              v-model="verificationCode"
-              type="text"
-              inputmode="numeric"
-              placeholder="000000"
-              maxlength="6"
+            <input v-model="verificationCode" type="text" inputmode="numeric" placeholder="000000" maxlength="6"
               autofocus
               class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 focus:border-accent outline-none transition-colors text-center text-3xl tracking-widest font-mono"
-              @keyup.enter="verifyToken"
-            />
+              @keyup.enter="verifyToken" />
           </div>
 
           <!-- Tabs: TOTP / Backup -->
           <div class="flex gap-2 border-b border-white/10">
-            <button
-              type="button"
-              @click="activeTab = 'totp'"
-              :class="[
-                'flex-1 py-2 text-sm font-medium border-b-2 transition-colors',
-                activeTab === 'totp'
-                  ? 'border-accent text-accent'
-                  : 'border-transparent text-text/60 hover:text-text'
-              ]"
-            >
+            <button type="button" @click="activeTab = 'totp'" :class="[
+              'flex-1 py-2 text-sm font-medium border-b-2 transition-colors',
+              activeTab === 'totp'
+                ? 'border-accent text-accent'
+                : 'border-transparent text-text/60 hover:text-text'
+            ]">
               Code d'application
             </button>
-            <button
-              type="button"
-              @click="activeTab = 'backup'"
-              :class="[
-                'flex-1 py-2 text-sm font-medium border-b-2 transition-colors',
-                activeTab === 'backup'
-                  ? 'border-accent text-accent'
-                  : 'border-transparent text-text/60 hover:text-text'
-              ]"
-            >
+            <button type="button" @click="activeTab = 'backup'" :class="[
+              'flex-1 py-2 text-sm font-medium border-b-2 transition-colors',
+              activeTab === 'backup'
+                ? 'border-accent text-accent'
+                : 'border-transparent text-text/60 hover:text-text'
+            ]">
               Code de sauvegarde
             </button>
           </div>
@@ -63,15 +50,10 @@
           </div>
           <div v-show="activeTab === 'backup'" class="text-sm text-text/60">
             Entrez l'un de vos codes de sauvegarde à 8 caractères
-            <input
-              v-if="activeTab === 'backup'"
-              v-model="verificationCode"
-              type="text"
-              placeholder="XXXXXXXX"
+            <input v-if="activeTab === 'backup'" v-model="verificationCode" type="text" placeholder="XXXXXXXX"
               maxlength="8"
               class="w-full mt-2 px-4 py-2 rounded-lg bg-white/5 border border-white/10 focus:border-accent outline-none transition-colors text-center text-lg tracking-widest font-mono"
-              @keyup.enter="verifyToken"
-            />
+              @keyup.enter="verifyToken" />
           </div>
 
           <!-- Error message -->
@@ -80,11 +62,9 @@
           </div>
 
           <!-- Submit button -->
-          <button
-            type="submit"
+          <button type="submit"
             :disabled="(activeTab === 'totp' && verificationCode.length !== 6) || (activeTab === 'backup' && verificationCode.length !== 8) || isLoading"
-            class="w-full px-4 py-2 rounded-lg bg-accent text-secondary font-medium hover:bg-accent/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          >
+            class="w-full px-4 py-2 rounded-lg bg-accent text-secondary font-medium hover:bg-accent/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
             {{ isLoading ? 'Vérification...' : 'Vérifier' }}
           </button>
 
@@ -114,15 +94,21 @@ const { isLoading, error: twoFactorError, validateLogin, clearError } = useTwoFa
 const verificationCode = ref('')
 const activeTab = ref<'totp' | 'backup'>('totp')
 const userId = ref<string>('')
+const tempToken = ref<string>('')
 const error = ref<string | null>(null)
 
-const tempToken = ref<string>('')
+useHead({
+  title: 'Vérification 2FA - Procrastinator',
+  meta: [
+    { name: 'robots', content: 'noindex, nofollow' },
+  ],
+})
 
 onMounted(() => {
   // Check if userId is in session/route
-  userId.value = route.query.userId as string || ''
-  tempToken.value = route.query.tempToken as string || ''
-  
+  userId.value = (route.query.userId as string) || ''
+  tempToken.value = (route.query.tempToken as string) || ''
+
   if (!userId.value || !tempToken.value) {
     console.error('Missing userId or tempToken')
     router.push('/login')
@@ -137,29 +123,27 @@ const verifyToken = async () => {
 
   try {
     const response = await validateLogin(tempToken.value, verificationCode.value)
-    
+
     if (response) { // Response is data directly from validateLogin wrapper
       console.log('[2FA Verify] Response:', response)
-      
+
       // Save token to localStorage with correct key
       const token = response.token
       const user = response.user
-      
+
       if (process.client) {
         localStorage.setItem('auth_token', token)
         localStorage.setItem('auth_user', JSON.stringify(user))
         if (response.expiresAt) {
-           // Handle expiration if needed
+          // Handle expiration if needed
         }
       }
-      
+
       // Update auth store
-      authStore.user = user
-      authStore.token = token // Set token directly if exposed or re-init
       authStore.init() // Reload from localStorage
-      
+
       console.log('[2FA Verify] Redirecting to home...')
-      
+
       // Redirect to home
       router.push('/')
     }

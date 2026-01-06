@@ -12,7 +12,10 @@ import {
   LoginRequest,
   UserFilters,
   ValidationError,
+  Badge,
 } from '../types/User.js';
+import { checkNewBadges } from '../utils/gamification.js';
+import { getLevelFromPoints } from '../utils/levelSystem.js';
 
 export class UserController {
   /**
@@ -425,6 +428,112 @@ export class UserController {
       res.status(500).json({
         success: false,
         message: 'Internal server error while updating profile',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+
+  /**
+   * Update user stats (Points, Streak, CompletedTasks)
+   * PUT /stats
+   */
+  static async updateUserStats(req: Request, res: Response): Promise<void> {
+    try {
+      const authHeader = req.headers.authorization;
+      const token = JWTUtils.extractTokenFromHeader(authHeader);
+
+      if (!token) {
+        res.status(401).json({
+          success: false,
+          message: 'Authorization token is required',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      const payload = JWTUtils.verifyToken(token);
+
+      if (!payload) {
+        res.status(401).json({
+          success: false,
+          message: 'Invalid or expired token',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      const { incrementPoints, incrementStreak, incrementCompletedTasks } = req.body;
+
+      const result = await UserModel.incrementStats(payload.userId, {
+        points: incrementPoints,
+        streak: incrementStreak,
+        completedTasks: incrementCompletedTasks
+      });
+
+      if (!result.success) {
+        res.status(400).json({
+          success: false,
+          message: 'Failed to update stats',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Check for Level Up and New Badges
+      let finalData = result.data;
+      const notifications: any = {};
+      console.log(finalData);
+
+      if (finalData) {
+        // Construct user state for checking
+        // Ensure properties exist
+        const currentUserState: any = {
+          points: finalData.points || 0,
+          streak: finalData.streak || 0,
+          completedTasks: finalData.completedTasks || 0,
+          level: finalData.level || 1,
+          badges: finalData.badges || []
+        };
+
+        const newLevel = getLevelFromPoints(currentUserState.points);
+        const earnedBadges = checkNewBadges(currentUserState);
+
+        const secondaryUpdates: any = {};
+
+        if (newLevel > currentUserState.level) {
+          secondaryUpdates.level = newLevel - currentUserState.level; // Calculate delta for $inc
+          notifications.levelUp = true;
+          notifications.newLevel = newLevel;
+        }
+
+        if (earnedBadges.length > 0) {
+          secondaryUpdates.badge = earnedBadges;
+          notifications.newBadges = earnedBadges;
+        }
+
+        // Apply secondary updates if needed
+        if (Object.keys(secondaryUpdates).length > 0) {
+          const secondaryResult = await UserModel.incrementStats(payload.userId, secondaryUpdates);
+          if (secondaryResult.success && secondaryResult.data) {
+            finalData = secondaryResult.data;
+          }
+        }
+      }
+
+      res.json({
+        success: true,
+        message: 'Stats updated successfully',
+        data: {
+          ...finalData,
+          notifications // Send notifications about what just happened
+        },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('Update stats error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error while updating stats',
         timestamp: new Date().toISOString(),
       });
     }
