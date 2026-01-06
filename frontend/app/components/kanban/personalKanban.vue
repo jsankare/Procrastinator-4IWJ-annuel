@@ -227,6 +227,12 @@ const getWorkspaceName = (workspaceId: string) => {
     return workspace ? workspace.name : "Workspace";
 };
 
+// Handle task created - reload tasks
+const handleTaskCreated = async () => {
+    showCreateModal.value = false;
+    await loadPersonalTasks();
+};
+
 // Load tasks on mount
 onMounted(() => {
     loadPersonalTasks();
