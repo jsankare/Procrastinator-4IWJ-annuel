@@ -39,7 +39,7 @@ export default defineNuxtConfig({
         plugins: [tailwindcss()],
     },
 
-    modules: ["@nuxt/eslint", "@nuxt/image", "@nuxt/scripts", "@nuxt/ui", "@nuxtjs/sitemap", "@nuxtjs/robots"],
+    modules: ["@nuxt/eslint", "@nuxt/image", "@nuxt/scripts", "@nuxt/ui", "@nuxtjs/sitemap", "@nuxtjs/robots", '@nuxt/test-utils/module',],
 
     site: {
         url: process.env.NUXT_PUBLIC_API_BASE_URL || "http://localhost",
