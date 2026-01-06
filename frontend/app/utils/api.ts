@@ -1,17 +1,7 @@
 // API client configuration
 // Base URL configurable via environment variable `NUXT_PUBLIC_API_BASE_URL`
-// Use a getter function that is evaluated each time to ensure we have the latest config
-function getApiBaseUrl(): string {
-  // Try to get from window.__NUXT__ if on client and available
-  if (typeof window !== 'undefined' && (window as any).__NUXT__?.config?.public?.apiBase) {
-    return (window as any).__NUXT__.config.public.apiBase;
-  }
-
-  // For local development without Docker/Caddy, default to localhost:3000
-  // For Docker/Caddy setup, use localhost (port 80)
-  // Users should set NUXT_PUBLIC_API_BASE_URL in .env.local for local dev
-  return "http://localhost:3000";
-}
+export const API_BASE_URL =
+  (import.meta.env?.NUXT_PUBLIC_API_BASE_URL as string) || "http://localhost";
 
 interface ApiResponse<T = any> {
   success: boolean;
@@ -23,9 +13,10 @@ interface ApiResponse<T = any> {
 }
 
 class ApiClient {
-  // Make baseURL a getter so it's evaluated dynamically
-  private get baseURL(): string {
-    return getApiBaseUrl();
+  private baseURL: string;
+
+  constructor(baseURL: string = API_BASE_URL) {
+    this.baseURL = baseURL;
   }
 
   private async request<T>(
