@@ -1,0 +1,103 @@
+# docker-compose.prod.yml
+# This file is optimized for production deployment.
+# It assumes you will be using a domain and Caddy for HTTPS.
+# Make sure to create the .env files for each service as referenced below.
+
+services:
+  # Reverse Proxy: Caddy
+  caddy:
+    image: caddy:2.11
+    container_name: caddy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./infra/caddy/Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - task-manager-network
+    restart: unless-stopped
+
+  # Database: MongoDB
+  mongodb:
+    image: mongo:latest
+    container_name: task-manager-mongodb
+    env_file:
+      - ./infra/mongo/.env
+    volumes:
+      - mongodb_data:/data/db
+      - ./infra/mongo/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+    networks:
+      - task-manager-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Frontend: Nuxt
+  frontend:
+    image: jsankare/procrastinator-frontend:latest
+    container_name: task-manager-frontend
+    env_file:
+      - ./frontend/.env
+    depends_on:
+      - auth-service
+      - workspace-service
+      - tasks-service
+    networks:
+      - task-manager-network
+    restart: unless-stopped
+
+  # Authentication Service
+  auth-service:
+    image: jsankare/procrastinator-auth-service:latest
+    container_name: auth-service
+    env_file:
+      - ./services/auth-service/.env
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - task-manager-network
+    restart: unless-stopped
+
+  # Workspace Service
+  workspace-service:
+    image: jsankare/procrastinator-workspace-service:latest
+    container_name: workspace-service
+    env_file:
+      - ./services/workspace-service/.env
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - task-manager-network
+    restart: unless-stopped
+
+  # Tasks Service
+  tasks-service:
+    image: jsankare/procrastinator-tasks-service:latest
+    container_name: tasks-service
+    env_file:
+      - ./services/tasks-service/.env
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - task-manager-network
+    restart: unless-stopped
+
+networks:
+  task-manager-network:
+    driver: bridge
+
+volumes:
+  mongodb_data:
+    driver: local
+  caddy_data:
+    driver: local
+  caddy_config:
+    driver: local

@@ -11,7 +11,8 @@
     "clean": "rm -rf dist",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write \"src/**/*.ts\"",
-    "format:check": "prettier --check \"src/**/*.ts\""
+    "format:check": "prettier --check \"src/**/*.ts\"",
+    "docker:ship": "docker build -t procrastinator-auth-service . && docker tag procrastinator-auth-service jsankare/procrastinator-auth-service:latest && docker push jsankare/procrastinator-auth-service:latest"
   },
   "keywords": [
     "microservice",
