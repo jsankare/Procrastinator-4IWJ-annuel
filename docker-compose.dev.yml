@@ -1,214 +1,243 @@
 #docker-copmpose.dev.yml
 services:
-    # Reverse Proxy : Caddy
-    caddy:
-        image: caddy:2.11
-        container_name: caddy
-        ports:
-            - "80:80"
-            - "443:443"
-            - "2019:2019" # Admin API
-        volumes:
-            - ./infra/caddy/Caddyfile:/etc/caddy/Caddyfile
-            - caddy_data:/data
-            - caddy_config:/config
-        networks:
-            - task-manager-network
-        restart: unless-stopped
+  # Reverse Proxy : Caddy
+  caddy:
+    image: caddy:2.11
+    container_name: caddy
+    ports:
+      - "80:80"
+      - "443:443"
+      - "2019:2019" # Admin API
+    volumes:
+      - ./infra/caddy/Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - task-manager-network
+    restart: unless-stopped
 
-    mongodb:
-        image: mongo:latest
-        container_name: task-manager-mongodb
-        environment:
-            - MONGO_INITDB_ROOT_USERNAME=admin
-            - MONGO_INITDB_ROOT_PASSWORD=password123
-            - MONGO_INITDB_DATABASE=procrastinator
-        ports:
-            - "27017:27017"
-        volumes:
-            - mongodb_data:/data/db
-            - ./infra/mongo/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
-        networks:
-            - task-manager-network
-        restart: unless-stopped
-        healthcheck:
-            test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
-            interval: 10s
-            timeout: 5s
-            retries: 5
+  mongodb:
+    image: mongo:latest
+    container_name: task-manager-mongodb
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=password123
+      - MONGO_INITDB_DATABASE=procrastinator
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+      - ./infra/mongo/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+    networks:
+      - task-manager-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-    # Frontend : Nuxt v4
-    frontend:
-        build:
-            context: ./frontend
-            dockerfile: Dockerfile
-        container_name: task-manager-frontend
-        # Ports commented out to force usage of Caddy on port 80
-        # Uncomment for direct access during debugging if needed
-        # ports:
-        #     - "3000:3000"
-        #     - "3333:3000"
-        #     - "5173:5173"
-        environment:
-            - NODE_ENV=development
-            - NUXT_HOST=0.0.0.0
-            - NUXT_PORT=3000
-            - NUXT_PUBLIC_API_BASE_URL=http://localhost
-        # Pour production, utiliser un fichier .env :
-        # env_file:
-        #   - ./frontend/.env
-        volumes:
-            - ./frontend/app:/app/app
-            - ./frontend/server:/app/server
-            - /app/node_modules
-            - /app/.nuxt
-        # No labels needed for Caddy - configured in Caddyfile
-        depends_on:
-            mongodb:
-                condition: service_healthy
-        networks:
-            - task-manager-network
-        restart: unless-stopped
+  # Frontend : Nuxt v4
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: task-manager-frontend
+    # Ports commented out to force usage of Caddy on port 80
+    # Uncomment for direct access during debugging if needed
+    # ports:
+    #     - "3000:3000"
+    #     - "3333:3000"
+    #     - "5173:5173"
+    environment:
+      - NODE_ENV=development
+      - NUXT_HOST=0.0.0.0
+      - NUXT_PORT=3000
+      - NUXT_PUBLIC_API_BASE_URL=http://localhost
+    # Pour production, utiliser un fichier .env :
+    # env_file:
+    #   - ./frontend/.env
+    volumes:
+      - ./frontend/app:/app/app
+      - ./frontend/server:/app/server
+      - /app/node_modules
+      - /app/.nuxt
+    # No labels needed for Caddy - configured in Caddyfile
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - task-manager-network
+    restart: unless-stopped
 
-    # Service d'authentification
-    auth-service:
-        build:
-            context: ./services/auth-service
-            dockerfile: Dockerfile
-        container_name: auth-service
-        environment:
-            - NODE_ENV=${NODE_ENV:-development}
-            - PORT=3001
-            - SERVICE_NAME=auth-service
-            - CORS_ORIGIN=http://localhost
-            - MONGODB_URI=mongodb://procrastinator_user:procrastinator_pass@mongodb:27017/procrastinator?authSource=procrastinator
-            - DB_NAME=procrastinator
-            - JWT_SECRET=your_super_secret_jwt_key_change_in_production_please
-            - JWT_EXPIRES_IN=7d
-            - JWT_REFRESH_EXPIRES_IN=30d
-        # Pour production, décommenter et utiliser un fichier .env :
-        # env_file:
-        #   - ./services/auth-service/.env
-        volumes:
-            - ./services/auth-service:/app
-            - /app/node_modules
-        depends_on:
-            mongodb:
-                condition: service_healthy
-        # No labels needed for Caddy - configured in Caddyfile
-        networks:
-            - task-manager-network
-        restart: unless-stopped
+  # Service d'authentification
+  auth-service:
+    build:
+      context: ./services/auth-service
+      dockerfile: Dockerfile
+    container_name: auth-service
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+      - PORT=3001
+      - SERVICE_NAME=auth-service
+      - CORS_ORIGIN=http://localhost
+      - MONGODB_URI=mongodb://procrastinator_user:procrastinator_pass@mongodb:27017/procrastinator?authSource=procrastinator
+      - DB_NAME=procrastinator
+      - JWT_SECRET=your_super_secret_jwt_key_change_in_production_please
+      - JWT_EXPIRES_IN=7d
+      - JWT_REFRESH_EXPIRES_IN=30d
+    # Pour production, décommenter et utiliser un fichier .env :
+    # env_file:
+    #   - ./services/auth-service/.env
+    volumes:
+      - ./services/auth-service:/app
+      - /app/node_modules
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    # No labels needed for Caddy - configured in Caddyfile
+    networks:
+      - task-manager-network
+    restart: unless-stopped
 
-    # Service de gestion des workspaces
-    workspace-service:
-        build:
-            context: ./services/workspace-service
-            dockerfile: Dockerfile
-        container_name: workspace-service
-        environment:
-            - NODE_ENV=development
-            - PORT=3002
-            - SERVICE_NAME=workspace-service
-            - CORS_ORIGIN=http://localhost
-            - MONGODB_URI=mongodb://procrastinator_user:procrastinator_pass@mongodb:27017/procrastinator?authSource=procrastinator
-            - DB_NAME=procrastinator
-            - JWT_SECRET=your_super_secret_jwt_key_change_in_production_please
-            - FRONTEND_URL=http://localhost
-        # Pour production, décommenter et utiliser un fichier .env :
-        # env_file:
-        #   - ./services/workspace-service/.env
-        volumes:
-            - ./services/workspace-service:/app
-            - /app/node_modules
-        depends_on:
-            mongodb:
-                condition: service_healthy
-        # No labels needed for Caddy - configured in Caddyfile
-        networks:
-            - task-manager-network
-        restart: unless-stopped
+  # Service de gestion des workspaces
+  workspace-service:
+    build:
+      context: ./services/workspace-service
+      dockerfile: Dockerfile
+    container_name: workspace-service
+    environment:
+      - NODE_ENV=development
+      - PORT=3002
+      - SERVICE_NAME=workspace-service
+      - CORS_ORIGIN=http://localhost
+      - MONGODB_URI=mongodb://procrastinator_user:procrastinator_pass@mongodb:27017/procrastinator?authSource=procrastinator
+      - DB_NAME=procrastinator
+      - JWT_SECRET=your_super_secret_jwt_key_change_in_production_please
+      - FRONTEND_URL=http://localhost
+    # Pour production, décommenter et utiliser un fichier .env :
+    # env_file:
+    #   - ./services/workspace-service/.env
+    volumes:
+      - ./services/workspace-service:/app
+      - /app/node_modules
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    # No labels needed for Caddy - configured in Caddyfile
+    networks:
+      - task-manager-network
+    restart: unless-stopped
 
-    # Service de gestion des tâches
-    # task-service:
-    #   build:
-    #     context: ./services/task-service
-    #     dockerfile: Dockerfile
-    #   container_name: task-service
-    #   environment:
-    #     - NODE_ENV=development
-    #     - PORT=3002
-    #     - SERVICE_NAME=task-service
-    #   volumes:
-    #     - ./services/task-service:/app
-    #     - /app/node_modules
-    #   # No labels needed for Caddy - configured in Caddyfile
-    #   networks:
-    #     - task-manager-network
-    #   restart: unless-stopped
+  # Service de gestion des workspaces
+  tasks-service:
+    build:
+      context: ./services/tasks-service
+      dockerfile: Dockerfile
+    container_name: tasks-service
+    environment:
+      - NODE_ENV=development
+      - PORT=3003
+      - SERVICE_NAME=tasks-service
+      - CORS_ORIGIN=http://localhost
+      - MONGODB_URI=mongodb://procrastinator_user:procrastinator_pass@mongodb:27017/procrastinator?authSource=procrastinator
+      - DB_NAME=procrastinator
+      - JWT_SECRET=your_super_secret_jwt_key_change_in_production_please
+      - FRONTEND_URL=http://localhost
+    # Pour production, décommenter et utiliser un fichier .env :
+    # env_file:
+    #   - ./services/tasks-service/.env
+    volumes:
+      - ./services/tasks-service:/app
+      - /app/node_modules
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    # No labels needed for Caddy - configured in Caddyfile
+    networks:
+      - task-manager-network
+    restart: unless-stopped
 
-    # # Service de gamification
-    # gamification-service:
-    #   build:
-    #     context: ./services/gamification-service
-    #     dockerfile: Dockerfile
-    #   container_name: gamification-service
-    #   environment:
-    #     - NODE_ENV=development
-    #     - PORT=3003
-    #     - SERVICE_NAME=gamification-service
-    #   volumes:
-    #     - ./services/gamification-service:/app
-    #     - /app/node_modules
-    #   # No labels needed for Caddy - configured in Caddyfile
-    #   networks:
-    #     - task-manager-network
-    #   restart: unless-stopped
+  # Service de gestion des tâches
+  # task-service:
+  #   build:
+  #     context: ./services/task-service
+  #     dockerfile: Dockerfile
+  #   container_name: task-service
+  #   environment:
+  #     - NODE_ENV=development
+  #     - PORT=3002
+  #     - SERVICE_NAME=task-service
+  #   volumes:
+  #     - ./services/task-service:/app
+  #     - /app/node_modules
+  #   # No labels needed for Caddy - configured in Caddyfile
+  #   networks:
+  #     - task-manager-network
+  #   restart: unless-stopped
 
-    # # Service de collaboration
-    # collaboration-service:
-    #   build:
-    #     context: ./services/collaboration-service
-    #     dockerfile: Dockerfile
-    #   container_name: collaboration-service
-    #   environment:
-    #     - NODE_ENV=development
-    #     - PORT=3004
-    #     - SERVICE_NAME=collaboration-service
-    #   volumes:
-    #     - ./services/collaboration-service:/app
-    #     - /app/node_modules
-    #   # No labels needed for Caddy - configured in Caddyfile
-    #   networks:
-    #     - task-manager-network
-    #   restart: unless-stopped
+  # # Service de gamification
+  # gamification-service:
+  #   build:
+  #     context: ./services/gamification-service
+  #     dockerfile: Dockerfile
+  #   container_name: gamification-service
+  #   environment:
+  #     - NODE_ENV=development
+  #     - PORT=3003
+  #     - SERVICE_NAME=gamification-service
+  #   volumes:
+  #     - ./services/gamification-service:/app
+  #     - /app/node_modules
+  #   # No labels needed for Caddy - configured in Caddyfile
+  #   networks:
+  #     - task-manager-network
+  #   restart: unless-stopped
 
-    #     # Service de notifications
-    # notification-service:
-    #   build:
-    #     context: ./services/notification-service
-    #     dockerfile: Dockerfile
-    #   container_name: notification-service
-    #   environment:
-    #     - NODE_ENV=development
-    #     - PORT=3005
-    #     - SERVICE_NAME=notification-service
-    #   volumes:
-    #     - ./services/notification-service:/app
-    #     - /app/node_modules
-    #   # No labels needed for Caddy - configured in Caddyfile
-    #   networks:
-    #     - task-manager-network
-    #   restart: unless-stopped
+  # # Service de collaboration
+  # collaboration-service:
+  #   build:
+  #     context: ./services/collaboration-service
+  #     dockerfile: Dockerfile
+  #   container_name: collaboration-service
+  #   environment:
+  #     - NODE_ENV=development
+  #     - PORT=3004
+  #     - SERVICE_NAME=collaboration-service
+  #   volumes:
+  #     - ./services/collaboration-service:/app
+  #     - /app/node_modules
+  #   # No labels needed for Caddy - configured in Caddyfile
+  #   networks:
+  #     - task-manager-network
+  #   restart: unless-stopped
+
+  #     # Service de notifications
+  # notification-service:
+  #   build:
+  #     context: ./services/notification-service
+  #     dockerfile: Dockerfile
+  #   container_name: notification-service
+  #   environment:
+  #     - NODE_ENV=development
+  #     - PORT=3005
+  #     - SERVICE_NAME=notification-service
+  #   volumes:
+  #     - ./services/notification-service:/app
+  #     - /app/node_modules
+  #   # No labels needed for Caddy - configured in Caddyfile
+  #   networks:
+  #     - task-manager-network
+  #   restart: unless-stopped
 
 networks:
-    task-manager-network:
-        driver: bridge
+  task-manager-network:
+    driver: bridge
 
 volumes:
-    mongodb_data:
-        driver: local
-    caddy_data:
-        driver: local
-    caddy_config:
-        driver: local
+  mongodb_data:
+    driver: local
+  caddy_data:
+    driver: local
+  caddy_config:
+    driver: local

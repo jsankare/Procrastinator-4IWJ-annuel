@@ -15,7 +15,7 @@ const SERVICE_NAME = process.env.SERVICE_NAME || 'tasks-service';
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
 // CORS configuration
-const FRONTEND_URL = process.env.CORS_ORIGIN || 'http://localhost:3000';
+const FRONTEND_URL = process.env.CORS_ORIGIN || 'http://localhost';
 
 const allowedOrigins = [
     FRONTEND_URL,
