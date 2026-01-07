@@ -1,7 +1,17 @@
 // API client configuration
 // Base URL configurable via environment variable `NUXT_PUBLIC_API_BASE_URL`
-export const API_BASE_URL =
-  (import.meta.env?.NUXT_PUBLIC_API_BASE_URL as string) || "http://localhost";
+// Use a getter function that is evaluated each time to ensure we have the latest config
+function getApiBaseUrl(): string {
+  // Try to get from window.__NUXT__ if on client and available
+  if (typeof window !== 'undefined' && (window as any).__NUXT__?.config?.public?.apiBase) {
+    return (window as any).__NUXT__.config.public.apiBase;
+  }
+
+  // For local development without Docker/Caddy, default to localhost:3000
+  // For Docker/Caddy setup, use localhost (port 80)
+  // Users should set NUXT_PUBLIC_API_BASE_URL in .env.local for local dev
+  return "http://localhost";
+}
 
 interface ApiResponse<T = any> {
   success: boolean;
@@ -13,17 +23,30 @@ interface ApiResponse<T = any> {
 }
 
 class ApiClient {
-  private baseURL: string;
-
-  constructor(baseURL: string = API_BASE_URL) {
-    this.baseURL = baseURL;
+  // Make baseURL a getter so it's evaluated dynamically
+  private get baseURL(): string {
+    return getApiBaseUrl();
   }
 
   private async request<T>(
     endpoint: string,
     options: RequestInit = {},
   ): Promise<ApiResponse<T>> {
-    const url = `${this.baseURL}${endpoint}`;
+
+    let normalizedEndpoint = endpoint;
+    if (
+      endpoint.startsWith("/api/") &&
+      !endpoint.includes("?") &&
+      !endpoint.endsWith("/")
+    ) {
+      const parts = endpoint.split("/");
+      const lastPart = parts[parts.length - 1];
+      if (!lastPart || lastPart === parts[2]) {
+        normalizedEndpoint = endpoint + "/";
+      }
+    }
+
+    const url = `${this.baseURL}${normalizedEndpoint}`;
 
     const defaultHeaders: HeadersInit = {
       "Content-Type": "application/json",

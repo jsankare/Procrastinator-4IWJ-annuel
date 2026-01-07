@@ -17,9 +17,17 @@ export const useAuthStore = () => {
       const savedToken = localStorage.getItem('auth_token')
       const savedUser = localStorage.getItem('auth_user')
 
-      if (savedToken && savedUser) {
-        token.value = savedToken
-        user.value = JSON.parse(savedUser)
+      if (savedToken && savedUser && savedUser !== 'undefined') {
+        try {
+          token.value = savedToken
+          user.value = JSON.parse(savedUser)
+        } catch (err) {
+          // Clear invalid data
+          console.error('Invalid auth data in localStorage, clearing...')
+          localStorage.removeItem('auth_token')
+          localStorage.removeItem('auth_user')
+          localStorage.removeItem('refresh_token')
+        }
       }
     }
   }
@@ -112,6 +120,15 @@ export const useAuthStore = () => {
   // Logout
   const logout = async () => {
     isLoading.value = true
+
+    // Call API logout (fire and forget basically, we want to clear local state regardless)
+    try {
+      if (token.value) {
+        await authApi.logout()
+      }
+    } catch (e) {
+      console.warn('Backend logout failed', e)
+    }
 
     // Clear state
     user.value = null

@@ -36,6 +36,14 @@ export interface User {
   isEmailVerified: boolean;
   emailVerificationToken?: string | null;
   emailVerificationExpires?: Date | null;
+  // Change Verification
+  pendingEmail?: string | null;
+  emailChangeToken?: string | null;
+  emailChangeExpires?: Date | null;
+  pendingPassword?: string | null;
+  passwordChangeToken?: string | null;
+  passwordChangeExpires?: Date | null;
+
   passwordResetToken?: string | null;
   passwordResetExpires?: Date | null;
   isTwoFactorEnabled: boolean;
@@ -52,6 +60,7 @@ export interface User {
   completedTasks: number;
   level: number;
   badges: Badge[];
+  lastTaskCompletedAt?: Date;
 }
 
 export interface CreateUserRequest {
@@ -77,6 +86,8 @@ export interface UpdateUserRequest {
   isTwoFactorEnabled?: boolean;
   totpSecret?: string | null;
   backupCodes?: string[];
+  currentPassword?: string;
+  newPassword?: string;
 }
 
 export interface UpdateStatsRequest {

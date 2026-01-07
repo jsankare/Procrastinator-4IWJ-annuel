@@ -167,7 +167,7 @@ export function generateMockTasksForWorkspace(
             PRIORITIES[Math.floor(Math.random() * PRIORITIES.length)];
         const workspaceColumn =
             workspaceColumns[
-                Math.floor(Math.random() * workspaceColumns.length)
+            Math.floor(Math.random() * workspaceColumns.length)
             ];
 
         tasks.push({
@@ -262,7 +262,7 @@ function getRandomDateRange(minDays: number, maxDays: number): string {
 /**
  * Organize tasks into dynamic columns based on their designated columns
  */
-export function organizeTasksIntoColumns(tasks: MockTask[]): TaskColumn[] {
+export function organizeTasksIntoColumns(tasks: any[]): TaskColumn[] {
     // Get all unique column names from tasks
     const columnNames = [...new Set(tasks.map((task) => task.columnName))];
 
@@ -270,8 +270,11 @@ export function organizeTasksIntoColumns(tasks: MockTask[]): TaskColumn[] {
     const columns: TaskColumn[] = columnNames.map((columnName) => ({
         id: columnName.toLowerCase().replace(/\s+/g, "-"),
         name: columnName,
-        color: COLUMN_CONFIGS[columnName] || COLUMN_CONFIGS["Sans colonne"],
-        tasks: tasks.filter((task) => task.columnName === columnName),
+        color: (COLUMN_CONFIGS as any)[columnName] || COLUMN_CONFIGS["Sans colonne"],
+        tasks: tasks.filter((task) => task.columnName === columnName).map(task => ({
+            ...task,
+            id: task.id || task._id || String(Math.random())
+        })),
     }));
 
     // Sort columns by priority (common ones first)
@@ -344,7 +347,7 @@ export function filterTasksByStatus(
 /**
  * Get task statistics
  */
-export function getTaskStats(tasks: MockTask[]) {
+export function getTaskStats(tasks: any[]) {
     return {
         total: tasks.length,
         completed: tasks.filter((t) =>
