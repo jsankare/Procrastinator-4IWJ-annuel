@@ -66,11 +66,17 @@ interface Workspace {
   name: string
   description?: string
   members: any[]
+  columns?: any[]
   // Add other properties as needed
 }
 
+interface WorkspaceWithStats extends Workspace {
+  totalTasks?: number
+  completedTasks?: number
+}
+
 // Reactive data
-const workspaces = ref<Workspace[]>([])
+const workspaces = ref<WorkspaceWithStats[]>([])
 const loading = ref(true)
 const error = ref<string | null>(null);
 
@@ -81,6 +87,26 @@ useHead({
   ],
 })
 
+// Load task statistics for a workspace
+const loadWorkspaceStats = async (workspaceId: string): Promise<{ total: number; completed: number }> => {
+  try {
+    const response = await apiClient.get(`/api/tasks/workspace/${workspaceId}`);
+    if (response.success) {
+      const tasks = (response.data as any)?.tasks || [];
+      const total = tasks.length;
+      const completed = tasks.filter((task: any) => {
+        const columnName = task.columnName?.toLowerCase() || '';
+        return columnName.includes('terminé') || columnName.includes('done') || columnName.includes('complete');
+      }).length;
+      
+      return { total, completed };
+    }
+  } catch (err) {
+    console.error(`Error loading stats for workspace ${workspaceId}:`, err);
+  }
+  return { total: 0, completed: 0 };
+};
+
 const workspacesWithDetails = computed(() =>
   workspaces.value.map((ws) => {
     const wsUsers = ws.members
@@ -90,18 +116,12 @@ const workspacesWithDetails = computed(() =>
           member.username || member.firstName || member.userId,
       );
 
-    // Mock task data for now - will be replaced with real tasks later
-    const totalTasks = Math.floor(Math.random() * 20) + 5;
-    const completedTasks = Math.floor(
-      totalTasks * (0.3 + Math.random() * 0.4),
-    );
-
     return {
       id: ws._id,
       title: ws.name,
       description: ws.description,
-      totalTasks,
-      completedTasks,
+      totalTasks: ws.totalTasks || 0,
+      completedTasks: ws.completedTasks || 0,
       users: wsUsers,
     };
   }),
@@ -114,7 +134,21 @@ const loadWorkspaces = async () => {
     error.value = null;
     const response = await apiClient.get('/api/workspaces/')
     if (response.success) {
-      workspaces.value = response.data?.workspaces || [];
+      const fetchedWorkspaces = (response.data as any)?.workspaces || [];
+      
+      // Load task statistics for each workspace in parallel
+      const workspacesWithStats = await Promise.all(
+        fetchedWorkspaces.map(async (ws: Workspace) => {
+          const stats = await loadWorkspaceStats(ws._id);
+          return {
+            ...ws,
+            totalTasks: stats.total,
+            completedTasks: stats.completed,
+          };
+        })
+      );
+      
+      workspaces.value = workspacesWithStats;
     } else {
       error.value = response.error || "Failed to load workspaces";
     }

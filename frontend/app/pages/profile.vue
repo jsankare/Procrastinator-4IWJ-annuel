@@ -137,6 +137,19 @@ async function onSave(newData: any) {
     const payload: any = {};
     if (newData.firstName !== undefined) payload.firstName = newData.firstName;
     if (newData.lastName !== undefined) payload.lastName = newData.lastName;
+    
+    if (newData.username && newData.username !== user.value?.username) {
+        payload.username = newData.username;
+    }
+    if (newData.email && newData.email !== user.value?.email) {
+        payload.email = newData.email;
+    }
+    
+    if (newData.currentPassword && newData.newPassword) {
+        payload.currentPassword = newData.currentPassword;
+        payload.newPassword = newData.newPassword;
+    }
+
     if (newData.avatar !== undefined) {
       const existingProfile = authStore.user.value?.profile || {};
       payload.profile = {

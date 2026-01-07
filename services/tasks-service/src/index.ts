@@ -83,6 +83,9 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 
 // ==================== ROUTES ====================
 
+// Task routes
+app.use('/', taskRoutes);
+
 // Health check endpoint
 app.get('/health', async (_req: Request, res: Response) => {
     try {
@@ -110,32 +113,6 @@ app.get('/health', async (_req: Request, res: Response) => {
         });
     }
 });
-
-// Root endpoint
-app.get('/', (_req: Request, res: Response) => {
-    res.json({
-        success: true,
-        message: `📝 ${SERVICE_NAME} is running`,
-        version: '1.0.0',
-        environment: NODE_ENV,
-        endpoints: {
-            health: '/health',
-            // Task operations (all require authentication)
-            listTasks: 'GET / (requires auth)',
-            getTask: 'GET /:id (requires auth)',
-            createTask: 'POST / (requires auth)',
-            updateTask: 'PUT /:id (requires auth)',
-            updateColumn: 'PATCH /:id/column (requires auth)',
-            deleteTask: 'DELETE /:id (requires auth)',
-            taskStats: 'GET /stats (requires auth)',
-            workspaceTasks: 'GET /workspace/:workspaceId (requires auth)',
-        },
-        timestamp: new Date().toISOString(),
-    });
-});
-
-// Task routes
-app.use('/', taskRoutes);
 
 // ==================== ERROR HANDLING ====================
 

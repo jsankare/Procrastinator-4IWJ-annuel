@@ -6,25 +6,6 @@
                 <div class="text-sm text-white/70">
                     {{ tasks.length }} tâche{{ tasks.length > 1 ? "s" : "" }}
                 </div>
-                <button
-                    @click="showCreateModal = true"
-                    class="px-4 py-2 bg-accent hover:bg-accent/90 text-primary rounded-lg font-semibold transition-colors flex items-center gap-2"
-                >
-                    <svg
-                        class="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            d="M12 4v16m8-8H4"
-                        />
-                    </svg>
-                    Nouvelle tâche
-                </button>
             </div>
         </div>
 
@@ -34,33 +15,19 @@
         </div>
 
         <!-- Task Statistics -->
-        <div v-else class="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-6">
-            <div class="bg-secondary/40 rounded-lg p-3 border border-white/10 text-center">
-                <div class="text-lg font-bold text-blue-400">
-                    {{ taskStats.todo }}
+        <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-6">
+            <!-- Dynamic Stats based on active columns -->
+            <div v-for="column in columns" :key="column.id"
+                class="bg-secondary/40 rounded-lg p-3 border border-white/10 text-center">
+                <div class="text-lg font-bold" :style="{ color: column.color }">
+                    {{ column.tasks.length }}
                 </div>
-                <div class="text-xs text-white/70">À faire</div>
+                <div class="text-xs text-white/70">{{ column.name }}</div>
             </div>
+
+            <!-- Overdue Stat (Always visible) -->
             <div class="bg-secondary/40 rounded-lg p-3 border border-white/10 text-center">
-                <div class="text-lg font-bold text-orange-400">
-                    {{ taskStats.inProgress }}
-                </div>
-                <div class="text-xs text-white/70">En cours</div>
-            </div>
-            <div class="bg-secondary/40 rounded-lg p-3 border border-white/10 text-center">
-                <div class="text-lg font-bold text-green-400">
-                    {{ taskStats.completed }}
-                </div>
-                <div class="text-xs text-white/70">Terminé</div>
-            </div>
-            <div class="bg-secondary/40 rounded-lg p-3 border border-white/10 text-center">
-                <div class="text-lg font-bold text-purple-400">
-                    {{ taskStats.review }}
-                </div>
-                <div class="text-xs text-white/70">Révision</div>
-            </div>
-            <div class="bg-secondary/40 rounded-lg p-3 border border-white/10 text-center">
-                <div class="text-lg font-bold text-red-400">
+                <div class="text-lg font-bold text-red-500">
                     {{ taskStats.overdue }}
                 </div>
                 <div class="text-xs text-white/70">En retard</div>
@@ -68,7 +35,7 @@
         </div>
 
         <!-- Personal Columns -->
-        <div class="flex gap-4 overflow-x-auto pb-6" style="min-height: 350px">
+        <div class="flex gap-4 overflow-x-auto pb-6 custom-scrollbar" style="min-height: 350px">
             <div v-for="column in columns" :key="column.id"
                 class="shrink-0 w-80 bg-secondary/60 rounded-xl p-4 border border-white/10 flex flex-col"
                 :style="{ borderTopColor: column.color, borderTopWidth: '3px' }">
@@ -82,8 +49,8 @@
                     }}</span>
                 </h3>
 
-                <div class="flex flex-col gap-3 flex-1">
-                    <div v-for="task in column.tasks" :key="task.id"
+                <div class="flex flex-col gap-3 flex-1 overflow-y-auto max-h-[70vh] pr-1 custom-scrollbar">
+                    <div v-for="task in column.tasks" :key="task._id || task.id"
                         class="bg-primary/60 rounded-lg p-3 border border-white/10 hover:border-accent/40 transition-colors">
                         <div class="flex items-start justify-between mb-2">
                             <h4 class="font-medium text-sm leading-5">
@@ -155,50 +122,175 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
-import { useTaskStore } from "~/composables/useTaskStore";
-import type { Task } from "~/types/task";
-import { organizeTasksIntoColumns, getTaskStats } from "~/utils/mockTasks";
+import { ref, computed, onMounted, onActivated, watch } from "vue";
 import { apiClient } from "~/utils/api";
 import CreateTaskModal from "~/components/tasks/CreateTaskModal.vue";
+import { useRoute } from "vue-router";
+import { useAuthStore } from '~/composables/useAuthStore';
 
-// Use task store
-const taskStore = useTaskStore();
+const route = useRoute();
+const authStore = useAuthStore();
 
 // Reactive data
 const workspaces = ref<any[]>([]);
-const loading = computed(() => taskStore.loading);
-const tasks = computed(() => taskStore.tasks);
+const tasks = ref<any[]>([]);
+const loading = ref(false);
 const showCreateModal = ref(false);
+
+// Column configurations
+const COLUMN_CONFIGS: Record<string, string> = {
+    "À faire": "#64748b",
+    "En cours": "#f59e0b",
+    "En révision": "#8b5cf6",
+    "Terminé": "#10b981",
+    "Bloqué": "#ef4444",
+};
 
 // Load user's workspaces and tasks from real API
 const loadPersonalTasks = async () => {
     try {
-        // Try to get user's workspaces
+        loading.value = true;
+        
+        // Load workspaces
         try {
-            const response = await apiClient.get("/api/workspaces/");
-            if (response.success) {
-                workspaces.value = response.data?.workspaces || [];
+            const wsResponse = await apiClient.get("/api/workspaces/");
+            if (wsResponse.success) {
+                workspaces.value = (wsResponse.data as any)?.workspaces || [];
             }
         } catch (err) {
             console.error("Error loading workspaces:", err);
             workspaces.value = [];
         }
 
-        // Fetch tasks from API
-        await taskStore.fetchTasks();
+        // Load all tasks assigned to the current user
+        try {
+            const tasksResponse = await apiClient.get("/api/tasks");
+            console.log("Full Tasks API response:", tasksResponse);
+            console.log("Response success:", tasksResponse.success);
+            console.log("Response data:", tasksResponse.data);
+            console.log("Response data type:", typeof tasksResponse.data);
+            
+            if (tasksResponse.success && tasksResponse.data) {
+                let extractedTasks: any[] = [];
+                
+                // Try different ways to extract tasks
+                if (Array.isArray(tasksResponse.data)) {
+                    // data is directly an array
+                    extractedTasks = tasksResponse.data;
+                } else if (Array.isArray((tasksResponse.data as any)?.tasks)) {
+                    // data.tasks is an array
+                    extractedTasks = (tasksResponse.data as any).tasks;
+                    console.log("data.tasks is an array with length:", extractedTasks.length);
+                } else if (typeof tasksResponse.data === 'object') {
+                    // data is an object, try to find the tasks array
+                    console.log("Data is object, keys:", Object.keys(tasksResponse.data));
+                    console.log("data.tasks value:", (tasksResponse.data as any).tasks);
+                    console.log("data.tasks type:", typeof (tasksResponse.data as any).tasks);
+                    console.log("data.tasks is Array?:", Array.isArray((tasksResponse.data as any).tasks));
+                    
+                    // Check common property names
+                    const possibleKeys = ['tasks', 'data', 'items', 'results'];
+                    for (const key of possibleKeys) {
+                        const value = (tasksResponse.data as any)[key];
+                        console.log(`Checking key "${key}":`, value, "isArray:", Array.isArray(value));
+                        
+                        if (Array.isArray(value)) {
+                            extractedTasks = value;
+                            console.log(`Found tasks in property: ${key}`);
+                            break;
+                        }
+                    }
+                }
+                    
+                console.log("Extracted tasks:", extractedTasks);
+                console.log("Extracted tasks length:", extractedTasks.length);
+                console.log("Extracted tasks type:", Array.isArray(extractedTasks) ? "Array" : typeof extractedTasks);
+                
+                // Ensure we have an array
+                if (!Array.isArray(extractedTasks)) {
+                    console.error("Extracted tasks is not an array!", extractedTasks);
+                    extractedTasks = [];
+                }
+                
+                tasks.value = extractedTasks;
+                console.log("Tasks assigned to ref:", tasks.value);
+                console.log("Tasks ref length:", tasks.value.length);
+            } else {
+                console.error("Failed to load tasks:", tasksResponse.error);
+                tasks.value = [];
+            }
+        } catch (err) {
+            console.error("Error loading tasks:", err);
+            tasks.value = [];
+        }
     } catch (error) {
         console.error("Error loading personal tasks:", error);
+    } finally {
+        loading.value = false;
     }
 };
 
-// Organize tasks into dynamic columns based on their designated columns
+// Organize tasks into columns based on their columnName
 const columns = computed(() => {
-    return organizeTasksIntoColumns(tasks.value);
+    // console.log("Computing columns from tasks:", tasks.value);
+    
+    if (!tasks.value || tasks.value.length === 0) {
+        // console.log("No tasks to organize");
+        return [];
+    }
+    
+    // Get unique column names
+    const columnNames = [...new Set(tasks.value.map((task: any) => task.columnName))];
+    // console.log("Unique column names:", columnNames);
+    
+    // Create columns with tasks
+    const cols = columnNames.map((columnName: any) => {
+        const columnTasks = tasks.value.filter((task: any) => task.columnName === columnName);
+        // console.log(`Column "${columnName}" has ${columnTasks.length} tasks:`, columnTasks);
+        
+        return {
+            id: String(columnName).toLowerCase().replace(/\s+/g, "-"),
+            name: columnName,
+            color: (COLUMN_CONFIGS as any)[columnName] || "#6b7280",
+            tasks: columnTasks,
+        };
+    });
+    
+    // console.log("Created columns:", cols);
+    
+    // Sort columns by priority
+    const columnOrder = ["À faire", "En cours", "En révision", "Terminé", "Bloqué"];
+    
+    const sortedCols = cols.sort((a, b) => {
+        const aIndex = columnOrder.indexOf(a.name);
+        const bIndex = columnOrder.indexOf(b.name);
+        
+        if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
+        if (aIndex !== -1) return -1;
+        if (bIndex !== -1) return 1;
+        
+        return a.name.localeCompare(b.name);
+    });
+    
+    // console.log("Sorted columns:", sortedCols);
+    return sortedCols;
 });
 
-// Task statistics
-const taskStats = computed(() => getTaskStats(tasks.value));
+// Task statistics - Calculated from tasks
+const taskStats = computed(() => {
+    const today = new Date().toISOString().split("T")[0];
+    const overdueCount = tasks.value ? tasks.value.filter((t: any) => {
+        return (
+            t.dueDate < today &&
+            !t.columnName?.toLowerCase().includes("terminé")
+        );
+    }).length : 0;
+
+    return {
+        overdue: overdueCount,
+        total: tasks.value ? tasks.value.length : 0
+    };
+});
 
 // Utility functions
 const formatDate = (dateStr?: string) => {
@@ -215,11 +307,11 @@ const formatDate = (dateStr?: string) => {
     return `Il y a ${Math.abs(diffDays)}j`;
 };
 
-const isOverdue = (task: MockTask) => {
-    if (task.status.toLowerCase().includes("terminé")) return false;
+const isOverdue = (task: any) => {
+    if (task.columnName?.toLowerCase().includes("terminé")) return false;
     if (!task.dueDate) return false;
     const today = new Date().toISOString().split("T")[0];
-    return today ? task.dueDate < today : false;
+    return task.dueDate < today;
 };
 
 const getWorkspaceName = (workspaceId: string) => {
@@ -237,4 +329,36 @@ const handleTaskCreated = async () => {
 onMounted(() => {
     loadPersonalTasks();
 });
+
+// Reload tasks when component is activated (navigating back to this page)
+onActivated(() => {
+    loadPersonalTasks();
+});
+
+// Watch route changes to reload tasks when navigating to home
+watch(() => route.path, (newPath) => {
+    if (newPath === '/' || newPath === '/home') {
+        loadPersonalTasks();
+    }
+});
 </script>
+
+<style scoped>
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+  height: 4px; /* Ajout pour le scroll horizontal */
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+</style>

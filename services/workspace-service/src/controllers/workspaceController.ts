@@ -19,7 +19,7 @@ export class WorkspaceController {
       const users = await usersCollection
         .find(
           { _id: { $in: userIds.map((id: string) => new ObjectId(id)) } },
-          { projection: { username: 1, firstName: 1, lastName: 1, email: 1 } },
+          { projection: { username: 1, firstName: 1, lastName: 1, email: 1, 'profile.avatar': 1 } },
         )
         .toArray();
 
@@ -31,6 +31,7 @@ export class WorkspaceController {
           firstName: user?.firstName,
           lastName: user?.lastName,
           email: user?.email,
+          avatar: user?.profile?.avatar || null,
         };
       });
 
