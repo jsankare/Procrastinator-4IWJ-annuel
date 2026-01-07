@@ -55,10 +55,12 @@ export interface WorkspaceMemberResponse {
   firstName?: string;
   lastName?: string;
   email?: string;
+  avatar?: string | null;
   role: 'owner' | 'admin' | 'member';
   joinedAt: Date;
   isActive: boolean;
 }
+
 
 export interface WorkspaceListResponse {
   workspaces: WorkspaceResponse[];

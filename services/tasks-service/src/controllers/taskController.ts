@@ -183,6 +183,38 @@ export const createTask = async (req: AuthRequest, res: Response): Promise<void>
             createdBy: req.user.userId,
         });
 
+        // GAMIFICATION INTEGRATION
+        // If task is created in "Terminé", grant points
+        if (columnName && (columnName.toLowerCase().includes('terminé') || columnName.toLowerCase().includes('done'))) {
+            try {
+                const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || 'http://localhost:3001';
+
+                const statsResponse = await fetch(`${AUTH_SERVICE_URL}/stats`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': req.headers.authorization || ''
+                    },
+                    body: JSON.stringify({
+                        incrementPoints: 10,
+                        incrementCompletedTasks: 1,
+                        incrementStreak: 0
+                    })
+                });
+
+                if (statsResponse.ok) {
+                    const data = await statsResponse.json() as { success: boolean, data: { notifications?: any } };
+
+                    // Add gamification info to response if available
+                    if (data.data?.notifications) {
+                        (task as any).gamification = data.data.notifications;
+                    }
+                }
+            } catch (err) {
+                console.error('[Gamification] Error calling auth-service:', err);
+            }
+        }
+
 
         res.status(201).json({
             success: true,
@@ -241,6 +273,42 @@ export const updateTask = async (req: AuthRequest, res: Response): Promise<void>
             return;
         }
 
+        // GAMIFICATION INTEGRATION
+        // If task is updated to "Terminé", grant points
+        if (updateData.columnName && (updateData.columnName.toLowerCase().includes('terminé') || updateData.columnName.toLowerCase().includes('done'))) {
+            try {
+                const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || 'http://localhost:3001';
+
+                // Call auth-service to update stats
+
+
+                const statsResponse = await fetch(`${AUTH_SERVICE_URL}/stats`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': req.headers.authorization || ''
+                    },
+                    body: JSON.stringify({
+                        incrementPoints: 10,
+                        incrementCompletedTasks: 1,
+                        incrementStreak: 0
+                    })
+                });
+
+                if (statsResponse.ok) {
+                    const data = await statsResponse.json() as { success: boolean, data: { notifications?: any } };
+
+
+                    // Add gamification info to response if available
+                    if (data.data?.notifications) {
+                        (task as any).gamification = data.data.notifications;
+                    }
+                }
+            } catch (err) {
+                console.error('[Gamification] Error calling auth-service:', err);
+            }
+        }
+
         res.json({
             success: true,
             data: { task },
@@ -296,6 +364,50 @@ export const updateTaskColumn = async (req: AuthRequest, res: Response): Promise
                 timestamp: new Date().toISOString(),
             });
             return;
+        }
+
+        // GAMIFICATION INTEGRATION
+        // If task is moved to "Terminé", grant points
+        const isCompleted = columnName.toLowerCase().includes('terminé') || columnName.toLowerCase().includes('done');
+
+
+        if (isCompleted) {
+            try {
+                const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || 'http://localhost:3001';
+
+
+
+                // Call auth-service to update stats
+                const statsResponse = await fetch(`${AUTH_SERVICE_URL}/stats`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': req.headers.authorization || ''
+                    },
+                    body: JSON.stringify({
+                        incrementPoints: 10,
+                        incrementCompletedTasks: 1,
+                        incrementStreak: 0 // Logic for streak would be more complex, skipping for now
+                    })
+                });
+
+
+                if (statsResponse.ok) {
+                    const data = await statsResponse.json() as { success: boolean, data: { notifications?: any } };
+
+
+                    // Add gamification info to response if available
+                    if (data.data?.notifications) {
+                        (task as any).gamification = data.data.notifications;
+                    }
+                } else {
+                    const errorText = await statsResponse.text();
+                    console.error('[Gamification] Failed to update stats:', errorText);
+                }
+            } catch (err) {
+                console.error('[Gamification] Error calling auth-service:', err);
+                // Don't fail the request if gamification fails
+            }
         }
 
         res.json({

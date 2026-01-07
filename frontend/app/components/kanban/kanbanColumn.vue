@@ -22,16 +22,16 @@
     </h2>
 
     <div
-        class="flex flex-col gap-3 flex-1"
+        class="flex flex-col gap-3 flex-1 overflow-y-auto max-h-[70vh] pr-1 custom-scrollbar"
         @dragover.prevent="onColumnDragOver"
         @drop.prevent="onColumnDrop"
     >
       <div
-          v-for="(task, index) in tasks"
+          v-for="(task, index) in sortedTasks"
           :key="task._id || task.id"
-          class="rounded-lg"
+          class="rounded-lg will-change-transform"
           draggable="true"
-          @dragstart="onDragStart($event, index)"
+          @dragstart="onDragStart($event, task, index)"
           @dragenter.stop.prevent="onTaskDragEnter($event, index)"
           @dragover.stop.prevent="onTaskDragOver($event, index)"
           @dragleave.stop="onTaskDragLeave"
@@ -42,12 +42,13 @@
             :title="task.title"
             :description="task.description"
             :due-date="task.dueDate"
+            :priority="task.priority"
             :user="task.user"
             @task-click="$emit('task-click', task)"
         />
       </div>
 
-      <p v-if="!tasks.length" class="text-white/40 text-sm italic mt-2 pointer-events-none">
+      <p v-if="!sortedTasks.length" class="text-white/40 text-sm italic mt-2 pointer-events-none">
         Aucune tâche
       </p>
     </div>
@@ -56,7 +57,6 @@
 
 <script setup lang="ts">
 import { ref, watch, computed } from "vue";
-import { VueDraggableNext as draggable } from 'vue-draggable-next';
 import KanbanTask from "./kanbanTask.vue";
 
 export interface Task {
@@ -94,6 +94,27 @@ const emit = defineEmits<{
 const hoverIndex = ref<number | null>(null);
 const hoverAfter = ref<boolean>(false);
 
+// Trier les tâches par priorité (urgent d'abord) puis par date
+const sortedTasks = computed(() => {
+  const priorityOrder = { high: 3, medium: 2, low: 1 };
+  
+  return [...props.tasks].sort((a, b) => {
+    // D'abord par priorité (du plus urgent au moins urgent)
+    const aPriority = priorityOrder[a.priority || 'low'];
+    const bPriority = priorityOrder[b.priority || 'low'];
+    
+    if (aPriority !== bPriority) {
+      return bPriority - aPriority; // Ordre décroissant (high first)
+    }
+    
+    // Ensuite par date (du plus proche au plus lointain)
+    const aDate = new Date(a.dueDate).getTime();
+    const bDate = new Date(b.dueDate).getTime();
+    
+    return aDate - bDate; // Ordre croissant (earliest first)
+  });
+});
+
 function dropClass(index: number) {
   if (hoverIndex.value === null) return "";
   if (hoverIndex.value !== index) return "";
@@ -106,12 +127,15 @@ type DragPayload = {
   taskId: number | string;
 };
 
-function onDragStart(e: DragEvent, index: number) {
-  const task = props.tasks[index];
-  if (!task) return; // évite 'possibly undefined'
+function onDragStart(e: DragEvent, task: Task, sortedIndex: number) {
+  // Trouver l'index original de la tâche dans props.tasks
+  const originalIndex = props.tasks.findIndex(t => (t._id || t.id) === (task._id || task.id));
+  
+  if (originalIndex === -1) return;
+  
   const payload: DragPayload = {
     fromCol: props.columnId,
-    fromIndex: index,
+    fromIndex: originalIndex, // Utiliser l'index original
     taskId: task._id || task.id || '',
   };
   e.dataTransfer?.setData("text/plain", JSON.stringify(payload));
@@ -188,3 +212,29 @@ function safeParse<T>(s: string): T | null {
   }
 }
 </script>
+
+<style scoped>
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+</style>
+
+<style scoped>
+.will-change-transform {
+  will-change: transform;
+}
+</style>

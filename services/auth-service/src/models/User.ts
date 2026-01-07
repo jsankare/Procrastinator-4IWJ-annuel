@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { Collection, ObjectId, Filter, UpdateFilter, FindOptions } from 'mongodb';
 import bcrypt from 'bcryptjs';
 import validator from 'validator';
@@ -242,9 +243,11 @@ export class UserModel {
     stats: {
       points?: number;
       streak?: number;
+      setStreak?: number;
       completedTasks?: number;
       level?: number;
       badge?: Badge | Badge[];
+      lastTaskCompletedAt?: Date;
     },
   ): Promise<{
     success: boolean;
@@ -276,6 +279,12 @@ export class UserModel {
       if (stats.badge) {
         const badgesToAdd = Array.isArray(stats.badge) ? stats.badge : [stats.badge];
         updateOps.$addToSet = { badges: { $each: badgesToAdd } };
+      }
+
+      if (stats.setStreak !== undefined || stats.lastTaskCompletedAt) {
+        updateOps.$set = updateOps.$set || {};
+        if (stats.setStreak !== undefined) updateOps.$set.streak = stats.setStreak;
+        if (stats.lastTaskCompletedAt) updateOps.$set.lastTaskCompletedAt = stats.lastTaskCompletedAt;
       }
 
       if (Object.keys(updateOps).length === 0) {
@@ -426,6 +435,106 @@ export class UserModel {
       console.error('Error updating user:', error);
       throw error;
     }
+  }
+
+  // Change password
+  static async changePassword(id: string, newPassword: string): Promise<{ success: boolean; errors?: ValidationError[] }> {
+    try {
+      const passwordErrors = this.validatePassword(newPassword);
+      if (passwordErrors.length > 0) {
+        return { success: false, errors: passwordErrors };
+      }
+
+      const hashedPassword = await this.hashPassword(newPassword);
+
+      await this.collection.updateOne(
+        { _id: new ObjectId(id) },
+        {
+          $set: {
+            password: hashedPassword,
+            updatedAt: new Date()
+          }
+        }
+      );
+
+      return { success: true };
+    } catch (error) {
+      console.error('Error changing password:', error);
+      throw error;
+    }
+  }
+
+  // Initiate password change
+  static async initiatePasswordChange(id: string, newPasswordRaw: string): Promise<string> {
+    const token = crypto.randomBytes(32).toString('hex');
+    const hashedPassword = await this.hashPassword(newPasswordRaw);
+
+    await this.collection.updateOne({ _id: new ObjectId(id) }, {
+      $set: {
+        pendingPassword: hashedPassword,
+        passwordChangeToken: token,
+        passwordChangeExpires: new Date(Date.now() + 15 * 60 * 1000) // 15 min
+      }
+    });
+    return token;
+  }
+
+  // Initiate email change
+  static async initiateEmailChange(id: string, newEmail: string): Promise<string> {
+    const token = crypto.randomBytes(32).toString('hex');
+
+    await this.collection.updateOne({ _id: new ObjectId(id) }, {
+      $set: {
+        pendingEmail: newEmail.toLowerCase(),
+        emailChangeToken: token,
+        emailChangeExpires: new Date(Date.now() + 60 * 60 * 1000) // 1 hour
+      }
+    });
+    return token;
+  }
+
+  // Verify & Apply Email Change
+  static async verifyEmailChange(token: string): Promise<boolean> {
+    const user = await this.collection.findOne({
+      emailChangeToken: token,
+      emailChangeExpires: { $gt: new Date() }
+    });
+    if (!user || !user.pendingEmail) return false;
+
+    await this.collection.updateOne({ _id: user._id }, {
+      $set: {
+        email: user.pendingEmail,
+        updatedAt: new Date()
+      },
+      $unset: {
+        pendingEmail: "",
+        emailChangeToken: "",
+        emailChangeExpires: ""
+      }
+    });
+    return true;
+  }
+
+  // Verify & Apply Password Change
+  static async verifyPasswordChange(token: string): Promise<boolean> {
+    const user = await this.collection.findOne({
+      passwordChangeToken: token,
+      passwordChangeExpires: { $gt: new Date() }
+    });
+    if (!user || !user.pendingPassword) return false;
+
+    await this.collection.updateOne({ _id: user._id }, {
+      $set: {
+        password: user.pendingPassword,
+        updatedAt: new Date()
+      },
+      $unset: {
+        pendingPassword: "",
+        passwordChangeToken: "",
+        passwordChangeExpires: ""
+      }
+    });
+    return true;
   }
 
   // Delete user

@@ -123,7 +123,7 @@
         <!-- Columns -->
         <div
             v-if="!loading && !error && columns.length > 0"
-            class="flex gap-4 overflow-x-auto pb-6 scrollbar-thin scrollbar-thumb-accent/40 scrollbar-track-transparent"
+            class="flex gap-4 overflow-x-auto pb-6 custom-scrollbar"
             style="min-height: 350px"
         >
             <KanbanColumn
@@ -196,6 +196,11 @@ type WorkspaceColumn = {
 const props = defineProps<{
     workspaceId: string;
     testMode?: "no-columns" | "loading" | "error" | null;
+}>();
+
+const emit = defineEmits<{
+    (e: 'tasks-changed'): void;
+    (e: 'columns-changed'): void;
 }>();
 
 // User role for permissions (will be passed from parent or fetched)
@@ -394,6 +399,8 @@ const addColumn = async () => {
             // Reload workspace to get updated columns
             await loadWorkspace();
             newColumnTitle.value = "";
+            // Notify parent that columns changed
+            emit('columns-changed');
         } else {
             error.value = response.error || "Failed to add column";
         }
@@ -424,6 +431,8 @@ const deleteColumn = async (columnId: string) => {
         if (response.success) {
             // Reload workspace to get updated columns
             await loadWorkspace();
+            // Notify parent that columns changed
+            emit('columns-changed');
         } else {
             error.value = response.error || "Failed to delete column";
         }
@@ -495,6 +504,8 @@ const handleDrop = async (details: {
             item.columnName = fromCol.name;
         } else {
             console.log("✅ Task column updated successfully");
+            // Notify parent that tasks changed
+            emit('tasks-changed');
         }
     } catch (error) {
         console.error('Error updating task column:', error);
@@ -552,6 +563,8 @@ const handleTaskCreated = async () => {
             (a: any, b: any) => a.position - b.position,
         );
         await loadWorkspaceTasks(sortedColumns);
+        // Notify parent that tasks changed
+        emit('tasks-changed');
     }
 };
 
@@ -574,6 +587,8 @@ const handleTaskUpdated = async () => {
             (a: any, b: any) => a.position - b.position,
         );
         await loadWorkspaceTasks(sortedColumns);
+        // Notify parent that tasks changed
+        emit('tasks-changed');
     }
 };
 
@@ -584,6 +599,8 @@ const handleTaskDeleted = async () => {
             (a: any, b: any) => a.position - b.position,
         );
         await loadWorkspaceTasks(sortedColumns);
+        // Notify parent that tasks changed
+        emit('tasks-changed');
     }
 };
 
@@ -592,3 +609,23 @@ onMounted(() => {
     loadWorkspace();
 });
 </script>
+
+<style scoped>
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+</style>

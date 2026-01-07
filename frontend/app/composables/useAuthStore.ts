@@ -121,6 +121,15 @@ export const useAuthStore = () => {
   const logout = async () => {
     isLoading.value = true
 
+    // Call API logout (fire and forget basically, we want to clear local state regardless)
+    try {
+      if (token.value) {
+        await authApi.logout()
+      }
+    } catch (e) {
+      console.warn('Backend logout failed', e)
+    }
+
     // Clear state
     user.value = null
     token.value = null
