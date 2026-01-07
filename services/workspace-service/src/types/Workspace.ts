@@ -23,6 +23,7 @@ export interface WorkspaceColumn {
   name: string;
   color?: string;
   position: number;
+  order?: number;
   createdAt: Date;
   isActive: boolean;
 }
@@ -60,7 +61,6 @@ export interface WorkspaceMemberResponse {
   joinedAt: Date;
   isActive: boolean;
 }
-
 
 export interface WorkspaceListResponse {
   workspaces: WorkspaceResponse[];

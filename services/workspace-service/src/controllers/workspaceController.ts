@@ -649,6 +649,7 @@ export class WorkspaceController {
         name: name.trim(),
         color: color || '#64748b',
         position: nextPosition,
+        order: nextPosition,
         createdAt: new Date(),
         isActive: true,
       };
@@ -704,7 +705,7 @@ export class WorkspaceController {
   static async updateColumn(req: Request, res: Response): Promise<void> {
     try {
       const { id, columnId } = req.params;
-      const { name, color, position } = req.body;
+      const { name, color, position, order } = req.body;
       const userId = req.user?.userId;
 
       if (!userId) {
@@ -754,6 +755,13 @@ export class WorkspaceController {
       }
       if (position !== undefined) {
         updateFields['columns.$.position'] = position;
+
+        if (order === undefined) {
+          updateFields['columns.$.order'] = position;
+        }
+      }
+      if (order !== undefined) {
+        updateFields['columns.$.order'] = order;
       }
       updateFields['columns.$.updatedAt'] = new Date();
 

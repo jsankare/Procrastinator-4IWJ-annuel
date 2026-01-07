@@ -289,7 +289,8 @@ export const updateTask = async (req: AuthRequest, res: Response): Promise<void>
                         'Authorization': req.headers.authorization || ''
                     },
                     body: JSON.stringify({
-                        incrementPoints: 10,
+                      incrementPoints:
+                          task?.priority === "low" ? 10 : task?.priority === "medium" ? 25 : 50,
                         incrementCompletedTasks: 1,
                         incrementStreak: 0
                     })

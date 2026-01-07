@@ -127,15 +127,19 @@
             style="min-height: 350px"
         >
             <KanbanColumn
-                v-for="col in columns"
+                v-for="(col, index) in columns"
                 :key="col._id"
                 :column-id="col._id"
                 :title="col.name"
                 :color="col.color"
                 :tasks="col.tasks"
                 :can-delete="columns.length > 1 && canManageColumns"
+                :show-move-left="index > 0 && !/terminé|done/i.test(col.name) && !(/terminé|done/i.test(columns[index - 1]?.name))"
+                :show-move-right="index < columns.length - 1 && !/terminé|done/i.test(col.name) && !(/terminé|done/i.test(columns[index + 1]?.name))"
                 @drop="handleDrop"
                 @delete="deleteColumn(col._id)"
+                @move-left="moveColumnLeft(col._id)"
+                @move-right="moveColumnRight(col._id)"
                 @task-click="handleTaskClick"
                 class="min-w-[260px] w-full max-w-xs shrink-0"
             />
@@ -319,10 +323,15 @@ const loadWorkspace = async () => {
             // Determine user role in this workspace
             determineUserRole();
 
-            // Sort columns by position
-            const sortedColumns = (workspace.value?.columns || []).sort(
-                (a: any, b: any) => a.position - b.position,
-            );
+            const sortedColumns = (workspace.value?.columns || []).slice().sort((a: any, b: any) => {
+            const aDone = /terminé|done/i.test(a.name);
+            const bDone = /terminé|done/i.test(b.name);
+            if (aDone && !bDone) return 1;
+            if (!aDone && bDone) return -1;
+            const aOrder = (a.order !== undefined && a.order !== null) ? a.order : a.position;
+            const bOrder = (b.order !== undefined && b.order !== null) ? b.order : b.position;
+            return aOrder - bOrder;
+            });
 
             // Set loading to false BEFORE loading tasks so Vue can render when tasks are assigned
             loading.value = false;
@@ -379,6 +388,18 @@ const loadWorkspaceTasks = async (sortedColumns: any[]) => {
         }));
     }
 };
+
+function sortColumnsWithDoneLast(cols: any[]) {
+    return cols.slice().sort((a: any, b: any) => {
+        const aDone = /terminé|done/i.test(a.name);
+        const bDone = /terminé|done/i.test(b.name);
+        if (aDone && !bDone) return 1;
+        if (!aDone && bDone) return -1;
+        const aOrder = (a.order !== undefined && a.order !== null) ? a.order : a.position ?? 0;
+        const bOrder = (b.order !== undefined && b.order !== null) ? b.order : b.position ?? 0;
+        return aOrder - bOrder;
+    });
+}
 
 // Add column function
 const addColumn = async () => {
@@ -442,6 +463,60 @@ const deleteColumn = async (columnId: string) => {
     }
 };
 
+// Move column
+const moveColumnLeft = async (columnId: string) => {
+    await moveColumn(columnId, 'left');
+};
+
+const moveColumnRight = async (columnId: string) => {
+    await moveColumn(columnId, 'right');
+};
+
+const moveColumn = async (columnId: string, dir: 'left' | 'right') => {
+    const idx = columns.value.findIndex((c) => c._id === columnId);
+    if (idx === -1) return;
+
+    const targetIdx = dir === 'left' ? idx - 1 : idx + 1;
+    if (targetIdx < 0 || targetIdx >= columns.value.length) return;
+
+    const col = columns.value[idx];
+    const target = columns.value[targetIdx];
+
+    const isDoneColumn = (c: any) => c.name && /terminé|done/i.test(c.name);
+    if (isDoneColumn(col) || isDoneColumn(target)) return;
+
+    const colOrder = (col as any).order !== undefined && (col as any).order !== null ? (col as any).order : col.position ?? idx;
+    const targetOrder = (target as any).order !== undefined && (target as any).order !== null ? (target as any).order : target.position ?? targetIdx;
+
+    try {
+        (col as any).order = targetOrder;
+        (target as any).order = colOrder;
+
+        // this to get changes now
+        columns.value = sortColumnsWithDoneLast(columns.value);
+
+        const resCol = await apiClient.put(
+            `/api/workspaces/${props.workspaceId}/columns/${col._id}`,
+            { order: (col as any).order },
+        );
+        const resTarget = await apiClient.put(
+            `/api/workspaces/${props.workspaceId}/columns/${target._id}`,
+            { order: (target as any).order },
+        );
+
+        if (!resCol.success || !resTarget.success) {
+            throw new Error('Failed to update column order on server');
+        }
+
+        emit('columns-changed');
+    } catch (err) {
+        console.error('Error moving column:', err);
+        // revert fallback on failure
+        await loadWorkspace();
+        error.value = 'Failed to move column';
+    }
+};
+
 // Handle task drop (for future task management)
 const handleDrop = async (details: {
     fromColumnId: string;
@@ -494,7 +569,7 @@ const handleDrop = async (details: {
             columnId: toCol._id,
             columnName: toCol.name,
         });
-        
+
         if (!response.success) {
             console.error('Failed to update task column:', response.error);
             // Revert the move on error
@@ -559,9 +634,15 @@ const canManageColumns = computed(() => {
 const handleTaskCreated = async () => {
     // Reload workspace to refresh tasks
     if (workspace.value?.columns) {
-        const sortedColumns = (workspace.value.columns || []).sort(
-            (a: any, b: any) => a.position - b.position,
-        );
+        const sortedColumns = (workspace.value.columns || []).slice().sort((a: any, b: any) => {
+            const aDone = /terminé|done/i.test(a.name);
+            const bDone = /terminé|done/i.test(b.name);
+            if (aDone && !bDone) return 1;
+            if (!aDone && bDone) return -1;
+            const aOrder = (a.order !== undefined && a.order !== null) ? a.order : a.position;
+            const bOrder = (b.order !== undefined && b.order !== null) ? b.order : b.position;
+            return aOrder - bOrder;
+        });
         await loadWorkspaceTasks(sortedColumns);
         // Notify parent that tasks changed
         emit('tasks-changed');
@@ -583,21 +664,31 @@ const handleCloseEditModal = () => {
 // Handle task updated - reload tasks
 const handleTaskUpdated = async () => {
     if (workspace.value?.columns) {
-        const sortedColumns = (workspace.value.columns || []).sort(
-            (a: any, b: any) => a.position - b.position,
-        );
+        const sortedColumns = (workspace.value.columns || []).slice().sort((a: any, b: any) => {
+            const aDone = /terminé|done/i.test(a.name);
+            const bDone = /terminé|done/i.test(b.name);
+            if (aDone && !bDone) return 1;
+            if (!aDone && bDone) return -1;
+            const aOrder = (a.order !== undefined && a.order !== null) ? a.order : a.position;
+            const bOrder = (b.order !== undefined && b.order !== null) ? b.order : b.position;
+            return aOrder - bOrder;
+        });
         await loadWorkspaceTasks(sortedColumns);
         // Notify parent that tasks changed
         emit('tasks-changed');
     }
 };
 
-// Handle task deleted - reload tasks 
+// Handle task deleted - reload tasks
 const handleTaskDeleted = async () => {
     if (workspace.value?.columns) {
-        const sortedColumns = (workspace.value.columns || []).sort(
-            (a: any, b: any) => a.position - b.position,
-        );
+        const sortedColumns = (workspace.value.columns || []).slice().sort((a: any, b: any) => {
+            const aDone = /terminé|done/i.test(a.name);
+            const bDone = /terminé|done/i.test(b.name);
+            if (aDone && !bDone) return 1;
+            if (!aDone && bDone) return -1;
+            return a.position - b.position;
+        });
         await loadWorkspaceTasks(sortedColumns);
         // Notify parent that tasks changed
         emit('tasks-changed');

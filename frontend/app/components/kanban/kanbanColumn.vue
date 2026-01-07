@@ -10,6 +10,37 @@
         <span class="text-xs text-white/40 font-normal">{{
           tasks.length
           }}</span>
+
+        <button
+          v-if="canShowMoveLeft"
+          :disabled="!canShowMoveLeft"
+          @click="handleMoveLeft"
+          :class="[
+            'p-1 rounded transition-colors',
+            canShowMoveLeft ? 'hover:bg-white/5 text-white/60 hover:text-white opacity-60 hover:opacity-100' : 'opacity-40 cursor-not-allowed text-white/30'
+          ]"
+          title="Déplacer la colonne vers la gauche"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+
+        <button
+          v-if="canShowMoveRight"
+          :disabled="!canShowMoveRight"
+          @click="handleMoveRight"
+          :class="[
+            'p-1 rounded transition-colors',
+            canShowMoveRight ? 'hover:bg-white/5 text-white/60 hover:text-white opacity-60 hover:opacity-100' : 'opacity-40 cursor-not-allowed text-white/30'
+          ]"
+          title="Déplacer la colonne vers la droite"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+
         <button v-if="canDelete" @click="$emit('delete')"
           class="p-1 hover:bg-red-500/20 rounded text-red-400 hover:text-red-300 transition-colors opacity-60 hover:opacity-100"
           title="Supprimer cette colonne">
@@ -18,6 +49,10 @@
               d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
           </svg>
         </button>
+
+        <div v-if="toast.visible" class="ml-2 px-2 py-1 bg-black/60 text-white text-xs rounded">
+          {{ toast.message }}
+        </div>
       </div>
     </h2>
 
@@ -80,15 +115,49 @@ const props = defineProps<{
   color?: string;
   tasks: Task[];
   canDelete?: boolean;
+  showMoveLeft?: boolean;
+  showMoveRight?: boolean;
 }>();
 
 const emit = defineEmits<{
   (e: "update:tasks", tasks: Task[]): void;
   (e: "change", event: any): void; // Re-emit change for parent persistence
   (e: "delete"): void;
+  (e: "move-left", columnId: string): void;
+  (e: "move-right", columnId: string): void;
   (e: "task-click", task: Task): void;
   (e: "drop", details: { fromColumnId: string; toColumnId: string; taskId: number | string; fromIndex: number; toIndex: number }): void;
 }>();
+
+const canShowMoveLeft = computed(() => (props.showMoveLeft === undefined ? true : !!props.showMoveLeft));
+const canShowMoveRight = computed(() => (props.showMoveRight === undefined ? true : !!props.showMoveRight));
+
+const toast = ref<{ message: string; visible: boolean }>({ message: "", visible: false });
+let toastTimer: ReturnType<typeof setTimeout> | null = null;
+function showToast(message: string, ms = 1800) {
+  if (toastTimer) {
+    clearTimeout(toastTimer);
+    toastTimer = null;
+  }
+  toast.value.message = message;
+  toast.value.visible = true;
+  toastTimer = setTimeout(() => {
+    toast.value.visible = false;
+    toastTimer = null;
+  }, ms);
+}
+
+function handleMoveLeft() {
+  if (!canShowMoveLeft.value) return;
+  emit("move-left", props.columnId);
+  showToast("Déplacement vers la gauche demandé");
+}
+
+function handleMoveRight() {
+  if (!canShowMoveRight.value) return;
+  emit("move-right", props.columnId);
+  showToast("Déplacement vers la droite demandé");
+}
 
 // État local pour survol
 const hoverIndex = ref<number | null>(null);

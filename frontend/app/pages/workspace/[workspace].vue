@@ -450,12 +450,16 @@ const getTaskCountByColumn = (columnName: string) => {
 // Get statistics for all columns
 const columnStats = computed(() => {
   if (!workspace.value?.columns) return [];
-  
-  // Sort columns by position and show all active columns
+
+  // Sort columns by order (fallback to position) and show all active columns
   const sortedColumns = [...workspace.value.columns]
     .filter(col => col.isActive)
-    .sort((a, b) => a.position - b.position);
-  
+    .sort((a: any, b: any) => {
+      const aOrder = (a.order !== undefined && a.order !== null) ? a.order : a.position;
+      const bOrder = (b.order !== undefined && b.order !== null) ? b.order : b.position;
+      return aOrder - bOrder;
+    });
+
   return sortedColumns.map(col => ({
     name: col.name,
     count: getTaskCountByColumn(col.name),

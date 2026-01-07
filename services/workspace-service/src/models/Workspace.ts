@@ -46,6 +46,7 @@ export class WorkspaceModel {
       name: col.name,
       color: col.color,
       position: col.position,
+      order: col.position,
       createdAt: new Date(),
       isActive: true,
     }));
@@ -477,6 +478,11 @@ export class WorkspaceModel {
     let columns = workspace.columns || [];
     if (columns.length === 0) {
       columns = WorkspaceModel.createDefaultColumns();
+    } else {
+      columns = columns.map((c: any) => ({
+        ...c,
+        order: (c as any).order !== undefined ? (c as any).order : c.position,
+      }));
     }
 
     return {

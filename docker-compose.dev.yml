@@ -144,6 +144,7 @@ services:
       - DB_NAME=procrastinator
       - JWT_SECRET=your_super_secret_jwt_key_change_in_production_please
       - FRONTEND_URL=http://localhost
+      - AUTH_SERVICE_URL=http://auth-service:3001
     # Pour production, décommenter et utiliser un fichier .env :
     # env_file:
     #   - ./services/tasks-service/.env
