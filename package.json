@@ -13,7 +13,10 @@
     "format": "pnpm -r format",
     "docker:nuke":  "docker stop $(docker ps -aq) 2>/dev/null || true && docker rm -f $(docker ps -aq) 2>/dev/null || true && docker rmi -f $(docker images -aq) 2>/dev/null || true && docker volume rm -f $(docker volume ls -q) 2>/dev/null || true && docker network rm $(docker network ls -q) 2>/dev/null || true && docker system prune -a --volumes -f",
     "docker:reset": "pnpm docker:nuke && pnpm dev-b",
-    "test": "cd frontend && npx vitest"
+    "test:front": "cd frontend && npx vitest",
+    "test:auth": "cd services/auth-service && pnpm test",
+    "test:workspace": "cd services/workspace-service && npx vitest",
+    "test:task": "cd services/tasks-service && npx vitest"
   },
   "keywords": [],
   "author": "",
