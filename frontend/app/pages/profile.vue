@@ -37,7 +37,7 @@
       <div class="grid gap-4 sm:grid-cols-3">
         <Card :icon="checkIcon" :title="user?.completedTasks" description="Tâches terminées" layout="side" icon-color="text-green-500" />
         <Card :icon="fireIcon" :title="user?.streak" description="Jours de streak" layout="side" icon-color="text-orange-600" />
-        <Card :icon="starIcon" :title="user?.level" description="Niveau" layout="side" icon-color="text-yellow-400" />
+        <Card :icon="starIcon" :title="getLevelFromPoints(user?.points)" description="Niveau" layout="side" icon-color="text-yellow-400" />
       </div>
     </div>
     <div class="space-y-4">

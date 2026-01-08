@@ -34,21 +34,18 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 
+import { getLevelFromPoints, getNextLevelPoints } from '~/utils/levelSystem';
+
 const props = defineProps<{
   points: number;
 }>();
 
 // Calculate dynamic level from points to ensure UI consistency
-// Current Formula: 1 + floor(points / 100)
-// This ensures that if user has 100 points, they are displayed as Level 2 immediately
-const dynamicLevel = computed(() => {
-  if (props.points < 0) return 1;
-  return 1 + Math.floor(props.points / 100);
-});
+const dynamicLevel = computed(() => getLevelFromPoints(props.points));
 
 // We generally expect 100 XP per level based on the formula
-const nextLevelXP = computed(() => dynamicLevel.value * 100);
-const currentLevelBaseXP = computed(() => (dynamicLevel.value - 1) * 100); // Start of current level
+const nextLevelXP = computed(() => getNextLevelPoints(dynamicLevel.value + 1));
+const currentLevelBaseXP = computed(() => getNextLevelPoints(dynamicLevel.value));
 
 // Calculate progress based on Relative Progress within Level (Visual Bar)
 // Text remains Absolute (Total / Total Next)
