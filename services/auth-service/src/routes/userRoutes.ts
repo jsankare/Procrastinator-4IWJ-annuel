@@ -7,10 +7,12 @@ const router: Router = Router();
 // Authentication routes
 router.post('/register', UserController.register);
 router.post('/login', UserController.login);
+router.post('/logout', UserController.logout);
 
 // Email verification routes
 router.post('/verify-email', UserController.verifyEmail);
 router.post('/resend-verification', UserController.resendVerification);
+router.post('/verify-change', UserController.verifyChange);
 
 // Password recovery routes
 router.post('/forgot-password', UserController.forgotPassword);

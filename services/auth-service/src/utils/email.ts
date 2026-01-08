@@ -79,7 +79,7 @@ export class EmailService {
   static async sendEmail(options: EmailOptions): Promise<boolean> {
     try {
       const transporter = this.getTransporter();
-      
+
       const mailOptions = {
         from: `"Procrastinator" <${process.env.EMAIL_USER || 'noreply@procrastinator.com'}>`,
         to: options.to,
@@ -89,7 +89,7 @@ export class EmailService {
       };
 
       const info = await transporter.sendMail(mailOptions);
-      
+
       // If using mock mode, log the email
       if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
         console.log('\n=================================');
@@ -255,6 +255,110 @@ Si vous n'avez pas demandé cette réinitialisation, vous pouvez ignorer cet ema
       subject: '🔐 Réinitialisation de mot de passe - Procrastinator',
       html,
       text,
+    });
+  }
+  /**
+   * Send Email Change Verification
+   */
+  static async sendEmailChangeVerification(
+    newEmail: string,
+    username: string,
+    token: string
+  ): Promise<boolean> {
+    const verificationUrl = `${this.baseUrl}/verify-change?type=email&token=${token}`;
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: #667eea; color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+          .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+          .button { display: inline-block; padding: 12px 30px; background: #667eea; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+          .footer { text-align: center; margin-top: 30px; color: #666; font-size: 12px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>Changement d'adresse email</h1>
+          </div>
+          <div class="content">
+            <p>Bonjour ${username},</p>
+            <p>Une demande de changement d'adresse email a été effectuée pour votre compte. Veuillez cliquer sur le lien ci-dessous pour confirmer cette nouvelle adresse :</p>
+            <p style="text-align: center;">
+              <a href="${verificationUrl}" class="button">Confirmer mon nouvel email</a>
+            </p>
+            <p>Ou copiez ce lien :</p>
+            <p style="word-break: break-all; background: #fff; padding: 10px; border-radius: 5px;">${verificationUrl}</p>
+            <p>Ce lien expirera dans 1 heure.</p>
+          </div>
+          <div class="footer">
+            <p>&copy; 2025 Procrastinator.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    return this.sendEmail({
+      to: newEmail,
+      subject: '📧 Validez votre nouvelle adresse email - Procrastinator',
+      html,
+    });
+  }
+
+  /**
+   * Send Password Change Confirmation
+   */
+  static async sendPasswordChangeConfirmation(
+    email: string,
+    username: string,
+    token: string
+  ): Promise<boolean> {
+    const verificationUrl = `${this.baseUrl}/verify-change?type=password&token=${token}`;
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: #f59e0b; color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+          .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+          .button { display: inline-block; padding: 12px 30px; background: #f59e0b; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+          .footer { text-align: center; margin-top: 30px; color: #666; font-size: 12px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>Confirmation de changement de mot de passe</h1>
+          </div>
+          <div class="content">
+            <p>Bonjour ${username},</p>
+            <p>Une demande de changement de mot de passe a été initiée. Pour valider ce changement, veuillez cliquer sur le bouton ci-dessous.</p>
+            <p style="text-align: center;">
+              <a href="${verificationUrl}" class="button">Confirmer le changement</a>
+            </p>
+            <p>Si vous n'êtes pas à l'origine de cette demande, <strong>ne cliquez pas</strong> et changez votre mot de passe immédiatement.</p>
+            <p>Ce lien expirera dans 15 minutes.</p>
+          </div>
+          <div class="footer">
+            <p>&copy; 2025 Procrastinator.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    return this.sendEmail({
+      to: email,
+      subject: '🔒 Confirmez votre changement de mot de passe - Procrastinator',
+      html,
     });
   }
 }

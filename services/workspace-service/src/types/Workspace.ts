@@ -25,6 +25,7 @@ export interface WorkspaceColumn {
   name: string;
   color?: string;
   position: number;
+  order?: number;
   createdAt: Date;
   isActive: boolean;
 }
@@ -53,10 +54,11 @@ export interface WorkspaceResponse {
 
 export interface WorkspaceMemberResponse {
   userId: string;
-  username?: string | undefined;
-  firstName?: string | undefined;
-  lastName?: string | undefined;
-  email?: string | undefined;
+  username?: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  avatar?: string | null;
   role: 'owner' | 'admin' | 'member';
   joinedAt: Date;
   isActive: boolean;

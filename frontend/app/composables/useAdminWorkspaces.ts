@@ -1,5 +1,5 @@
-import { ref } from "vue";
-import { apiClient } from "~/utils/api";
+import {ref} from "vue";
+import {apiClient} from "~/utils/api";
 
 export interface AdminWorkspace {
     _id: string;
@@ -22,6 +22,7 @@ export interface AdminWorkspace {
         name: string;
         color: string;
         position: number;
+        order?: number;
         createdAt: Date;
         isActive: boolean;
     }>;
@@ -66,12 +67,9 @@ export const useAdminWorkspaces = () => {
             loading.value = true;
             error.value = null;
 
-            const response = await apiClient.get(
-                "/api/workspaces/admin/workspaces",
-                {
-                    params: { page, limit },
-                },
-            );
+            const response = await apiClient.get("/api/workspaces/admin/workspaces", {
+                params: {page, limit},
+            });
 
             if (response.success && response.data) {
                 return response.data;
@@ -80,8 +78,7 @@ export const useAdminWorkspaces = () => {
                 return null;
             }
         } catch (err) {
-            error.value =
-                err instanceof Error ? err.message : "An error occurred";
+            error.value = err instanceof Error ? err.message : "An error occurred";
             return null;
         } finally {
             loading.value = false;
@@ -109,8 +106,7 @@ export const useAdminWorkspaces = () => {
                 return null;
             }
         } catch (err) {
-            error.value =
-                err instanceof Error ? err.message : "An error occurred";
+            error.value = err instanceof Error ? err.message : "An error occurred";
             return null;
         } finally {
             loading.value = false;
@@ -142,8 +138,7 @@ export const useAdminWorkspaces = () => {
                 return null;
             }
         } catch (err) {
-            error.value =
-                err instanceof Error ? err.message : "An error occurred";
+            error.value = err instanceof Error ? err.message : "An error occurred";
             return null;
         } finally {
             loading.value = false;
@@ -169,8 +164,7 @@ export const useAdminWorkspaces = () => {
                 return false;
             }
         } catch (err) {
-            error.value =
-                err instanceof Error ? err.message : "An error occurred";
+            error.value = err instanceof Error ? err.message : "An error occurred";
             return false;
         } finally {
             loading.value = false;
@@ -197,8 +191,7 @@ export const useAdminWorkspaces = () => {
                 return false;
             }
         } catch (err) {
-            error.value =
-                err instanceof Error ? err.message : "An error occurred";
+            error.value = err instanceof Error ? err.message : "An error occurred";
             return false;
         } finally {
             loading.value = false;
@@ -222,8 +215,7 @@ export const useAdminWorkspaces = () => {
                 return null;
             }
         } catch (err) {
-            error.value =
-                err instanceof Error ? err.message : "An error occurred";
+            error.value = err instanceof Error ? err.message : "An error occurred";
             return null;
         } finally {
             loading.value = false;

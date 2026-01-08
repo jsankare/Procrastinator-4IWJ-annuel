@@ -111,26 +111,6 @@
           </div>
         </div>
 
-        <div class="flex gap-6 mt-4">
-          <div class="flex flex-col items-center min-w-20">
-                        <span class="text-lg font-bold text-accent">{{
-                            totalTasks
-                          }}</span>
-            <span class="text-xs text-white/70">Tâches</span>
-          </div>
-          <div class="flex flex-col items-center min-w-20">
-                        <span class="text-lg font-bold text-green-400">{{
-                            completedTasks
-                          }}</span>
-            <span class="text-xs text-white/70">Complétées</span>
-          </div>
-          <div class="flex flex-col items-center min-w-20">
-                        <span class="text-lg font-bold text-orange-400">{{
-                            inProgressTasks
-                          }}</span>
-            <span class="text-xs text-white/70">En cours</span>
-          </div>
-        </div>
       </header>
 
       <div class="grid gap-6 sm:grid-cols-2">
@@ -147,7 +127,14 @@
                             <span
                                 class="w-14 h-14 rounded-full overflow-hidden border-2 border-accent mb-1 bg-primary flex items-center justify-center relative"
                             >
+                                <img
+                                    v-if="member.avatar"
+                                    :src="member.avatar"
+                                    :alt="`${member.username || member.firstName || 'User'} avatar`"
+                                    class="w-full h-full object-cover"
+                                />
                                 <svg
+                                    v-else
                                     class="w-8 h-8 text-white/70"
                                     fill="none"
                                     stroke="currentColor"
@@ -178,96 +165,49 @@
 
         <div class="rounded-lg border border-white/10 bg-secondary p-6">
           <h2 class="text-xl font-semibold mb-3">Résumé</h2>
-          <div class="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             <div
+                v-for="(stat, index) in columnStats"
+                :key="stat.name"
                 class="flex items-center gap-3 p-3 rounded-lg bg-primary/40"
             >
-                            <span class="bg-accent/20 p-2 rounded-full">
+                            <span 
+                                class="p-2 rounded-full"
+                                :style="{ backgroundColor: `${stat.color}20` }"
+                            >
                                 <svg
-                                    class="w-6 h-6 text-accent"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    stroke-width="2"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        d="M9 12l2 2l4-4"
-                                    />
-                                </svg>
-                            </span>
-              <div>
-                <div class="text-lg font-bold">
-                  {{ completedTasks }}
-                </div>
-                <div class="text-xs text-white/70">
-                  Tâches complétées
-                </div>
-              </div>
-            </div>
-            <div
-                class="flex items-center gap-3 p-3 rounded-lg bg-primary/40"
-            >
-                            <span class="bg-orange-400/20 p-2 rounded-full">
-                                <svg
-                                    class="w-6 h-6 text-orange-400"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    stroke-width="2"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <circle cx="12" cy="12" r="10"/>
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        d="M12 6v6l4 2"
-                                    />
-                                </svg>
-                            </span>
-              <div>
-                <div class="text-lg font-bold">
-                  {{ inProgressTasks }}
-                </div>
-                <div class="text-xs text-white/70">
-                  En cours
-                </div>
-              </div>
-            </div>
-            <div
-                class="flex items-center gap-3 p-3 rounded-lg bg-primary/40"
-            >
-                            <span class="bg-blue-400/20 p-2 rounded-full">
-                                <svg
-                                    class="w-6 h-6 text-blue-400"
+                                    class="w-6 h-6"
+                                    :style="{ color: stat.color }"
                                     fill="none"
                                     stroke="currentColor"
                                     stroke-width="2"
                                     viewBox="0 0 24 24"
                                 >
                                     <rect
-                                        x="4"
-                                        y="4"
-                                        width="16"
-                                        height="16"
+                                        x="3"
+                                        y="3"
+                                        width="18"
+                                        height="18"
                                         rx="2"
                                     />
                                     <path
                                         stroke-linecap="round"
                                         stroke-linejoin="round"
-                                        d="M8 12h8"
+                                        d="M3 9h18"
                                     />
                                 </svg>
                             </span>
               <div>
                 <div class="text-lg font-bold">
-                  {{ plannedTasks }}
+                  {{ stat.count }}
                 </div>
                 <div class="text-xs text-white/70">
-                  Planifiées
+                  {{ stat.name }}
                 </div>
               </div>
             </div>
+            
+            <!-- Total tasks card -->
             <div
                 class="flex items-center gap-3 p-3 rounded-lg bg-primary/40"
             >
@@ -304,7 +244,7 @@
         </div>
       </div>
 
-      <Kanban :workspace-id="workspaceId"/>
+      <Kanban :workspace-id="workspaceId" @tasks-changed="loadTasks" @columns-changed="loadWorkspace"/>
     </div>
 
     <!-- Invite Modal -->
@@ -455,8 +395,8 @@ const showInviteModal = ref(false);
 const codeCopied = ref(false);
 const linkCopied = ref(false);
 
-// Mock task data (will be replaced with real API calls later)
-const mockTasks = ref<any[]>([]);
+// Real task data from API
+const tasks = ref<any[]>([]);
 
 // Load workspace data
 const loadWorkspace = async () => {
@@ -467,9 +407,9 @@ const loadWorkspace = async () => {
     const response = await apiClient.get(`/api/workspaces/${workspaceId}`);
 
     if (response.success) {
-      workspace.value = response.data?.workspace;
-      // Generate some mock tasks for now
-      generateMockTasks();
+      workspace.value = (response.data as any)?.workspace;
+      // Load real tasks for this workspace
+      await loadTasks();
     } else {
       error.value =
           response.error ||
@@ -483,36 +423,80 @@ const loadWorkspace = async () => {
   }
 };
 
-// Generate mock tasks for demonstration
-const generateMockTasks = () => {
-  const taskCount = Math.floor(Math.random() * 15) + 5;
-  const statuses = ["terminé", "en cours", "planifié"];
-
-  mockTasks.value = Array.from({length: taskCount}, (_, i) => ({
-    id: i + 1,
-    title: `Task ${i + 1}`,
-    status: statuses[Math.floor(Math.random() * statuses.length)],
-  }));
+// Load tasks for the workspace
+const loadTasks = async () => {
+  try {
+    const response = await apiClient.get(`/api/tasks/workspace/${workspaceId}`);
+    if (response.success) {
+      tasks.value = (response.data as any)?.tasks || [];
+    } else {
+      console.error("Error loading tasks:", response.error);
+      tasks.value = [];
+    }
+  } catch (err) {
+    console.error("Error loading tasks:", err);
+    tasks.value = [];
+  }
 };
 
-// Computed properties
-const totalTasks = computed(() => mockTasks.value.length);
-const completedTasks = computed(
-    () =>
-        mockTasks.value.filter((t) => t.status?.toLowerCase() === "terminé")
-            .length,
-);
-const inProgressTasks = computed(
-    () =>
-        mockTasks.value.filter((t) => t.status?.toLowerCase() === "en cours")
-            .length,
-);
-const plannedTasks = computed(
-    () =>
-        mockTasks.value.filter((t) =>
-            t.status?.toLowerCase().startsWith("planif"),
-        ).length,
-);
+// Computed properties based on real data
+const totalTasks = computed(() => tasks.value.length);
+
+// Get task count by column name
+const getTaskCountByColumn = (columnName: string) => {
+  return tasks.value.filter((t) => t.columnName === columnName).length;
+};
+
+// Get statistics for all columns
+const columnStats = computed(() => {
+  if (!workspace.value?.columns) return [];
+
+  // Sort columns by order (fallback to position) and show all active columns
+  const sortedColumns = [...workspace.value.columns]
+    .filter(col => col.isActive)
+    .sort((a: any, b: any) => {
+      const aOrder = (a.order !== undefined && a.order !== null) ? a.order : a.position;
+      const bOrder = (b.order !== undefined && b.order !== null) ? b.order : b.position;
+      return aOrder - bOrder;
+    });
+
+  return sortedColumns.map(col => ({
+    name: col.name,
+    count: getTaskCountByColumn(col.name),
+    color: col.color || '#6366f1'
+  }));
+});
+
+// Legacy computed properties for backward compatibility with header stats
+const completedTasks = computed(() => {
+  // Find a column that contains "terminé" or "done" or "complete"
+  const completedColumn = workspace.value?.columns?.find((col: any) => 
+    col.name.toLowerCase().includes('terminé') || 
+    col.name.toLowerCase().includes('done') ||
+    col.name.toLowerCase().includes('complete')
+  );
+  return completedColumn ? getTaskCountByColumn(completedColumn.name) : 0;
+});
+
+const inProgressTasks = computed(() => {
+  // Find a column that contains "en cours" or "in progress" or "doing"
+  const inProgressColumn = workspace.value?.columns?.find((col: any) => 
+    col.name.toLowerCase().includes('cours') || 
+    col.name.toLowerCase().includes('progress') ||
+    col.name.toLowerCase().includes('doing')
+  );
+  return inProgressColumn ? getTaskCountByColumn(inProgressColumn.name) : 0;
+});
+
+const plannedTasks = computed(() => {
+  // Find a column that contains "planif" or "todo" or "à faire"
+  const plannedColumn = workspace.value?.columns?.find((col: any) => 
+    col.name.toLowerCase().includes('planif') || 
+    col.name.toLowerCase().includes('todo') ||
+    col.name.toLowerCase().includes('faire')
+  );
+  return plannedColumn ? getTaskCountByColumn(plannedColumn.name) : 0;
+});
 
 // Computed invite link
 const inviteLink = computed(() => {

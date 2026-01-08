@@ -15,39 +15,36 @@ http://localhost {
         respond "Caddy OK" 200
     }
 
-    # Auth service - strip /api/auth prefix and proxy to auth-service:3001
-    handle /api/auth/* {
-        uri strip_prefix /api/auth
-        reverse_proxy auth-service:3001 {
-            header_up Host {upstream_hostport}
-            header_up X-Real-IP {remote_host}
-            header_up X-Forwarded-For {remote_host}
-            header_up X-Forwarded-Proto {scheme}
-        }
+    # Handle OPTIONS requests for CORS preflight
+    @options method OPTIONS
+    handle @options {
+        respond "" 204
     }
 
-    # Workspace service - strip /api/workspaces prefix and proxy to workspace-service:3002
-    handle /api/workspaces/* {
-        uri strip_prefix /api/workspaces
-        reverse_proxy workspace-service:3002 {
-            header_up Host {upstream_hostport}
-            header_up X-Real-IP {remote_host}
-            header_up X-Forwarded-For {remote_host}
-            header_up X-Forwarded-Proto {scheme}
+    # Use route to force order of evaluation
+    route {
+        # Auth service - strip /api/auth prefix and proxy to auth-service:3001
+        handle_path /api/auth* {
+            reverse_proxy auth-service:3001
         }
-    }
 
-    # All other requests go to the frontend (Nuxt app)
-    handle /* {
-        reverse_proxy task-manager-frontend:3000 {
-            header_up Host {upstream_hostport}
-            header_up X-Real-IP {remote_host}
-            header_up X-Forwarded-For {remote_host}
-            header_up X-Forwarded-Proto {scheme}
+        # Workspace service - strip /api/workspaces prefix and proxy to workspace-service:3002
+        handle_path /api/workspaces* {
+            reverse_proxy workspace-service:3002
+        }
 
-            # Handle WebSocket connections for HMR
-            header_up Connection {>Connection}
-            header_up Upgrade {>Upgrade}
+        # Task service - strip /api/tasks prefix and proxy to tasks-service:3003
+        handle_path /api/tasks* {
+            reverse_proxy tasks-service:3003
+        }
+
+        # All other requests go to the frontend (Nuxt app)
+        handle {
+            reverse_proxy task-manager-frontend:3000 {
+                # Handle WebSocket connections for HMR
+                header_up Connection {>Connection}
+                header_up Upgrade {>Upgrade}
+            }
         }
     }
 
@@ -57,15 +54,9 @@ http://localhost {
     # CORS headers for development
     header {
         Access-Control-Allow-Origin "*"
-        Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+        Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS, PATCH"
         Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With"
         Access-Control-Allow-Credentials "true"
-    }
-
-    # Handle OPTIONS requests for CORS preflight
-    @options method OPTIONS
-    handle @options {
-        respond "" 204
     }
 }
 

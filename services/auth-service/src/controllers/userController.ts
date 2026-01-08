@@ -1,10 +1,10 @@
 import { Request, Response } from 'express';
-import { UserModel } from '../models/User.js';
 import jwt from 'jsonwebtoken';
 import { EmailService } from '../utils/email.js';
 import { authenticator } from 'otplib';
 import { toDataURL } from 'qrcode';
 import { JWTUtils } from '../utils/jwt.js';
+import { UserModel } from '../models/User.js';
 import { TOTPUtils } from '../utils/totp.js';
 import {
   CreateUserRequest,
@@ -405,6 +405,66 @@ export class UserController {
       }
 
       const updateData: UpdateUserRequest = req.body;
+      const notifications: string[] = [];
+      const currentUser = await UserModel.findById(payload.userId);
+
+      if (!currentUser) {
+        res.status(404).json({
+          success: false,
+          message: 'User not found',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Handle password change verification
+      if (updateData.newPassword) {
+        if (!updateData.currentPassword) {
+          res.status(400).json({
+            success: false,
+            message: 'Current password is required to change password',
+            timestamp: new Date().toISOString(),
+          });
+          return;
+        }
+
+        const isMatch = await UserModel.verifyPassword(updateData.currentPassword, currentUser.password);
+        if (!isMatch) {
+          res.status(400).json({
+            success: false,
+            message: 'Current password is incorrect',
+            timestamp: new Date().toISOString(),
+          });
+          return;
+        }
+
+        const token = await UserModel.initiatePasswordChange(payload.userId, updateData.newPassword);
+        await EmailService.sendPasswordChangeConfirmation(currentUser.email, currentUser.username, token);
+        notifications.push('Un email de confirmation a été envoyé pour valider le changement de mot de passe.');
+
+        delete updateData.newPassword;
+        delete updateData.currentPassword;
+      }
+
+      // Handle email change verification
+      if (updateData.email && updateData.email.toLowerCase() !== currentUser.email) {
+        const exists = await UserModel.exists({ email: updateData.email });
+        if (exists) {
+          res.status(400).json({
+            success: false,
+            message: 'Cette adresse email est déjà utilisée',
+            timestamp: new Date().toISOString(),
+          });
+          return;
+        }
+
+        const token = await UserModel.initiateEmailChange(payload.userId, updateData.email);
+        await EmailService.sendEmailChangeVerification(updateData.email, currentUser.username, token);
+        notifications.push(`Un lien de vérification a été envoyé à ${updateData.email}.`);
+
+        delete updateData.email;
+      }
+
       const result = await UserModel.updateById(payload.userId, updateData);
 
       if (!result.success) {
@@ -419,7 +479,7 @@ export class UserController {
 
       res.json({
         success: true,
-        message: 'Profile updated successfully',
+        message: notifications.length > 0 ? notifications.join(' ') : 'Profil mis à jour avec succès',
         data: result.data,
         timestamp: new Date().toISOString(),
       });
@@ -430,6 +490,41 @@ export class UserController {
         message: 'Internal server error while updating profile',
         timestamp: new Date().toISOString(),
       });
+    }
+  }
+
+  /**
+   * Verify change (email or password)
+   * POST /verify-change
+   * body: { token, type: 'email' | 'password' }
+   */
+  static async verifyChange(req: Request, res: Response): Promise<void> {
+    try {
+      const { token, type } = req.body;
+
+      if (!token || !type) {
+        res.status(400).json({ success: false, message: 'Token et type requis' });
+        return;
+      }
+
+      let success = false;
+      if (type === 'email') {
+        success = await UserModel.verifyEmailChange(token);
+      } else if (type === 'password') {
+        success = await UserModel.verifyPasswordChange(token);
+      } else {
+        res.status(400).json({ success: false, message: 'Type de vérification invalide' });
+        return;
+      }
+
+      if (success) {
+        res.json({ success: true, message: 'Changement validé et appliqué avec succès.' });
+      } else {
+        res.status(400).json({ success: false, message: 'Lien invalide ou expiré.' });
+      }
+    } catch (error) {
+      console.error('Verify change error:', error);
+      res.status(500).json({ success: false, message: 'Erreur serveur lors de la vérification' });
     }
   }
 
@@ -464,11 +559,56 @@ export class UserController {
 
       const { incrementPoints, incrementStreak, incrementCompletedTasks } = req.body;
 
-      const result = await UserModel.incrementStats(payload.userId, {
+      // Calculate Streak Logic
+      const currentUser = await UserModel.findById(payload.userId);
+      let calculatedSetStreak: number | undefined;
+      let calculatedStreakIncrement: number | undefined;
+      let newLastTaskDate: Date | undefined;
+
+      if (currentUser && incrementCompletedTasks && incrementCompletedTasks > 0) {
+        const now = new Date();
+        newLastTaskDate = now;
+
+        if (!currentUser.lastTaskCompletedAt) {
+          calculatedSetStreak = 1; // First task ever
+        } else {
+          const lastDate = new Date(currentUser.lastTaskCompletedAt);
+          const today = new Date();
+          // Normalize to midnight
+          lastDate.setHours(0, 0, 0, 0);
+          today.setHours(0, 0, 0, 0);
+
+          const diffTime = today.getTime() - lastDate.getTime();
+          const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+          if (diffDays === 0) {
+            calculatedStreakIncrement = 0; // Already done today
+          } else if (diffDays === 1) {
+            calculatedStreakIncrement = 1; // Done yesterday
+          } else {
+            calculatedSetStreak = 1; // Streak broken
+          }
+        }
+      }
+
+      const statsUpdate: any = {
         points: incrementPoints,
-        streak: incrementStreak,
         completedTasks: incrementCompletedTasks
-      });
+      };
+
+      if (calculatedSetStreak !== undefined) {
+        statsUpdate.setStreak = calculatedSetStreak;
+      } else if (calculatedStreakIncrement !== undefined) {
+        if (calculatedStreakIncrement > 0) statsUpdate.streak = calculatedStreakIncrement;
+      } else if (incrementStreak) {
+        statsUpdate.streak = incrementStreak;
+      }
+
+      if (newLastTaskDate) {
+        statsUpdate.lastTaskCompletedAt = newLastTaskDate;
+      }
+
+      const result = await UserModel.incrementStats(payload.userId, statsUpdate);
 
       if (!result.success) {
         res.status(400).json({
@@ -1443,5 +1583,30 @@ export class UserController {
     }
 
     return errors;
+  }
+  /**
+   * Logout user
+   * POST /logout
+   */
+  static async logout(req: Request, res: Response): Promise<void> {
+    try {
+      const authHeader = req.headers.authorization;
+
+      // Log logout event (client side should clear token)
+      console.log(`[Auth Service] Logout request received.`);
+
+      res.status(200).json({
+        success: true,
+        message: 'Logged out successfully',
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('Error logging out:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error during logout',
+        timestamp: new Date().toISOString(),
+      });
+    }
   }
 }
