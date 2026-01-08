@@ -1,0 +1,141 @@
+#docker-compose.prod.yml
+# Configuration de production pour pa.lucasratiaray.fr
+
+services:
+  # Reverse Proxy : Caddy avec HTTPS automatique
+  caddy:
+    image: caddy:2.11
+    container_name: caddy-prod
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./infra/caddy/Caddyfile.prod:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - web
+      - internal
+    restart: unless-stopped
+    environment:
+      # Domaine principal
+      - DOMAIN=pa.lucasratiaray.fr
+      # Sous-domaine API (ou même domaine avec path routing, mais Caddyfile.prod attend API_DOMAIN)
+      # Si on utilise path routing, on peut pointer API_DOMAIN vers le même domaine, ou modifier Caddyfile.
+      # Vérifions Caddyfile.prod. Supposons API sur api.pa.lucasratiaray.fr ou même domaine.
+      # Pour l'instant on met le meme domaine au cas où
+      - API_DOMAIN=pa.lucasratiaray.fr
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+    container_name: procrastinator-frontend
+    environment:
+      - NODE_ENV=production
+      - NUXT_HOST=0.0.0.0
+      - NUXT_PORT=3000
+      - NUXT_PUBLIC_API_BASE_URL=https://pa.lucasratiaray.fr
+    depends_on:
+      - auth-service
+      - workspace-service
+    networks:
+      - internal
+    restart: unless-stopped
+
+  auth-service:
+    build:
+      context: ./services/auth-service
+      dockerfile: Dockerfile.prod
+    container_name: auth-service-prod
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - SERVICE_NAME=auth-service
+      - CORS_ORIGIN=https://pa.lucasratiaray.fr
+      - FRONTEND_URL=https://pa.lucasratiaray.fr
+      - MONGODB_URI=${MONGODB_URI}
+      - DB_NAME=procrastinator
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRES_IN=7d
+      - JWT_REFRESH_EXPIRES_IN=30d
+    env_file:
+      - ./services/auth-service/.env.production
+    depends_on:
+      - mongodb
+    networks:
+      - internal
+    restart: unless-stopped
+
+  workspace-service:
+    build:
+      context: ./services/workspace-service
+      dockerfile: Dockerfile.prod
+    container_name: workspace-service-prod
+    environment:
+      - NODE_ENV=production
+      - PORT=3002
+      - SERVICE_NAME=workspace-service
+      - CORS_ORIGIN=https://pa.lucasratiaray.fr
+      - MONGODB_URI=${MONGODB_URI}
+      - DB_NAME=procrastinator
+      - JWT_SECRET=${JWT_SECRET}
+      - FRONTEND_URL=https://pa.lucasratiaray.fr
+    env_file:
+      - ./services/workspace-service/.env.production
+    depends_on:
+      - mongodb
+    networks:
+      - internal
+    restart: unless-stopped
+
+  tasks-service:
+    build:
+      context: ./services/tasks-service
+      dockerfile: Dockerfile.prod
+    container_name: tasks-service-prod
+    environment:
+      - NODE_ENV=production
+      - PORT=3003
+      - SERVICE_NAME=tasks-service
+      - CORS_ORIGIN=https://pa.lucasratiaray.fr
+      - MONGODB_URI=${MONGODB_URI}
+      - DB_NAME=procrastinator
+      - JWT_SECRET=${JWT_SECRET}
+      - FRONTEND_URL=https://pa.lucasratiaray.fr
+      - AUTH_SERVICE_URL=http://auth-service-prod:3001
+    env_file:
+      - ./services/tasks-service/.env.production
+    depends_on:
+        - mongodb
+    networks:
+      - internal
+    restart: unless-stopped
+
+  mongodb:
+    image: mongo:7.0
+    container_name: mongodb-prod
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_ROOT_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_ROOT_PASSWORD}
+      - MONGO_INITDB_DATABASE=procrastinator
+    volumes:
+      - mongodb_data:/data/db
+      - ./infra/mongo/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+    networks:
+      - internal
+    restart: unless-stopped
+
+volumes:
+  mongodb_data:
+    driver: local
+  caddy_data:
+    driver: local
+  caddy_config:
+    driver: local
+
+networks:
+  web:
+    driver: bridge
+  internal:
+    driver: bridge

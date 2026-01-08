@@ -33,6 +33,17 @@
         }
     }
 
+    # API Routes - Tasks service
+    handle /api/tasks/* {
+        uri strip_prefix /api/tasks
+        reverse_proxy tasks-service-prod:3003 {
+            header_up Host {upstream_hostport}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto https
+        }
+    }
+
     # API Health check
     handle /api/health {
         respond "API OK" 200
