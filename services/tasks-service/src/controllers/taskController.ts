@@ -196,7 +196,7 @@ export const createTask = async (req: AuthRequest, res: Response): Promise<void>
                         'Authorization': req.headers.authorization || ''
                     },
                     body: JSON.stringify({
-                        incrementPoints: 10,
+                        incrementPoints: task?.priority === "low" ? 10 : task?.priority === "medium" ? 25 : 50,
                         incrementCompletedTasks: 1,
                         incrementStreak: 0
                     })
@@ -386,7 +386,7 @@ export const updateTaskColumn = async (req: AuthRequest, res: Response): Promise
                         'Authorization': req.headers.authorization || ''
                     },
                     body: JSON.stringify({
-                        incrementPoints: 10,
+                        incrementPoints: task?.priority === "low" ? 10 : task?.priority === "medium" ? 25 : 50,
                         incrementCompletedTasks: 1,
                         incrementStreak: 0 // Logic for streak would be more complex, skipping for now
                     })
