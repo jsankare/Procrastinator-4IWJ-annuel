@@ -289,4 +289,6 @@ public_key
 ssl/
 certificates/
 
-# sujet
+PRODUCTION_SETUP.txt
+QUICK_START.txt
+verify_build.sh

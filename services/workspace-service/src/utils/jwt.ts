@@ -46,7 +46,8 @@ export class JWTUtils {
         return null;
       }
 
-      return jwt.sign(payload, jwtSecret, { expiresIn });
+      const options: jwt.SignOptions = { expiresIn: expiresIn as any };
+      return jwt.sign(payload, jwtSecret as string, options);
     } catch (error) {
       console.error('Token generation error:', error);
       return null;

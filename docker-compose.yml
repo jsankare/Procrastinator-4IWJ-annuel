@@ -1,0 +1,172 @@
+#docker-compose.prod.example.yml
+# Configuration de production avec Caddy comme reverse proxy
+# À adapter selon votre domaine et configuration
+
+services:
+  # Reverse Proxy : Caddy avec HTTPS automatique
+  caddy:
+    image: caddy:2.11
+    container_name: caddy-prod
+    ports:
+      - "80:80"
+      - "443:443"
+      - "2019:2019" # Admin API (à désactiver en prod si non nécessaire)
+    volumes:
+      - ./infra/caddy/Caddyfile.prod:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - web
+      - internal
+    restart: unless-stopped
+    environment:
+      - DOMAIN=${DOMAIN:-yourdomain.com}
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+    container_name: procrastinator-frontend
+    # Override the default entrypoint from node:22-alpine
+    entrypoint: []
+    command: ["node", "/app/.output/server/index.mjs"]
+    environment:
+      - NODE_ENV=production
+      - NUXT_HOST=0.0.0.0
+      - NUXT_PORT=3000
+      - NUXT_PUBLIC_API_BASE_URL=https://${API_DOMAIN:-api.yourdomain.com}
+    # Volumes removed for production - using built image instead
+    depends_on:
+      - auth-service
+      - workspace-service
+    networks:
+      - internal
+    restart: unless-stopped
+
+  auth-service:
+    build:
+      context: ./services/auth-service
+      dockerfile: Dockerfile.prod
+    container_name: auth-service-prod
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - SERVICE_NAME=auth-service
+      - FRONTEND_URL=${FRONTEND_URL}
+      - MONGODB_URI=${MONGODB_URI}
+      - DB_NAME=${DB_NAME:-procrastinator}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRES_IN=7d
+      - JWT_REFRESH_EXPIRES_IN=30d
+    env_file:
+      - ./services/auth-service/.env.production
+    depends_on:
+      - mongodb
+    networks:
+      - internal
+    restart: unless-stopped
+
+  workspace-service:
+    build:
+      context: ./services/workspace-service
+      dockerfile: Dockerfile.prod
+    container_name: workspace-service-prod
+    environment:
+      - NODE_ENV=production
+      - PORT=3002
+      - SERVICE_NAME=workspace-service
+      - MONGODB_URI=${MONGODB_URI}
+      - DB_NAME=${DB_NAME:-procrastinator}
+      - JWT_SECRET=${JWT_SECRET}
+      - FRONTEND_URL=https://${DOMAIN:-yourdomain.com}
+    env_file:
+      - ./services/workspace-service/.env.production
+    depends_on:
+      - mongodb
+    networks:
+      - internal
+    restart: unless-stopped
+
+  # Services futurs (à décommenter quand implémentés)
+  # task-service:
+  #   build:
+  #     context: ./services/task-service
+  #     dockerfile: Dockerfile.prod
+  #   container_name: task-service-prod
+  #   environment:
+  #     - NODE_ENV=production
+  #     - PORT=3003
+  #     - SERVICE_NAME=task-service
+  #     - MONGODB_URI=${MONGODB_URI}
+  #   env_file:
+  #     - ./services/task-service/.env.production
+  #   depends_on:
+  #     - mongodb
+  #   networks:
+  #     - internal
+  #   restart: unless-stopped
+
+  # gamification-service:
+  #   build:
+  #     context: ./services/gamification-service
+  #     dockerfile: Dockerfile.prod
+  #   container_name: gamification-service-prod
+  #   environment:
+  #     - NODE_ENV=production
+  #     - PORT=3004
+  #     - SERVICE_NAME=gamification-service
+  #     - MONGODB_URI=${MONGODB_URI}
+  #   env_file:
+  #     - ./services/gamification-service/.env.production
+  #   depends_on:
+  #     - mongodb
+  #   networks:
+  #     - internal
+  #   restart: unless-stopped
+
+  # notification-service:
+  #   build:
+  #     context: ./services/notification-service
+  #     dockerfile: Dockerfile.prod
+  #   container_name: notification-service-prod
+  #   environment:
+  #     - NODE_ENV=production
+  #     - PORT=3005
+  #     - SERVICE_NAME=notification-service
+  #     - MONGODB_URI=${MONGODB_URI}
+  #   env_file:
+  #     - ./services/notification-service/.env.production
+  #   depends_on:
+  #     - mongodb
+  #   networks:
+  #     - internal
+  #   restart: unless-stopped
+
+  mongodb:
+    image: mongo:7.0
+    container_name: mongodb-prod
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_ROOT_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_ROOT_PASSWORD}
+      - MONGO_INITDB_DATABASE=${DB_NAME:-procrastinator}
+    volumes:
+      - mongodb_data:/data/db
+      - ./infra/mongo/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+    networks:
+      - internal
+    restart: unless-stopped
+    # Pas d'exposition directe en prod - accès uniquement via réseau interne
+
+volumes:
+  mongodb_data:
+    driver: local
+  caddy_data:
+    driver: local
+  caddy_config:
+    driver: local
+
+networks:
+  web:
+    driver: bridge
+  internal:
+    driver: bridge

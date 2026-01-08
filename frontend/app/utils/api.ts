@@ -1,7 +1,10 @@
 // API client configuration
 // Base URL configurable via environment variable `NUXT_PUBLIC_API_BASE_URL`
+// Use window location in browser, fallback to localhost for SSR
 export const API_BASE_URL =
-  (import.meta.env?.NUXT_PUBLIC_API_BASE_URL as string) || "http://localhost";
+  typeof window !== 'undefined'
+    ? window.location.origin
+    : "http://localhost";
 
 interface ApiResponse<T = any> {
   success: boolean;

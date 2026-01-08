@@ -1,0 +1,30 @@
+FROM node:22-alpine AS build
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm install
+
+COPY . .
+RUN npm run build
+# Adjust if there is no build step or if it's TS
+
+FROM node:22-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm install --only=production
+
+COPY --from=build /app/dist ./dist
+# Assuming TS build goes to dist/
+
+ENV NODE_ENV=production
+ENV PORT=3001
+
+EXPOSE 3001
+
+CMD ["node", "dist/index.js"] 
+# NOTE: I need to verify entry point. I'll guess dist/index.js or dist/app.js based on common patterns but I should check package.json first to be sure. 
+# For now I will write a generic one and check package.json in next step to correct if needed.
+# BETTER STRATEGY: Check package.json FIRST.

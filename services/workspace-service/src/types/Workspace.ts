@@ -1,7 +1,9 @@
+import type { ObjectId } from 'mongodb';
+
 export interface Workspace {
-  _id?: string;
+  _id?: string | ObjectId;
   name: string;
-  description?: string;
+  description?: string | undefined;
   inviteCode: string;
   ownerId: string;
   members: WorkspaceMember[];
@@ -19,7 +21,7 @@ export interface WorkspaceMember {
 }
 
 export interface WorkspaceColumn {
-  _id?: string;
+  _id?: string | ObjectId;
   name: string;
   color?: string;
   position: number;
@@ -39,7 +41,7 @@ export interface JoinWorkspaceRequest {
 export interface WorkspaceResponse {
   _id: string;
   name: string;
-  description?: string;
+  description?: string | undefined;
   inviteCode: string;
   ownerId: string;
   members: WorkspaceMemberResponse[];
@@ -51,10 +53,10 @@ export interface WorkspaceResponse {
 
 export interface WorkspaceMemberResponse {
   userId: string;
-  username?: string;
-  firstName?: string;
-  lastName?: string;
-  email?: string;
+  username?: string | undefined;
+  firstName?: string | undefined;
+  lastName?: string | undefined;
+  email?: string | undefined;
   role: 'owner' | 'admin' | 'member';
   joinedAt: Date;
   isActive: boolean;

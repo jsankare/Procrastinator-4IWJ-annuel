@@ -1,4 +1,5 @@
 import { MongoClient, Db, Collection } from 'mongodb';
+import type { Document } from 'mongodb';
 
 const MONGODB_URI =
   process.env.MONGODB_URI ||
@@ -10,7 +11,7 @@ class Database {
   private client: MongoClient | null = null;
   private db: Db | null = null;
 
-  private constructor() {}
+  private constructor() { }
 
   public static getInstance(): Database {
     if (!Database.instance) {
@@ -65,7 +66,7 @@ class Database {
     return this.db;
   }
 
-  public getCollection<T = any>(name: string): Collection<T> {
+  public getCollection<T extends Document = Document>(name: string): Collection<T> {
     return this.getDb().collection<T>(name);
   }
 

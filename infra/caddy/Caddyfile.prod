@@ -1,0 +1,57 @@
+# Caddyfile for Procrastinator production environment
+# Uses automatic HTTPS with Let's Encrypt
+# Single domain configuration with /api path routing
+
+{$DOMAIN} {
+    log {
+        level INFO
+        output file /data/logs/access.log {
+            roll_size 100mb
+            roll_keep 5
+        }
+    }
+
+    # API Routes - Auth service
+    handle /api/auth/* {
+        uri strip_prefix /api/auth
+        reverse_proxy auth-service-prod:3001 {
+            header_up Host {upstream_hostport}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto https
+        }
+    }
+
+    # API Routes - Workspace service
+    handle /api/workspaces/* {
+        uri strip_prefix /api/workspaces
+        reverse_proxy workspace-service-prod:3002 {
+            header_up Host {upstream_hostport}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto https
+        }
+    }
+
+    # API Health check
+    handle /api/health {
+        respond "API OK" 200
+    }
+
+    # Frontend - Nuxt app (catch-all for everything else)
+    handle {
+        reverse_proxy procrastinator-frontend:3000 {
+            header_up Host {upstream_hostport}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto https
+            
+            # WebSocket support
+            header_up Connection {>Connection}
+            header_up Upgrade {>Upgrade}
+        }
+    }
+
+    # Enable compression
+    encode gzip
+}

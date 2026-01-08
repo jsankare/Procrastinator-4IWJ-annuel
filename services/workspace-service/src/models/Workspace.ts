@@ -9,8 +9,8 @@ import type {
 } from '../types/Workspace.js';
 
 export class WorkspaceModel {
-  private static db: Db;
-  private static collection: Collection<Workspace>;
+  static db: Db;
+  public static collection: Collection<Workspace>;
 
   static initialize() {
     const database = Database.getInstance();
