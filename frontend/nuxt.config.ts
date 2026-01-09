@@ -1,3 +1,4 @@
+import { defineNuxtConfig } from "nuxt/config";
 // https://nuxt.com/docs/api/configuration/nuxt-config
 import tailwindcss from "@tailwindcss/vite";
 
@@ -42,11 +43,11 @@ export default defineNuxtConfig({
   modules: [
     "@pinia/nuxt",
     "@nuxt/eslint",
-    "@nuxt/image",
     "@nuxt/scripts",
     "@nuxt/ui",
     "@nuxtjs/sitemap",
     "@nuxtjs/robots",
+      "@nuxt/test-utils/module",
   ],
 
   site: {
