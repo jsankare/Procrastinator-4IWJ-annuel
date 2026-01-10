@@ -7,7 +7,13 @@
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:simple": "playwright test --project=chromium",
+    "test:e2e:check": "playwright test --config=playwright.simple.config.ts test/e2e/playwright-check.spec.ts"
   },
   "dependencies": {
     "@nuxt/eslint": "1.9.0",

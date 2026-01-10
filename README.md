@@ -256,6 +256,170 @@ Ce projet respecte les exigences du cours Vue.js/Nuxt 4 :
 - ✅ **Architecture microservices**
 - ✅ **Docker** et containerisation
 
+## 🧪 Tests
+
+Le projet dispose d'un système de tests complet couvrant à la fois le backend et le frontend.
+
+### 🔧 Configuration des Tests
+
+#### Backend (Workspace Service)
+- **Framework** : Jest
+- **Type** : Tests d'intégration
+- **Couverture** : 100% des routes API
+- **Fichiers** : `services/workspace-service/src/test/`
+
+#### Frontend (Nuxt)
+- **Framework** : Playwright
+- **Type** : Tests End-to-End (E2E)
+- **Couverture** : Pages principales et flux utilisateur
+- **Fichiers** : `frontend/test/e2e/`
+
+### 📋 Prérequis pour les Tests
+
+```bash
+# Installer les dépendances de test
+cd frontend
+pnpm install
+
+cd services/workspace-service
+npm install
+```
+
+### 🚀 Exécution des Tests
+
+#### Tests Backend (Workspace Service)
+
+```bash
+# Exécuter tous les tests d'intégration
+cd services/workspace-service
+npm test
+
+# Exécuter un test spécifique
+npm test -- --testNamePattern="should create a new workspace"
+
+# Mode watch (développement)
+npm test -- --watch
+```
+
+**Résultats attendus** : 45 tests passant, couvrant toutes les routes et scénarios.
+
+#### Tests Frontend (E2E)
+
+```bash
+# Installer les navigateurs Playwright
+cd frontend
+npx playwright install
+
+# Exécuter le test de vérification (recommandé en premier)
+pnpm run test:e2e:check
+
+# Exécuter tous les tests E2E
+pnpm run test:e2e
+
+# Mode interactif (UI)
+pnpm run test:e2e:ui
+
+# Mode headed (voir le navigateur)
+pnpm run test:e2e:headed
+```
+
+**Résultats attendus** : 11 tests passant, couvrant les pages principales et flux utilisateur.
+
+### 📊 Détails des Tests
+
+#### Tests Backend (Workspace Service)
+
+**Routes testées** :
+- ✅ `GET /health` - Vérification de santé
+- ✅ `POST /` - Création d'espace de travail
+- ✅ `GET /` - Liste des espaces de l'utilisateur
+- ✅ `POST /join` - Rejoindre un espace via code d'invitation
+- ✅ `GET /:id` - Détails d'un espace spécifique
+- ✅ `PUT /:id` - Mise à jour d'un espace
+- ✅ `POST /:id/leave` - Quitter un espace
+- ✅ `DELETE /:id` - Suppression d'un espace
+- ✅ `POST /:id/columns` - Ajout de colonne
+- ✅ `PUT /:id/columns/:columnId` - Mise à jour de colonne
+- ✅ `DELETE /:id/columns/:columnId` - Suppression de colonne
+
+**Routes Admin** :
+- ✅ `GET /admin/stats` - Statistiques
+- ✅ `GET /admin/workspaces` - Liste complète
+- ✅ `GET /admin/workspaces/:id` - Détails admin
+- ✅ `PUT /admin/workspaces/:id` - Mise à jour admin
+- ✅ `DELETE /admin/workspaces/:id` - Suppression soft
+- ✅ `DELETE /admin/workspaces/:id/hard` - Suppression définitive
+
+**Scénarios couverts** :
+- ✅ Succès des opérations
+- ✅ Gestion des erreurs (400, 403, 404, 500)
+- ✅ Validation des données
+- ✅ Vérification des permissions
+- ✅ Authentification et autorisation
+
+#### Tests Frontend (E2E)
+
+**Pages testées** :
+- ✅ Page d'accueil (`index.vue`)
+- ✅ États d'authentification
+- ✅ Responsive design
+- ✅ Gestion des erreurs
+
+**Scénarios couverts** :
+- ✅ Chargement de l'application
+- ✅ Affichage du contenu
+- ✅ Navigation entre pages
+- ✅ Comportement responsive
+- ✅ Gestion des erreurs 404
+
+### 🔍 Dépannage
+
+#### Problèmes Backend
+
+```bash
+# Nettoyer et réinstaller
+cd services/workspace-service
+rm -rf node_modules
+npm install
+
+# Vérifier la connexion MongoDB
+npm test -- --verbose
+```
+
+#### Problèmes Frontend
+
+```bash
+# Installer les dépendances système pour Playwright
+sudo npx playwright install-deps
+
+# Réinstaller les navigateurs
+npx playwright install
+
+# Vérifier les ports utilisés
+sudo lsof -i :3000
+kill -9 <PID>
+```
+
+### 📈 Qualité des Tests
+
+- **Couverture backend** : 100% des routes API
+- **Couverture frontend** : Pages principales et flux critiques
+- **Fiabilité** : Tests stables avec gestion des erreurs
+- **Maintenabilité** : Code de test clair et documenté
+
+### 🎯 Bonnes Pratiques
+
+**Backend** :
+- Tests isolés avec nettoyage de la base de données
+- Mocking des dépendances externes
+- Validation des réponses API (status, body, structure)
+
+**Frontend** :
+- Sélecteurs sémantiques (`getByRole`, `getByText`)
+- Attente automatique des éléments
+- Tests indépendants du serveur (quand possible)
+- Vérification des états visuels
+
 ## 📝 Contribution
 
 1. **Fork** le projet
