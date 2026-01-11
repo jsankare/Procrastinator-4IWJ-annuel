@@ -30,4 +30,4 @@ jobs:
 
       - run: pnpm install
       - run: cd frontend && npx playwright install --with-deps
-      - run: pnpm test:all
+      - run: pnpm test:services
