@@ -29,5 +29,5 @@ jobs:
           cache: "pnpm"
 
       - run: pnpm install
-      - run: cd frontend && pnpm exec playwright install --with-deps
+      - run: cd frontend && npx playwright install --with-deps
       - run: pnpm test:all
