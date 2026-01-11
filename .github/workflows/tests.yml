@@ -13,6 +13,9 @@ jobs:
     runs-on: ubuntu-latest
     environment: testing
 
+    env:
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+
     steps:
       - uses: actions/checkout@v4
 
