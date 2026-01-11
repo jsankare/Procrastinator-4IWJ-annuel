@@ -15,8 +15,9 @@
     "docker:reset": "pnpm docker:nuke && pnpm dev-b",
     "test:front": "cd frontend && npx vitest",
     "test:auth": "cd services/auth-service && pnpm test",
-    "test:workspace": "cd services/workspace-service && npx vitest",
-    "test:task": "cd services/tasks-service && npx vitest"
+    "test:workspace": "cd services/workspace-service && pnpm test",
+    "test:task": "cd services/tasks-service && npx test",
+    "test:services": "pnpm test:workspace"
   },
   "keywords": [],
   "author": "",
