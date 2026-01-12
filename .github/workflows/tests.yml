@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - chore/testing
+      - chore/testing-2fa
   pull_request:
     branches:
       - chore/testing

@@ -10,7 +10,7 @@ class Database {
   private client: MongoClient | null = null;
   private db: Db | null = null;
 
-  private constructor() {}
+  private constructor() { }
 
   public static getInstance(): Database {
     if (!Database.instance) {
@@ -19,11 +19,11 @@ class Database {
     return Database.instance;
   }
 
-  public async connect(): Promise<void> {
+  public async connect(uri: string = MONGODB_URI): Promise<void> {
     try {
       console.log('Connecting to MongoDB...');
 
-      this.client = new MongoClient(MONGODB_URI, {
+      this.client = new MongoClient(uri, {
         maxPoolSize: 10,
         serverSelectionTimeoutMS: 5000,
         socketTimeoutMS: 45000,
