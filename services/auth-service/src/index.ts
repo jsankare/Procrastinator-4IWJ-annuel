@@ -247,7 +247,10 @@ process.on('unhandledRejection', (reason: unknown) => {
   process.exit(1);
 });
 
-// Start the server
-startServer();
+// Start the server (skip in test mode)
+if (process.env.NODE_ENV !== 'test') {
+  startServer();
+}
 
-export default app;
+export { app, startServer };
+
