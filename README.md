@@ -357,6 +357,65 @@ pnpm run test:e2e:headed
 - ✅ Vérification des permissions
 - ✅ Authentification et autorisation
 
+#### Tests 2FA (Auth Service)
+
+**Configuration** :
+- **Framework** : Jest avec ts-jest (ESM)
+- **Type** : Tests d'intégration
+- **Base de données** : MongoDB Memory Server
+- **Fichiers** : `services/auth-service/src/test/integration/2fa.routes.test.ts`
+
+**Exécution** :
+```bash
+# Exécuter les tests 2FA
+pnpm test:2fa
+
+# Ou depuis le service
+cd services/auth-service
+NODE_OPTIONS='--experimental-vm-modules' pnpm exec jest --testPathPatterns=2fa
+```
+
+**Endpoints testés (19 tests)** :
+
+| Endpoint | Tests | Description |
+|----------|-------|-------------|
+| `POST /setup-2fa` | 3 | Initialisation 2FA (secret, QR code, backup codes) |
+| `POST /enable-2fa` | 4 | Activation 2FA avec validation TOTP |
+| `POST /verify-2fa` | 4 | Vérification token et génération JWT |
+| `POST /disable-2fa` | 4 | Désactivation 2FA avec mot de passe |
+| `POST /2fa/validate-login` | 4 | Validation login avec code 2FA |
+
+**Détails des tests** :
+
+- ✅ `POST /setup-2fa`
+  - Retourne secret, QR code et 10 backup codes
+  - Erreur 400 si userId manquant
+  - Erreur 404 si utilisateur non trouvé
+
+- ✅ `POST /enable-2fa`
+  - Active 2FA avec token TOTP valide
+  - Erreur 400 si champs requis manquants
+  - Erreur 400 si token TOTP invalide
+  - Erreur 400 si utilisateur non trouvé
+
+- ✅ `POST /verify-2fa`
+  - Vérifie token et retourne JWT
+  - Erreur 400 si userId ou token manquant
+  - Erreur 401 si token invalide
+  - Erreur 400 si 2FA non activé
+
+- ✅ `POST /disable-2fa`
+  - Désactive 2FA avec mot de passe valide
+  - Erreur 400 si userId ou password manquant
+  - Erreur 401 si mot de passe incorrect
+  - Erreur 404 si utilisateur non trouvé
+
+- ✅ `POST /2fa/validate-login`
+  - Complète login avec tempToken et code 2FA
+  - Erreur 400 si tokens manquants
+  - Erreur 401 si tempToken invalide
+  - Erreur 401 si code 2FA invalide
+
 #### Tests Frontend (E2E)
 
 **Pages testées** :
